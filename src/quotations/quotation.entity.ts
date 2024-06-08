@@ -3,12 +3,12 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  Index,
+  Index, OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import {QuotationItem} from "../commons/types/quotation-item.interface";
 import {CurrencyEnum} from "../commons/types/currency.enum";
+import {QuotationItem} from "./quotation-item.entity";
 
 
 @Entity({ name: 'quotations' })
@@ -27,7 +27,7 @@ export class Quotation {
   @Column("enum", { name: 'currency', enum: CurrencyEnum, default: CurrencyEnum.ARS})
   public currency: CurrencyEnum;
 
-  @Column({ name: 'quotation_items', type: 'json' })
+  @OneToMany(() => QuotationItem, item => item.quotation)
   public quotationItems: QuotationItem[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
