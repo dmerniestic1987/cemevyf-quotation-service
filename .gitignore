@@ -1,0 +1,24 @@
+/config/local.yml
+
+# dependencies
+/node_modules
+
+# IDE
+/.idea
+/.awcache
+/.vscode
+# MAC
+.DS_Store
+
+# misc
+npm-debug.log
+
+# example
+/quick-start
+
+# tests
+/coverage
+/.nyc_output
+
+# dist
+/dist

@@ -1,0 +1,4 @@
+typeOrm:
+  username: root
+  password: my-secret-pw
+logLevel: log

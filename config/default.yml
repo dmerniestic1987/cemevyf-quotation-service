@@ -1,0 +1,16 @@
+typeOrm:
+  type: mysql
+  host: localhost
+  port: 3306
+  database: cemevyf_quotations_service
+  syncronize: false
+  logging: [ "error" ]
+  multipleStatements: true
+  timezone: Z
+  cli:
+    migrationsDir: migrations
+port: 9900
+logLevel: warn
+crypto:
+  encryptionKey: 'CEMEVYF encryption key'
+  iv: 'CEK iv'

@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  mysql:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: cemevyf_quotations_service
+    ports:
+      - "3306:3306"
+  db-test:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: my-secret-pw
+    ports:
+      - "3306:3306"
