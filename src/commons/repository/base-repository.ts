@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PageOptionsDto } from '../dto/page-options.dto';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { PageResponseDto } from '../dto/page-response.dto';
 import { PageMetaDataDto } from '../dto/page-meta-data.dto';
 

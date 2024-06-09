@@ -1,4 +1,4 @@
-import { Body, Injectable, Logger, Query } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { QuotationsRepository } from './quotations.repository';
 import { CreateQuotationRequestDto } from './dto/create-quotation-request.dto';
 import { QuotationResponseDto } from './dto/quotation-response.dto';
