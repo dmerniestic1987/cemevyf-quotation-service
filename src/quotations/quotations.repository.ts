@@ -7,7 +7,6 @@ import { QuotationResponseDto } from './dto/quotation-response.dto';
 import {InjectDataSource, InjectRepository} from '@nestjs/typeorm';
 import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import {Client} from "../clients/client.entity";
-import {QuotationItem} from "./quotation-item.entity";
 import {createQuotationInternalError} from "../commons/errors/exceptions";
 
 export class QuotationsRepository extends BaseRepository<Quotation, CreateQuotationRequestDto> {
@@ -21,34 +20,13 @@ export class QuotationsRepository extends BaseRepository<Quotation, CreateQuotat
     super();
   }
 
-  async createQuotation(createQuotationRequestDto: CreateQuotationRequestDto, client: Client): Promise<Quotation> {
-    this.logger.debug('create quotation', { service: QuotationsRepository.name, createQuotationRequestDto });
-    let quotation: Quotation = new Quotation();
-    quotation.totalAmount = Number(createQuotationRequestDto.totalAmount); //TODO: Transform to BigDecimal
-    quotation.currency = createQuotationRequestDto.currency;
-    quotation.quotationItems = [];
-    createQuotationRequestDto.quotationItems.forEach((itemDto, itemIndex) => {
-      const item = new QuotationItem();
-      item.id = itemIndex;
-      item.name = itemDto.name;
-      item.code = itemDto.code;
-      item.unitPrice = Number(itemDto.unitPrice); //TODO: Transform to BigDecimal
-      item.quotation = quotation;
-      item.quotationId = quotation.id;
-      item.itemCount = itemDto.itemCount;
-      quotation.quotationItems.push(item);
-    });
+  async createQuotation(quotation: Quotation, client: Client): Promise<Quotation> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      quotation.client = client;
-      if (!client.quotations) {
-        client.quotations = [];
-      }
       quotation = await queryRunner.manager.save(quotation);
       await queryRunner.manager.save(quotation.quotationItems);
-      client.quotations.push(quotation);
       await queryRunner.manager.save(client);
       await queryRunner.commitTransaction();
       return quotation;
