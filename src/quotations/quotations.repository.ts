@@ -17,8 +17,6 @@ export class QuotationsRepository extends BaseRepository<Quotation, CreateQuotat
     private dataSource: DataSource,
     @InjectRepository(Quotation)
     private readonly quotationRepository: Repository<Quotation>,
-    @InjectRepository(Client)
-    private readonly clientsRepository: Repository<Client>,
   ) {
     super();
   }
