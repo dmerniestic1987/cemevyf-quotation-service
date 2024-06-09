@@ -14,3 +14,5 @@ logLevel: warn
 crypto:
   encryptionKey: 'CEMEVYF encryption key'
   iv: 'CEK iv'
+serviceConfig:
+  messageServiceUrl: http://localhost:9001
