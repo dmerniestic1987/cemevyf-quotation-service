@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {IsArray, IsEmail, IsEnum, IsNumber, IsPhoneNumber, IsString} from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsNumber, IsPhoneNumber, IsString } from 'class-validator';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
 import { ItemQuotationRequestDto } from './item-quotation-request.dto';
 import { ClientIdTypeEnum } from '../../commons/types/client-id-type.enum';

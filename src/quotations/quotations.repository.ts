@@ -1,13 +1,13 @@
 import { Logger } from '@nestjs/common';
 import { Quotation } from './quotation.entity';
 import { BaseRepository } from '../commons/repository/base-repository';
-import {DataSource, Repository} from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CreateQuotationRequestDto } from './dto/create-quotation-request.dto';
 import { QuotationResponseDto } from './dto/quotation-response.dto';
-import {InjectDataSource, InjectRepository} from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { PageOptionsDto } from '../commons/dto/page-options.dto';
-import {Client} from "../clients/client.entity";
-import {createQuotationInternalError} from "../commons/errors/exceptions";
+import { Client } from '../clients/client.entity';
+import { createQuotationInternalError } from '../commons/errors/exceptions';
 
 export class QuotationsRepository extends BaseRepository<Quotation, CreateQuotationRequestDto> {
   private readonly logger = new Logger(QuotationsRepository.name);
@@ -30,9 +30,7 @@ export class QuotationsRepository extends BaseRepository<Quotation, CreateQuotat
       await queryRunner.manager.save(client);
       await queryRunner.commitTransaction();
       return quotation;
-    }
-
-    catch (err) {
+    } catch (err) {
       this.logger.error(JSON.stringify(err));
       await queryRunner.rollbackTransaction();
       throw createQuotationInternalError(err.message);

@@ -4,19 +4,19 @@ import { CreateQuotationRequestDto } from './dto/create-quotation-request.dto';
 import { QuotationResponseDto } from './dto/quotation-response.dto';
 import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
-import {InjectRepository} from "@nestjs/typeorm";
-import {Client} from "../clients/client.entity";
-import {Repository} from "typeorm";
-import {Quotation} from "./quotation.entity";
-import {QuotationItem} from "./quotation-item.entity";
+import { InjectRepository } from '@nestjs/typeorm';
+import { Client } from '../clients/client.entity';
+import { Repository } from 'typeorm';
+import { Quotation } from './quotation.entity';
+import { QuotationItem } from './quotation-item.entity';
 
 @Injectable()
 export class QuotationsService {
   private logger = new Logger(QuotationsService.name);
   constructor(
-      private readonly quotationRepository: QuotationsRepository,
-      @InjectRepository(Client)
-      private readonly clientsRepository: Repository<Client>
+    private readonly quotationRepository: QuotationsRepository,
+    @InjectRepository(Client)
+    private readonly clientsRepository: Repository<Client>,
   ) {}
 
   async createQuotation(createQuotationRequestDto: CreateQuotationRequestDto): Promise<QuotationResponseDto> {
@@ -24,7 +24,7 @@ export class QuotationsService {
       where: {
         eMail: createQuotationRequestDto.eMail.toLowerCase(),
       },
-      relations: ['quotations']
+      relations: ['quotations'],
     });
     if (!client) {
       client = new Client();

@@ -5,8 +5,8 @@ import { BaseRepositoryModule } from 'src/commons/repository/base-repository.mod
 import { QuotationsRepository } from './quotations.repository';
 import { Quotation } from './quotation.entity';
 import { QuotationsService } from './quotations.service';
-import {Client} from "../clients/client.entity";
-import {QuotationItem} from "./quotation-item.entity";
+import { Client } from '../clients/client.entity';
+import { QuotationItem } from './quotation-item.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Client, Quotation, QuotationItem]), BaseRepositoryModule],
