@@ -9,9 +9,9 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { CurrencyEnum } from '../commons/types/currency.enum';
-import { QuotationItem } from './quotation-item.entity';
-import { PersonIdTypeEnum } from '../commons/types/person-id-type.enum';
-import { Quotation } from './quotation.entity';
+import { QuotationItem } from '../quotations/quotation-item.entity';
+import { ClientIdTypeEnum } from '../commons/types/client-id-type.enum';
+import { Quotation } from '../quotations/quotation.entity';
 
 @Entity({ name: 'clients' })
 @Index('idx_client_type_and_id', ['clientIdType', 'clientId'], { unique: true })
@@ -35,8 +35,8 @@ export class Client {
   @Index('idx_client_last_name', { unique: false })
   public clientLastName: string;
 
-  @Column({ name: 'client_id_type', nullable: true, type: 'enum', enum: PersonIdTypeEnum })
-  public clientIdType: PersonIdTypeEnum;
+  @Column({ name: 'client_id_type', nullable: true, type: 'enum', enum: ClientIdTypeEnum })
+  public clientIdType: ClientIdTypeEnum;
 
   @Column({ name: 'client_id', nullable: true })
   public clientId: string;

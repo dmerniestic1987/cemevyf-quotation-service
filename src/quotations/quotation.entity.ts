@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 import { CurrencyEnum } from '../commons/types/currency.enum';
 import { QuotationItem } from './quotation-item.entity';
-import { Client } from './client.entity';
+import { Client } from '../clients/client.entity';
 
 @Entity({ name: 'quotations' })
 export class Quotation {

@@ -1,4 +1,4 @@
-export enum PersonIdTypeEnum {
+export enum ClientIdTypeEnum {
   DNI = 'dni',
   PASSPORT = 'pass',
   CUIL = 'cuil',

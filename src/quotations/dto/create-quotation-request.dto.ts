@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsEmail, IsEnum, IsNumber, IsString } from 'class-validator';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
 import { ItemQuotationRequestDto } from './item-quotation-request.dto';
-import { PersonIdTypeEnum } from '../../commons/types/person-id-type.enum';
+import { ClientIdTypeEnum } from '../../commons/types/client-id-type.enum';
 
 export class CreateQuotationRequestDto {
   @ApiProperty({
@@ -24,11 +24,11 @@ export class CreateQuotationRequestDto {
   @ApiProperty({
     description: 'The type Id of patient',
     required: false,
-    default: PersonIdTypeEnum.DNI,
-    example: PersonIdTypeEnum.DNI,
+    default: ClientIdTypeEnum.DNI,
+    example: ClientIdTypeEnum.DNI,
   })
-  @IsEnum(PersonIdTypeEnum)
-  patientIdType: PersonIdTypeEnum;
+  @IsEnum(ClientIdTypeEnum)
+  patientIdType: ClientIdTypeEnum;
 
   @ApiProperty({
     description: 'The ID of Patient',
