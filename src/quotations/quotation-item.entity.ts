@@ -12,8 +12,11 @@ import { Quotation } from './quotation.entity';
 
 @Entity({ name: 'quotation_items' })
 export class QuotationItem {
-  @PrimaryColumn({ type: 'bigint' })
+  @PrimaryColumn({ type: 'integer' })
   public id: number;
+
+  @PrimaryColumn({ name: 'quotation_id', type: 'bigint' })
+  public quotationId: number;
 
   @ManyToOne(() => Quotation, quotation => quotation.quotationItems)
   @JoinColumn({ name: 'quotation_id', referencedColumnName: 'id' })
