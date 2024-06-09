@@ -17,26 +17,19 @@ export class QuotationsRepository extends BaseRepository<Quotation, CreateQuotat
     private dataSource: DataSource,
     @InjectRepository(Quotation)
     private readonly quotationRepository: Repository<Quotation>,
-    @InjectRepository(QuotationItem)
-    private readonly quotationItemsRepository: Repository<QuotationItem>,
     @InjectRepository(Client)
     private readonly clientsRepository: Repository<Client>,
   ) {
     super();
   }
 
-  async createQuotation(createProviderRequestDto: CreateQuotationRequestDto): Promise<QuotationResponseDto> {
-    this.logger.debug('create user', { service: QuotationsRepository.name, createProviderRequestDto });
-    let client: Client = await this.clientsRepository.findOne({
-      where: {
-        eMail: createProviderRequestDto.eMail.toLowerCase(),
-      }
-    });
+  async createQuotation(createQuotationRequestDto: CreateQuotationRequestDto, client: Client): Promise<Quotation> {
+    this.logger.debug('create quotation', { service: QuotationsRepository.name, createQuotationRequestDto });
     let quotation: Quotation = new Quotation();
-    quotation.totalAmount = Number(createProviderRequestDto.totalAmount); //TODO: Transform to BigDecimal
-    quotation.currency = createProviderRequestDto.currency;
+    quotation.totalAmount = Number(createQuotationRequestDto.totalAmount); //TODO: Transform to BigDecimal
+    quotation.currency = createQuotationRequestDto.currency;
     quotation.quotationItems = [];
-    createProviderRequestDto.quotationItems.forEach((itemDto, itemIndex) => {
+    createQuotationRequestDto.quotationItems.forEach((itemDto, itemIndex) => {
       const item = new QuotationItem();
       item.id = itemIndex;
       item.name = itemDto.name;
@@ -51,24 +44,16 @@ export class QuotationsRepository extends BaseRepository<Quotation, CreateQuotat
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      if (!client) {
-        client = new Client();
-        client.clientId = createProviderRequestDto.clientId;
-        client.clientIdType = createProviderRequestDto.clientIdType;
-        client.clientFirstName = createProviderRequestDto.clientFirstName;
-        client.clientLastName = createProviderRequestDto.clientLastName;
-        client.eMail = createProviderRequestDto.eMail.toLowerCase();
-        client.phoneNumber = createProviderRequestDto.phoneNumber;
-        client = await queryRunner.manager.save(client);
-      }
       quotation.client = client;
+      if (!client.quotations) {
+        client.quotations = [];
+      }
       quotation = await queryRunner.manager.save(quotation);
       await queryRunner.manager.save(quotation.quotationItems);
+      client.quotations.push(quotation);
+      await queryRunner.manager.save(client);
       await queryRunner.commitTransaction();
-      return {
-        id: quotation.id,
-        itemCount: quotation.quotationItems.length,
-      };
+      return quotation;
     }
 
     catch (err) {
