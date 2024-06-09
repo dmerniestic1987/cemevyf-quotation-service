@@ -1,2 +1,0 @@
-export const TRACE_ID_MOCK = '7AB06868-2C3F-4036-B4AF-EFA229E7CA27';
-export const CRYPTO_USER_SESSION_MOCK = 'gWfGgaLdXsvKtx3gTtpe9g==';

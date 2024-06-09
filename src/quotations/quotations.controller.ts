@@ -4,18 +4,18 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { QuotationResponseDto } from './dto/quotation-response.dto';
 import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
-import { QuotationsRepository } from './quotations.repository';
+import { QuotationsService } from './quotations.service';
 
 @ApiTags('quotations')
 @Controller('quotations')
 export class QuotationsController {
-  constructor(private readonly quotationRepository: QuotationsRepository) {}
+  constructor(private readonly quotationService: QuotationsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new quotation', operationId: 'createQuotation' })
   @ApiOkResponse({ type: QuotationResponseDto })
   async create(@Body() createProviderDto: CreateQuotationRequestDto): Promise<QuotationResponseDto> {
-    return this.quotationRepository.createQuotation(createProviderDto);
+    return this.quotationService.createQuotation(createProviderDto);
   }
 
   @Get()
