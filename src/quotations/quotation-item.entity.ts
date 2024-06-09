@@ -2,16 +2,17 @@ import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
-  Entity, JoinColumn, ManyToOne,
+  Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import {Quotation} from "./quotation.entity";
+import { Quotation } from './quotation.entity';
 
 @Entity({ name: 'quotation_items' })
-
 export class QuotationItem {
-  @PrimaryColumn({type: 'bigint'})
+  @PrimaryColumn({ type: 'bigint' })
   public id: number;
 
   @Column({ name: 'code', nullable: true })
@@ -20,10 +21,10 @@ export class QuotationItem {
   @Column({ name: 'name', nullable: true })
   public name: string;
 
-  @Column("decimal", { precision: 12, scale: 2, name: 'unit_price'})
+  @Column('decimal', { precision: 12, scale: 2, name: 'unit_price' })
   public unitPrice: number;
 
-  @Column({name: 'item_count', type: 'integer'})
+  @Column({ name: 'item_count', type: 'integer' })
   public itemCount: number;
 
   @ManyToOne(() => Quotation, quotation => quotation.quotationItems)

@@ -32,12 +32,4 @@ export class BaseRepository<T, U> {
     const pageMetaDto = new PageMetaDataDto({ itemCount, pageOptionsDto });
     return new PageResponseDto(items, pageMetaDto);
   }
-
-  async findOneOrFail(
-    repository: Repository<T>,
-    where: FindOptionsWhere<T>,
-    relations: string[] = undefined,
-  ): Promise<T> {
-    return await repository.findOneOrFail({ where, relations });
-  }
 }

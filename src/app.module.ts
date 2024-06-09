@@ -5,10 +5,6 @@ import { typeOrmOptions } from '../datasource.config';
 import { QuotationsModule } from './quotations/quotations.module';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRoot(typeOrmOptions),
-    QuotationsModule,
-  ],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), TypeOrmModule.forRoot(typeOrmOptions), QuotationsModule],
 })
 export class AppModule {}

@@ -2,33 +2,31 @@ import { Logger } from '@nestjs/common';
 import { Quotation } from './quotation.entity';
 import { BaseRepository } from '../commons/repository/base-repository';
 import { Repository } from 'typeorm';
-import { CreateProviderRequestDto } from './dto/create-provider-request.dto';
-import { ProviderResponseDto } from './dto/provider-response.dto';
+import { CreateQuotationRequestDto } from './dto/create-quotation-request.dto';
+import { QuotationResponseDto } from './dto/quotation-response.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PageOptionsDto } from '../commons/dto/page-options.dto';
 
-export class QuotationsRepository extends BaseRepository<Quotation, CreateProviderRequestDto> {
-  private readonly usersLogger = new Logger(QuotationsRepository.name);
+export class QuotationsRepository extends BaseRepository<Quotation, CreateQuotationRequestDto> {
+  private readonly logger = new Logger(QuotationsRepository.name);
   constructor(
     @InjectRepository(Quotation)
-    private readonly providersRepository: Repository<Quotation>,
+    private readonly quotationRepository: Repository<Quotation>,
   ) {
     super();
   }
 
-  async createProvider(createProviderRequestDto: CreateProviderRequestDto): Promise<ProviderResponseDto> {
-    this.usersLogger.debug('create user', { service: QuotationsRepository.name, createProviderRequestDto });
-    const provider = await super.create(createProviderRequestDto, this.providersRepository, Quotation);
-    return ProviderResponseDto.fromProvider(provider);
+  async createQuotation(createProviderRequestDto: CreateQuotationRequestDto): Promise<QuotationResponseDto> {
+    this.logger.debug('create user', { service: QuotationsRepository.name, createProviderRequestDto });
+    const quotation = await super.create(createProviderRequestDto, this.quotationRepository, Quotation);
+    return {
+      id: quotation.id,
+      itemCount: quotation.quotationItems.length,
+    };
   }
 
-  async findAllProviders(pageOptionsDto: PageOptionsDto) {
-    this.usersLogger.debug('find all users', { service: QuotationsRepository.name });
-    return super.findAll(pageOptionsDto, this.providersRepository, undefined, {}, undefined, ProviderResponseDto);
-  }
-
-  async findOneProvider(id: number): Promise<Quotation> {
-    this.usersLogger.debug('find a user', { service: QuotationsRepository.name, id });
-    return super.findOneOrFail(this.providersRepository, { id });
+  async findAllQuotations(pageOptionsDto: PageOptionsDto) {
+    this.logger.debug('find all users', { service: QuotationsRepository.name });
+    return super.findAll(pageOptionsDto, this.quotationRepository, undefined, {}, undefined, QuotationResponseDto);
   }
 }
