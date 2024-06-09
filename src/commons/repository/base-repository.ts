@@ -6,11 +6,6 @@ import { PageMetaDataDto } from '../dto/page-meta-data.dto';
 
 @Injectable()
 export class BaseRepository<T, U> {
-  async create(createDto: U, repository: Repository<T>, entityClass: new () => T): Promise<T> {
-    const entity = new entityClass();
-    Object.assign(entity, createDto);
-    return repository.save(entity);
-  }
 
   async findAll<T, V>(
     pageOptionsDto: PageOptionsDto,
