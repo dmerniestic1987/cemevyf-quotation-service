@@ -15,6 +15,10 @@ export class QuotationItem {
   @PrimaryColumn({ type: 'bigint' })
   public id: number;
 
+  @ManyToOne(() => Quotation, quotation => quotation.quotationItems)
+  @JoinColumn({ name: 'quotation_id', referencedColumnName: 'id' })
+  quotation: Quotation;
+
   @Column({ name: 'code', nullable: true })
   public code: string;
 
@@ -26,10 +30,6 @@ export class QuotationItem {
 
   @Column({ name: 'item_count', type: 'integer' })
   public itemCount: number;
-
-  @ManyToOne(() => Quotation, quotation => quotation.quotationItems)
-  @JoinColumn({ name: 'quotation_id', referencedColumnName: 'id' })
-  quotation: Quotation;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   public createdAt: Date;

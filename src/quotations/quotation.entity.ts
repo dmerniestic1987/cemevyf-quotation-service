@@ -3,39 +3,24 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  Index,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { CurrencyEnum } from '../commons/types/currency.enum';
 import { QuotationItem } from './quotation-item.entity';
-import { PersonIdTypeEnum } from '../commons/types/person-id-type.enum';
+import { Client } from './client.entity';
 
 @Entity({ name: 'quotations' })
 export class Quotation {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   public id: number;
 
-  @Column({ name: 'e_mail', nullable: true })
-  @Index('idx_quotations_e_mail', { unique: false })
-  public eMail: string;
-
-  @Column({ name: 'patient_first_name', nullable: true })
-  @Index('idx_first_name', { unique: false })
-  public patientFirstName: string;
-
-  @Column({ name: 'patient_last_name', nullable: true })
-  @Index('idx_last_name', { unique: false })
-  public patientLastName: string;
-
-  @Column({ name: 'patient_id_type', nullable: true, type: 'enum', enum: PersonIdTypeEnum })
-  @Index('idx_patient_id_type', { unique: false })
-  public patientIdType: PersonIdTypeEnum;
-
-  @Column({ name: 'patient_id', nullable: true })
-  @Index('idx_patient', { unique: false })
-  public patientId: string;
+  @ManyToOne(() => Client, client => client.quotations)
+  @JoinColumn({ name: 'client_id', referencedColumnName: 'id' })
+  client: Client;
 
   @Column('decimal', { precision: 12, scale: 2, name: 'total_amount' })
   public totalAmount: number;
