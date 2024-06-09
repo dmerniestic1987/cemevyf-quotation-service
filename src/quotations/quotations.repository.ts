@@ -41,6 +41,13 @@ export class QuotationsRepository extends BaseRepository<Quotation, CreateQuotat
 
   async findAllQuotations(pageOptionsDto: PageOptionsDto) {
     this.logger.debug('find all users', { service: QuotationsRepository.name });
-    return super.findAll(pageOptionsDto, this.quotationRepository, undefined, {}, undefined, QuotationResponseDto);
+    return super.findAll(
+        pageOptionsDto,
+        this.quotationRepository,
+        undefined,
+        {},
+        undefined,
+        QuotationResponseDto
+    );
   }
 }

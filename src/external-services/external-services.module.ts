@@ -1,10 +1,9 @@
 import { Global, Module } from '@nestjs/common';
-import { HsmGatewayModule } from './hsm-gateway/hsm-gateway.module';
-import { AbstractionLayerModule } from './abstraction-layer/abstraction-layer.module';
+import { CemevyfMessageServiceModule } from './cemevyf-message-service/cemevyf-message-service.module';
 
 @Global()
 @Module({
-  imports: [HsmGatewayModule, AbstractionLayerModule],
-  exports: [HsmGatewayModule, AbstractionLayerModule],
+  imports: [CemevyfMessageServiceModule],
+  exports: [CemevyfMessageServiceModule],
 })
 export class ExternalServicesModule {}

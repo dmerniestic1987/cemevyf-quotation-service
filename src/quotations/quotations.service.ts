@@ -9,6 +9,7 @@ import { Client } from '../clients/client.entity';
 import { Repository } from 'typeorm';
 import { Quotation } from './quotation.entity';
 import { QuotationItem } from './quotation-item.entity';
+import {CemevyfMessageService} from "../external-services/cemevyf-message-service/cemevyf-message.service";
 
 @Injectable()
 export class QuotationsService {
@@ -17,9 +18,11 @@ export class QuotationsService {
     private readonly quotationRepository: QuotationsRepository,
     @InjectRepository(Client)
     private readonly clientsRepository: Repository<Client>,
+    private readonly messageService: CemevyfMessageService,
   ) {}
 
   async createQuotation(createQuotationRequestDto: CreateQuotationRequestDto): Promise<QuotationResponseDto> {
+    this.logger.debug('Create Quotation', {service: QuotationsService.name, createQuotationRequestDto});
     let client: Client = await this.clientsRepository.findOne({
       where: {
         eMail: createQuotationRequestDto.eMail.toLowerCase(),
