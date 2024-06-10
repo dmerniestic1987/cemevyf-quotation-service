@@ -65,6 +65,17 @@ export class QuotationsService {
     //TODO: Check client
     //TODO: We need to get client information from ClientService
     quotation = await this.quotationRepository.createQuotation(quotation, client);
+    await this.messageService.sendMail({
+      to: client.eMail,
+      subject: 'CEMEVYF - Nueva Cotización de Análisis de Laboratorio',
+      context: {
+        clientFirstName: client.clientFirstName,
+        clientLastName: client.clientLastName,
+        createdAt: quotation.createdAt.toDateString(),
+        quotationId: quotation.id,
+        totalAmount: quotation.totalAmount,
+      }
+    })
     return {
       id: quotation.id,
       itemCount: quotation.quotationItems.length,
