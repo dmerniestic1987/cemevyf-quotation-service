@@ -5,7 +5,8 @@ import { PageResponseDto } from '../dto/page-response.dto';
 import { PageMetaDataDto } from '../dto/page-meta-data.dto';
 
 @Injectable()
-export class BaseRepository<T, U> {
+export class BaseService<T, U> {
+
   async findAll<T, V>(
     pageOptionsDto: PageOptionsDto,
     repository: Repository<T>,

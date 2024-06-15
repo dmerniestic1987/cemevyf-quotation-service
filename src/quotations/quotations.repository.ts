@@ -1,23 +1,19 @@
 import { Logger } from '@nestjs/common';
 import { Quotation } from './quotation.entity';
-import { BaseRepository } from '../commons/repository/base-repository';
 import { DataSource, Repository } from 'typeorm';
-import { CreateQuotationRequestDto } from './dto/create-quotation-request.dto';
-import { QuotationResponseDto } from './dto/quotation-response.dto';
-import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { PageOptionsDto } from '../commons/dto/page-options.dto';
+import { InjectDataSource } from '@nestjs/typeorm';
 import { Client } from '../clients/client.entity';
 import { createQuotationInternalError } from '../commons/errors/exceptions';
 
-export class QuotationsRepository extends BaseRepository<Quotation, CreateQuotationRequestDto> {
+export class QuotationsRepository {
   private readonly logger = new Logger(QuotationsRepository.name);
   constructor(
     @InjectDataSource()
     private dataSource: DataSource,
-    @InjectRepository(Quotation)
-    private readonly quotationRepository: Repository<Quotation>,
-  ) {
-    super();
+  ) {}
+
+  getRepository(): Repository<Quotation> {
+    return this.dataSource.getRepository<Quotation>(Quotation);
   }
 
   async createQuotation(quotation: Quotation, client: Client): Promise<Quotation> {
@@ -37,17 +33,5 @@ export class QuotationsRepository extends BaseRepository<Quotation, CreateQuotat
     } finally {
       await queryRunner.release();
     }
-  }
-
-  async findAllQuotations(pageOptionsDto: PageOptionsDto) {
-    this.logger.debug('find all users', { service: QuotationsRepository.name });
-    return super.findAll(
-        pageOptionsDto,
-        this.quotationRepository,
-        undefined,
-        {},
-        undefined,
-        QuotationResponseDto
-    );
   }
 }

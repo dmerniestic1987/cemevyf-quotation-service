@@ -10,16 +10,19 @@ import { Repository } from 'typeorm';
 import { Quotation } from './quotation.entity';
 import { QuotationItem } from './quotation-item.entity';
 import {CemevyfMessageService} from "../external-services/cemevyf-message-service/cemevyf-message.service";
+import {BaseService} from "../commons/service/base-service";
 
 @Injectable()
-export class QuotationsService {
+export class QuotationsService extends BaseService<Quotation, CreateQuotationRequestDto> {
   private logger = new Logger(QuotationsService.name);
   constructor(
     private readonly quotationRepository: QuotationsRepository,
     @InjectRepository(Client)
     private readonly clientsRepository: Repository<Client>,
     private readonly messageService: CemevyfMessageService,
-  ) {}
+  ) {
+    super();
+  }
 
   async createQuotation(createQuotationRequestDto: CreateQuotationRequestDto): Promise<QuotationResponseDto> {
     this.logger.debug('Create Quotation', {service: QuotationsService.name, createQuotationRequestDto});
@@ -82,7 +85,14 @@ export class QuotationsService {
     };
   }
 
-  async findAll(pageOptionsDto: PageOptionsDto): Promise<PageResponseDto<QuotationResponseDto>> {
-    return null;
+  async findAllQuotations(pageOptionsDto: PageOptionsDto): Promise<PageResponseDto<QuotationResponseDto>> {
+    return super.findAll(
+        pageOptionsDto,
+        this.quotationRepository.getRepository(),
+        undefined,
+        {},
+        undefined,
+        QuotationResponseDto
+    );
   }
 }

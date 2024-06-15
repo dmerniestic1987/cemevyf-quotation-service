@@ -22,6 +22,6 @@ export class QuotationsController {
   @ApiOperation({ summary: 'Gets a list of all enabled quotations', operationId: 'findAllQuotations' })
   @ApiOkResponse({ type: [QuotationResponseDto] })
   async findAll(@Query() pageOptionsDto: PageOptionsDto): Promise<PageResponseDto<QuotationResponseDto>> {
-    return null;
+    return this.quotationService.findAllQuotations(pageOptionsDto);
   }
 }
