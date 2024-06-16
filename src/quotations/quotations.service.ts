@@ -13,6 +13,7 @@ import { CemevyfMessageService } from '../external-services/cemevyf-message-serv
 import { BaseService } from '../commons/service/base-service';
 import { FilterQuotationDto } from './dto/filter-quotation.dto';
 import { QuotationEntityDtoMapper } from './dto/mapper/quotation-entity-dto-mapper';
+import { UpdateQuotationRequestDto } from './dto/update-quotation-request.dto';
 
 @Injectable()
 export class QuotationsService extends BaseService<Quotation, CreateQuotationRequestDto> {
@@ -106,6 +107,17 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
       relations: ['quotationItems'],
     });
 
+    return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
+  }
+
+  async updateQuotation(id: number, updateQuotationDto: UpdateQuotationRequestDto): Promise<QuotationResponseDto> {
+    const quotation = await this.quotationRepository.getRepository().findOne({
+      where: {
+        id,
+      },
+      relations: ['quotationItems'],
+    });
+    //TODO: IMPLEMENT PARSE TO QUOTATION AND UPDATE
     return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 }

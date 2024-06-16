@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { CreateQuotationRequestDto } from './dto/create-quotation-request.dto';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { QuotationResponseDto } from './dto/quotation-response.dto';
@@ -6,6 +6,7 @@ import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { QuotationsService } from './quotations.service';
 import { FilterQuotationDto } from './dto/filter-quotation.dto';
+import { UpdateQuotationRequestDto } from './dto/update-quotation-request.dto';
 
 @ApiTags('quotations')
 @Controller('quotations')
@@ -36,4 +37,16 @@ export class QuotationsController {
   async findQuotation(@Param('id') id): Promise<QuotationResponseDto> {
     return this.quotationService.findQuotation(id);
   }
+
+  @Put('/:id')
+  @ApiParam({ type: 'number', name: 'id' })
+  @ApiOperation({ summary: 'Updates an specific quotation', operationId: 'updateQuotation' })
+  @ApiOkResponse({ type: QuotationResponseDto })
+  async updateQuotation(
+    @Param('id') id,
+    @Body() updateQuotationDto: UpdateQuotationRequestDto,
+  ): Promise<QuotationResponseDto> {
+    return this.quotationService.updateQuotation(id, updateQuotationDto);
+  }
 }
+//
