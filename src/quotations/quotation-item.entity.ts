@@ -31,9 +31,6 @@ export class QuotationItem {
   @Column('decimal', { precision: 12, scale: 2, name: 'unit_price' })
   public unitPrice: number;
 
-  @Column({ name: 'item_count', type: 'integer' })
-  public itemCount: number;
-
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   public createdAt: Date;
 

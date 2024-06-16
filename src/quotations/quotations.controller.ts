@@ -5,6 +5,7 @@ import { QuotationResponseDto } from './dto/quotation-response.dto';
 import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { QuotationsService } from './quotations.service';
+import {FilterQuotationDto} from "./dto/filter-quotation.dto";
 
 @ApiTags('quotations')
 @Controller('quotations')
@@ -21,7 +22,10 @@ export class QuotationsController {
   @Get()
   @ApiOperation({ summary: 'Gets a list of all enabled quotations', operationId: 'findAllQuotations' })
   @ApiOkResponse({ type: [QuotationResponseDto] })
-  async findAll(@Query() pageOptionsDto: PageOptionsDto): Promise<PageResponseDto<QuotationResponseDto>> {
+  async findAll(
+      @Query() filterDto: FilterQuotationDto,
+      @Query() pageOptionsDto: PageOptionsDto,
+      ): Promise<PageResponseDto<QuotationResponseDto>> {
     return this.quotationService.findAllQuotations(pageOptionsDto);
   }
 }

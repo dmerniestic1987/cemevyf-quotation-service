@@ -56,7 +56,6 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
       item.unitPrice = Number(itemDto.unitPrice); //TODO: Transform to BigDecimal
       item.quotation = quotation;
       item.quotationId = quotation.id;
-      item.itemCount = itemDto.itemCount;
       quotation.quotationItems.push(item);
     });
 
@@ -82,6 +81,8 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     return {
       id: quotation.id,
       itemCount: quotation.quotationItems.length,
+      currency: quotation.currency,
+      totalAmount: quotation.totalAmount,
     };
   }
 
