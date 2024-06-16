@@ -26,6 +26,6 @@ export class QuotationsController {
     @Query() filterDto: FilterQuotationDto,
     @Query() pageOptionsDto: PageOptionsDto,
   ): Promise<PageResponseDto<QuotationResponseDto>> {
-    return this.quotationService.findAllQuotations(pageOptionsDto);
+    return this.quotationService.findAllQuotations(filterDto, pageOptionsDto);
   }
 }

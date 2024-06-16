@@ -11,6 +11,7 @@ import { Quotation } from './quotation.entity';
 import { QuotationItem } from './quotation-item.entity';
 import { CemevyfMessageService } from '../external-services/cemevyf-message-service/cemevyf-message.service';
 import { BaseService } from '../commons/service/base-service';
+import {FilterQuotationDto} from "./dto/filter-quotation.dto";
 
 @Injectable()
 export class QuotationsService extends BaseService<Quotation, CreateQuotationRequestDto> {
@@ -56,6 +57,7 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
       item.unitPrice = Number(itemDto.unitPrice); //TODO: Transform to BigDecimal
       item.quotation = quotation;
       item.quotationId = quotation.id;
+      item.itemCount = itemDto.itemCount;
       quotation.quotationItems.push(item);
     });
 
@@ -80,13 +82,16 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     });
     return {
       id: quotation.id,
-      itemCount: quotation.quotationItems.length,
       currency: quotation.currency,
       totalAmount: quotation.totalAmount,
+      items: [],
     };
   }
 
-  async findAllQuotations(pageOptionsDto: PageOptionsDto): Promise<PageResponseDto<QuotationResponseDto>> {
+  async findAllQuotations(
+      filterDto: FilterQuotationDto,
+      pageOptionsDto: PageOptionsDto
+  ): Promise<PageResponseDto<QuotationResponseDto>> {
     return super.findAll(
       pageOptionsDto,
       this.quotationRepository.getRepository(),
