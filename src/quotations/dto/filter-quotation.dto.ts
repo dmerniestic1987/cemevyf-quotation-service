@@ -8,7 +8,7 @@ import {
   IsInt,
   IsNumber,
   IsPhoneNumber,
-  IsString
+  IsString,
 } from 'class-validator';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
 import { ItemQuotationRequestDto } from './item-quotation-request.dto';

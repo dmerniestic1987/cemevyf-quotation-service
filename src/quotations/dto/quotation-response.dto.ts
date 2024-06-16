@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {CurrencyEnum} from "../../commons/types/currency.enum";
+import { CurrencyEnum } from '../../commons/types/currency.enum';
 
 export class QuotationResponseDto {
   @ApiProperty({

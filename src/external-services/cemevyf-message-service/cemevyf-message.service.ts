@@ -4,9 +4,9 @@ import { lastValueFrom, map } from 'rxjs';
 const { serviceConfig } = require('config');
 
 export interface CemevyfMailMessage {
-  to: string,
-  subject: string,
-  context: any
+  to: string;
+  subject: string;
+  context: any;
 }
 
 @Injectable()
@@ -23,12 +23,10 @@ export class CemevyfMessageService {
    * @param signedTransaction signed transaction
    */
   async sendMail(message: CemevyfMailMessage): Promise<any> {
-    this.logger.debug({ name: CemevyfMessageService.name, message});
+    this.logger.debug({ name: CemevyfMessageService.name, message });
     try {
       return lastValueFrom<any>(
-        this.httpService
-          .post(`${this.messageServiceUrl}/message`, message)
-          .pipe(map(result => result.data)),
+        this.httpService.post(`${this.messageServiceUrl}/message`, message).pipe(map(result => result.data)),
       );
     } catch (error) {
       this.logger.error('Error sending message to cemevyf-message-service', error);

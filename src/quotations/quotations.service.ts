@@ -9,8 +9,8 @@ import { Client } from '../clients/client.entity';
 import { Repository } from 'typeorm';
 import { Quotation } from './quotation.entity';
 import { QuotationItem } from './quotation-item.entity';
-import {CemevyfMessageService} from "../external-services/cemevyf-message-service/cemevyf-message.service";
-import {BaseService} from "../commons/service/base-service";
+import { CemevyfMessageService } from '../external-services/cemevyf-message-service/cemevyf-message.service';
+import { BaseService } from '../commons/service/base-service';
 
 @Injectable()
 export class QuotationsService extends BaseService<Quotation, CreateQuotationRequestDto> {
@@ -25,7 +25,7 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
   }
 
   async createQuotation(createQuotationRequestDto: CreateQuotationRequestDto): Promise<QuotationResponseDto> {
-    this.logger.debug('Create Quotation', {service: QuotationsService.name, createQuotationRequestDto});
+    this.logger.debug('Create Quotation', { service: QuotationsService.name, createQuotationRequestDto });
     let client: Client = await this.clientsRepository.findOne({
       where: {
         eMail: createQuotationRequestDto.eMail.toLowerCase(),
@@ -76,8 +76,8 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
         createdAt: quotation.createdAt.toDateString(),
         quotationId: quotation.id,
         totalAmount: quotation.totalAmount,
-      }
-    })
+      },
+    });
     return {
       id: quotation.id,
       itemCount: quotation.quotationItems.length,
@@ -88,12 +88,12 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
 
   async findAllQuotations(pageOptionsDto: PageOptionsDto): Promise<PageResponseDto<QuotationResponseDto>> {
     return super.findAll(
-        pageOptionsDto,
-        this.quotationRepository.getRepository(),
-        undefined,
-        {},
-        undefined,
-        QuotationResponseDto
+      pageOptionsDto,
+      this.quotationRepository.getRepository(),
+      undefined,
+      {},
+      undefined,
+      QuotationResponseDto,
     );
   }
 }
