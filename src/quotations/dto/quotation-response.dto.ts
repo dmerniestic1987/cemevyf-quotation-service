@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
-import {ItemQuotationResponseDto} from "./item-quotation-response.dto";
+import { ItemQuotationResponseDto } from './item-quotation-response.dto';
 
 export class QuotationResponseDto {
   @ApiProperty({
@@ -22,7 +22,13 @@ export class QuotationResponseDto {
   public totalAmount: number;
 
   @ApiProperty({
+    description: 'Creation Date in ISO 8601 format',
+    example: '2023-05-30T00:00:00.000Z',
+  })
+  public createdAt: string;
+
+  @ApiProperty({
     description: 'The list of items',
   })
-  public items?: ItemQuotationResponseDto[]
+  public items?: ItemQuotationResponseDto[];
 }

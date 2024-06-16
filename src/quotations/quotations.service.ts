@@ -11,9 +11,8 @@ import { Quotation } from './quotation.entity';
 import { QuotationItem } from './quotation-item.entity';
 import { CemevyfMessageService } from '../external-services/cemevyf-message-service/cemevyf-message.service';
 import { BaseService } from '../commons/service/base-service';
-import {FilterQuotationDto} from "./dto/filter-quotation.dto";
-import {ItemQuotationResponseDto} from "./dto/item-quotation-response.dto";
-import {QuotationEntityDtoMapper} from "./dto/mapper/quotation-entity-dto-mapper";
+import { FilterQuotationDto } from './dto/filter-quotation.dto';
+import { QuotationEntityDtoMapper } from './dto/mapper/quotation-entity-dto-mapper';
 
 @Injectable()
 export class QuotationsService extends BaseService<Quotation, CreateQuotationRequestDto> {
@@ -31,18 +30,18 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     this.logger.debug('Create Quotation', { service: QuotationsService.name, createQuotationRequestDto });
     let client: Client = await this.clientsRepository.findOne({
       where: {
-        eMail: createQuotationRequestDto.eMail.toLowerCase(),
+        eMail: createQuotationRequestDto.client.eMail.toLowerCase(),
       },
       relations: ['quotations'],
     });
     if (!client) {
       client = new Client();
-      client.clientId = createQuotationRequestDto.clientId;
-      client.clientIdType = createQuotationRequestDto.clientIdType;
-      client.clientFirstName = createQuotationRequestDto.clientFirstName;
-      client.clientLastName = createQuotationRequestDto.clientLastName;
-      client.eMail = createQuotationRequestDto.eMail.toLowerCase();
-      client.phoneNumber = createQuotationRequestDto.phoneNumber;
+      client.clientId = createQuotationRequestDto.client.clientId;
+      client.clientIdType = createQuotationRequestDto.client.clientIdType;
+      client.clientFirstName = createQuotationRequestDto.client.clientFirstName;
+      client.clientLastName = createQuotationRequestDto.client.clientLastName;
+      client.eMail = createQuotationRequestDto.client.eMail.toLowerCase();
+      client.phoneNumber = createQuotationRequestDto.client.phoneNumber;
       client = await this.clientsRepository.save(client);
     }
 
@@ -82,17 +81,12 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
         totalAmount: quotation.totalAmount,
       },
     });
-    return {
-      id: quotation.id,
-      currency: quotation.currency,
-      totalAmount: quotation.totalAmount,
-      items: [],
-    };
+    return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
   async findAllQuotations(
-      filterDto: FilterQuotationDto,
-      pageOptionsDto: PageOptionsDto
+    filterDto: FilterQuotationDto,
+    pageOptionsDto: PageOptionsDto,
   ): Promise<PageResponseDto<QuotationResponseDto>> {
     return super.findAll(
       pageOptionsDto,
@@ -100,7 +94,7 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
       undefined,
       {},
       undefined,
-      QuotationResponseDto,
+      QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto,
     );
   }
 
@@ -109,7 +103,7 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
       where: {
         id,
       },
-      relations: ['quotationItems']
+      relations: ['quotationItems'],
     });
 
     return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);

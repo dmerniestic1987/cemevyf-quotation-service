@@ -1,0 +1,56 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsEnum, IsPhoneNumber, IsString } from 'class-validator';
+import { ClientIdTypeEnum } from '../../commons/types/client-id-type.enum';
+
+export class CreateClientRequestDto {
+  @ApiProperty({
+    description: 'The first name of the person who will receive the quotation',
+    required: true,
+    example: 'Diego',
+  })
+  @IsString()
+  clientFirstName: string;
+
+  @ApiProperty({
+    description: 'The last name of the person who will receive the quotation',
+    required: true,
+    example: 'Di Rossi',
+  })
+  @IsString()
+  clientLastName: string;
+
+  @ApiProperty({
+    description: 'The type Id of patient',
+    required: false,
+    default: ClientIdTypeEnum.DNI,
+    example: ClientIdTypeEnum.DNI,
+  })
+  @IsEnum(ClientIdTypeEnum)
+  clientIdType: ClientIdTypeEnum;
+
+  @ApiProperty({
+    description: 'The ID of Patient',
+    required: false,
+    example: '32847809',
+  })
+  @IsString()
+  clientId: string;
+
+  @ApiProperty({
+    description: 'target e-mail to send quotation',
+    required: true,
+    example: 'example@cemevyf.com',
+  })
+  @IsString()
+  @IsEmail()
+  eMail: string;
+
+  @ApiProperty({
+    description: 'target e-mail to send quotation',
+    required: true,
+    example: 'example@cemevyf.com',
+  })
+  @IsString()
+  @IsPhoneNumber()
+  phoneNumber: string;
+}

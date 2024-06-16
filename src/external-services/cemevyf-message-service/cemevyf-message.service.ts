@@ -25,7 +25,7 @@ export class CemevyfMessageService {
   async sendMail(message: CemevyfMailMessage): Promise<any> {
     this.logger.debug({ name: CemevyfMessageService.name, message });
     try {
-      return lastValueFrom<any>(
+      return await lastValueFrom<any>(
         this.httpService.post(`${this.messageServiceUrl}/message`, message).pipe(map(result => result.data)),
       );
     } catch (error) {

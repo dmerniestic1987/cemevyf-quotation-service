@@ -12,16 +12,14 @@ export class BaseService<T, U> {
     where = '',
     parameters: object,
     queryBuilderType: string = undefined,
-    dtoClass: new () => V,
+    dtoToClassMapper: (T) => V,
   ): Promise<PageResponseDto<V>> {
     const skip = (pageOptionsDto.page - 1) * pageOptionsDto.take;
     const queryBuilder = repository.createQueryBuilder(queryBuilderType);
     queryBuilder.where(where, parameters).skip(skip).take(pageOptionsDto.take);
     const [entities, itemCount] = await queryBuilder.getManyAndCount();
     const items: V[] = (entities || []).map(entity => {
-      const dto = new dtoClass();
-      Object.assign(dto, entity);
-      return dto;
+      return dtoToClassMapper(entity);
     });
     const pageMetaDto = new PageMetaDataDto({ itemCount, pageOptionsDto });
     return new PageResponseDto(items, pageMetaDto);
