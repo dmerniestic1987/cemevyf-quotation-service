@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import {Body, Controller, Get, Param, Post, Query} from '@nestjs/common';
 import { CreateQuotationRequestDto } from './dto/create-quotation-request.dto';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {ApiOkResponse, ApiOperation, ApiParam, ApiTags} from '@nestjs/swagger';
 import { QuotationResponseDto } from './dto/quotation-response.dto';
 import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
@@ -20,12 +20,20 @@ export class QuotationsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Gets a list of all enabled quotations', operationId: 'findAllQuotations' })
+  @ApiOperation({ summary: 'Gets a list of all enabled quotations', operationId: 'findQuotations' })
   @ApiOkResponse({ type: [QuotationResponseDto] })
-  async findAll(
+  async findQuotations(
     @Query() filterDto: FilterQuotationDto,
     @Query() pageOptionsDto: PageOptionsDto,
   ): Promise<PageResponseDto<QuotationResponseDto>> {
     return this.quotationService.findAllQuotations(filterDto, pageOptionsDto);
+  }
+
+  @Get('/:id')
+  @ApiParam({ type: 'number', name: 'id' })
+  @ApiOperation({ summary: 'Gets details of an specific quotation', operationId: 'findQuotation' })
+  @ApiOkResponse({ type: QuotationResponseDto })
+  async findQuotation(@Param('id') id): Promise<QuotationResponseDto> {
+    return this.quotationService.findQuotation(id);
   }
 }
