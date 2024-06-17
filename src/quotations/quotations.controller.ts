@@ -7,6 +7,8 @@ import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { QuotationsService } from './quotations.service';
 import { FilterQuotationDto } from './dto/filter-quotation.dto';
 import { UpdateQuotationRequestDto } from './dto/update-quotation-request.dto';
+import { SendQuotationByMessageRequestDto } from './dto/send-quotation-by-message-request.dto';
+import { QuotationSentMessageResponseDto } from './dto/quotation-sent-message-response.dto';
 
 @ApiTags('quotations')
 @Controller('quotations')
@@ -48,5 +50,18 @@ export class QuotationsController {
   ): Promise<QuotationResponseDto> {
     return this.quotationService.updateQuotation(id, updateQuotationDto);
   }
+
+  @Post('/:id/message')
+  @ApiParam({ type: 'number', name: 'id' })
+  @ApiOperation({
+    summary: 'Send a message with quotation to the customer or the supplier',
+    operationId: 'sendQuotationByMessage',
+  })
+  @ApiOkResponse({ type: QuotationSentMessageResponseDto })
+  async sendQuotationByMessage(
+    @Param('id') id,
+    @Body() updateQuotationDto: SendQuotationByMessageRequestDto,
+  ): Promise<QuotationSentMessageResponseDto> {
+    return this.quotationService.sendQuotationByMessage(id, updateQuotationDto);
+  }
 }
-//

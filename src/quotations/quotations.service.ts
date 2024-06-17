@@ -9,11 +9,18 @@ import { Client } from '../clients/client.entity';
 import { Repository } from 'typeorm';
 import { Quotation } from './quotation.entity';
 import { QuotationItem } from './quotation-item.entity';
-import { CemevyfMessageService } from '../external-services/cemevyf-message-service/cemevyf-message.service';
+import {
+  CemevyfMailMessage,
+  CemevyfMessageService,
+} from '../external-services/cemevyf-message-service/cemevyf-message.service';
 import { BaseService } from '../commons/service/base-service';
 import { FilterQuotationDto } from './dto/filter-quotation.dto';
 import { QuotationEntityDtoMapper } from './dto/mapper/quotation-entity-dto-mapper';
 import { UpdateQuotationRequestDto } from './dto/update-quotation-request.dto';
+import { SendQuotationByMessageRequestDto } from './dto/send-quotation-by-message-request.dto';
+import { QuotationSentMessageResponseDto } from './dto/quotation-sent-message-response.dto';
+import { MessageChannelEnum } from '../commons/types/message-channel.enum';
+import { featureNotImplemented } from '../commons/errors/exceptions';
 
 @Injectable()
 export class QuotationsService extends BaseService<Quotation, CreateQuotationRequestDto> {
@@ -71,17 +78,7 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     //TODO: Check client
     //TODO: We need to get client information from ClientService
     quotation = await this.quotationRepository.createQuotation(quotation, client);
-    await this.messageService.sendMail({
-      to: client.eMail,
-      subject: 'CEMEVYF - Nueva Cotización de Análisis de Laboratorio',
-      context: {
-        clientFirstName: client.clientFirstName,
-        clientLastName: client.clientLastName,
-        createdAt: quotation.createdAt.toDateString(),
-        quotationId: quotation.id,
-        totalAmount: quotation.totalAmount,
-      },
-    });
+    await this.messageService.sendMail(this.toCemevyfMailMessage(quotation));
     return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
@@ -117,7 +114,43 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
       },
       relations: ['quotationItems'],
     });
+
     //TODO: IMPLEMENT PARSE TO QUOTATION AND UPDATE
     return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
+  }
+
+  async sendQuotationByMessage(
+    id: number,
+    sendQuotationDto: SendQuotationByMessageRequestDto,
+  ): Promise<QuotationSentMessageResponseDto> {
+    if (sendQuotationDto.channel !== MessageChannelEnum.E_MAIL) {
+      throw featureNotImplemented(`Sending messages by ${sendQuotationDto.channel} is not implemented`);
+    }
+    const quotation = await this.quotationRepository.getRepository().findOne({
+      where: {
+        id,
+      },
+      relations: ['client', 'quotationItems'],
+    });
+
+    await this.messageService.sendMail(this.toCemevyfMailMessage(quotation));
+    return {
+      id,
+      channel: sendQuotationDto.channel,
+    };
+  }
+
+  private toCemevyfMailMessage(quotation: Quotation): CemevyfMailMessage {
+    return {
+      to: quotation.client.eMail,
+      subject: 'CEMEVYF - Nueva Cotización de Análisis de Laboratorio',
+      context: {
+        clientFirstName: quotation.client.clientFirstName,
+        clientLastName: quotation.client.clientLastName,
+        createdAt: quotation.createdAt.toDateString(),
+        quotationId: quotation.id,
+        totalAmount: quotation.totalAmount,
+      },
+    };
   }
 }
