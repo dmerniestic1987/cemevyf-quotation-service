@@ -1,18 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsArray,
-  IsDate,
   IsDateString,
-  IsEmail,
   IsEnum,
   IsInt,
-  IsNumber,
-  IsPhoneNumber,
-  IsString,
 } from 'class-validator';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
-import { ItemQuotationRequestDto } from './item-quotation-request.dto';
-import { ClientIdTypeEnum } from '../../commons/types/client-id-type.enum';
 
 export class FilterQuotationDto {
   @ApiProperty({

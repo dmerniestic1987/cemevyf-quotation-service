@@ -8,8 +8,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { CurrencyEnum } from '../commons/types/currency.enum';
-import { QuotationItem } from '../quotations/quotation-item.entity';
 import { ClientIdTypeEnum } from '../commons/types/client-id-type.enum';
 import { Quotation } from '../quotations/quotation.entity';
 

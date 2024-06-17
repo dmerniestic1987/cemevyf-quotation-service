@@ -1,8 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CurrencyEnum } from '../../commons/types/currency.enum';
-import { ItemQuotationResponseDto } from './item-quotation-response.dto';
 import { MessageChannelEnum } from '../../commons/types/message-channel.enum';
-import { IsEnum } from 'class-validator';
 
 export class QuotationSentMessageResponseDto {
   @ApiProperty({
