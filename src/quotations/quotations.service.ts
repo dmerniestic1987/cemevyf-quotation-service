@@ -8,7 +8,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Client } from '../clients/client.entity';
 import { Repository } from 'typeorm';
 import { Quotation } from './quotation.entity';
-import { QuotationItem } from './quotation-item.entity';
 import {
   CemevyfMailMessage,
   CemevyfMessageService,
@@ -20,7 +19,7 @@ import { UpdateQuotationRequestDto } from './dto/update-quotation-request.dto';
 import { SendQuotationByMessageRequestDto } from './dto/send-quotation-by-message-request.dto';
 import { QuotationSentMessageResponseDto } from './dto/quotation-sent-message-response.dto';
 import { MessageChannelEnum } from '../commons/types/message-channel.enum';
-import { featureNotImplemented } from '../commons/errors/exceptions';
+import { featureNotImplementedError, notFoundError } from '../commons/errors/exceptions';
 
 @Injectable()
 export class QuotationsService extends BaseService<Quotation, CreateQuotationRequestDto> {
@@ -35,7 +34,7 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
   }
 
   async createQuotation(createQuotationRequestDto: CreateQuotationRequestDto): Promise<QuotationResponseDto> {
-    this.logger.debug('Create Quotation', { service: QuotationsService.name, createQuotationRequestDto });
+    this.logger.log('Create Quotation', { service: QuotationsService.name, createQuotationRequestDto });
     let client: Client = await this.clientsRepository.findOne({
       where: {
         eMail: createQuotationRequestDto.client.eMail.toLowerCase(),
@@ -59,14 +58,9 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     quotation.quotationItems = [];
     quotation.client = client;
     createQuotationRequestDto.quotationItems.forEach((itemDto, itemIndex) => {
-      const item = new QuotationItem();
-      item.id = itemIndex;
-      item.name = itemDto.name;
-      item.code = itemDto.code;
-      item.unitPrice = Number(itemDto.unitPrice); //TODO: Transform to BigDecimal
+      const item = QuotationEntityDtoMapper.quotationItemRequestDtoToQuotationItemDto(itemDto, itemIndex);
       item.quotation = quotation;
       item.quotationId = quotation.id;
-      item.itemCount = itemDto.itemCount;
       quotation.quotationItems.push(item);
     });
 
@@ -82,10 +76,11 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
-  async findAllQuotations(
+  async findQuotations(
     filterDto: FilterQuotationDto,
     pageOptionsDto: PageOptionsDto,
   ): Promise<PageResponseDto<QuotationResponseDto>> {
+    this.logger.log('Find Quotation', { service: QuotationsService.name, filterDto, pageOptionsDto });
     return super.findAll(
       pageOptionsDto,
       this.quotationRepository.getRepository(),
@@ -97,25 +92,32 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
   }
 
   async findQuotation(id: number): Promise<QuotationResponseDto> {
-    const quotation = await this.quotationRepository.getRepository().findOne({
-      where: {
-        id,
-      },
-      relations: ['quotationItems'],
-    });
-
+    this.logger.log('Find Quotation', { service: QuotationsService.name, id });
+    const quotation = await this.getQuotationAndFail(id);
     return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
   async updateQuotation(id: number, updateQuotationDto: UpdateQuotationRequestDto): Promise<QuotationResponseDto> {
-    const quotation = await this.quotationRepository.getRepository().findOne({
-      where: {
-        id,
-      },
-      relations: ['quotationItems'],
-    });
+    this.logger.log('Update Quotation', { service: QuotationsService.name, id });
+    let quotation = await this.getQuotationAndFail(id);
+    if (updateQuotationDto.totalAmount) {
+      quotation.totalAmount = Number(updateQuotationDto.totalAmount);
+    }
+    if (updateQuotationDto.currency) {
+      quotation.currency = updateQuotationDto.currency;
+    }
 
-    //TODO: IMPLEMENT PARSE TO QUOTATION AND UPDATE
+    if (updateQuotationDto.quotationItems) {
+      quotation.quotationItems = [];
+      updateQuotationDto.quotationItems.forEach((itemDto, itemIndex) => {
+        const quotationItem = QuotationEntityDtoMapper.quotationItemRequestDtoToQuotationItemDto(itemDto, itemIndex);
+        quotationItem.quotation = quotation;
+        quotationItem.quotationId = quotation.id;
+        quotation.quotationItems.push(quotationItem);
+      });
+    }
+
+    quotation = await this.quotationRepository.updateQuotation(quotation);
     return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
@@ -128,20 +130,28 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     sendQuotationDto: SendQuotationByMessageRequestDto,
   ): Promise<QuotationSentMessageResponseDto> {
     if (sendQuotationDto.channel !== MessageChannelEnum.E_MAIL) {
-      throw featureNotImplemented(`Sending messages by ${sendQuotationDto.channel} is not implemented`);
+      throw featureNotImplementedError(`Sending messages by ${sendQuotationDto.channel} is not implemented`);
     }
-    const quotation = await this.quotationRepository.getRepository().findOne({
-      where: {
-        id,
-      },
-      relations: ['client', 'quotationItems'],
-    });
+    const quotation = await this.getQuotationAndFail(id);
 
     await this.messageService.sendMail(this.toCemevyfMailMessage(quotation));
     return {
       id,
       channel: sendQuotationDto.channel,
     };
+  }
+
+  private async getQuotationAndFail(id: number): Promise<Quotation> {
+    const quotation = await this.quotationRepository.getRepository().findOne({
+      where: {
+        id,
+      },
+      relations: ['quotationItems'],
+    });
+    if (!quotation) {
+      throw notFoundError(`Quotation ID: ${id} was not found`);
+    }
+    return quotation;
   }
 
   private toCemevyfMailMessage(quotation: Quotation): CemevyfMailMessage {

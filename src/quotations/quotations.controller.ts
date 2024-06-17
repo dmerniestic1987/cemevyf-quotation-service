@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Param, Post, Put, Query} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { CreateQuotationRequestDto } from './dto/create-quotation-request.dto';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { QuotationResponseDto } from './dto/quotation-response.dto';
@@ -29,7 +29,7 @@ export class QuotationsController {
     @Query() filterDto: FilterQuotationDto,
     @Query() pageOptionsDto: PageOptionsDto,
   ): Promise<PageResponseDto<QuotationResponseDto>> {
-    return this.quotationService.findAllQuotations(filterDto, pageOptionsDto);
+    return this.quotationService.findQuotations(filterDto, pageOptionsDto);
   }
 
   @Get('/:id')
@@ -69,9 +69,7 @@ export class QuotationsController {
   @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({ summary: 'Deletes an specific quotation', operationId: 'deleteQuotation' })
   @ApiOkResponse({ type: QuotationResponseDto })
-  async deleteQuotation(
-      @Param('id') id,
-  ): Promise<void> {
+  async deleteQuotation(@Param('id') id): Promise<void> {
     return this.quotationService.deleteQuotation(id);
   }
 }
