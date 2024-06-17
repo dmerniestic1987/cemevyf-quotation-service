@@ -119,6 +119,10 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
+  async deleteQuotation(id: number): Promise<void> {
+    await this.quotationRepository.getRepository().softDelete(id);
+  }
+
   async sendQuotationByMessage(
     id: number,
     sendQuotationDto: SendQuotationByMessageRequestDto,
