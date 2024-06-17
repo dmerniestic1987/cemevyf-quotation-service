@@ -6,7 +6,7 @@ import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Client } from '../clients/client.entity';
-import { Repository } from 'typeorm';
+import {And, Between, LessThanOrEqual, MoreThanOrEqual, Repository} from 'typeorm';
 import { Quotation } from './quotation.entity';
 import {
   CemevyfMailMessage,
@@ -81,11 +81,34 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     pageOptionsDto: PageOptionsDto,
   ): Promise<PageResponseDto<QuotationResponseDto>> {
     this.logger.log('Find Quotation', { service: QuotationsService.name, filterDto, pageOptionsDto });
-    return super.findAll(
+    const where = {};
+    if (filterDto.id) {
+      where['id'] = filterDto.id;
+    }
+
+    if (filterDto.dateFrom && filterDto.dateTo) {
+      where['createdAt'] = And(
+          MoreThanOrEqual(new Date(filterDto.dateFrom)),
+          LessThanOrEqual(new Date(filterDto.dateTo))
+      );
+    }
+
+    if (filterDto.dateFrom && !filterDto.dateTo) {
+      where['createdAt'] = MoreThanOrEqual(new Date(filterDto.dateFrom));
+    }
+
+    if (!filterDto.dateFrom && filterDto.dateTo) {
+      where['createdAt'] = LessThanOrEqual(new Date(filterDto.dateTo));
+    }
+
+    if (filterDto.currency) {
+      where['currency'] = filterDto.currency;
+    }
+
+    return super.findAndPaginate(
       pageOptionsDto,
       this.quotationRepository.getRepository(),
-      undefined,
-      {},
+      where,
       undefined,
       QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto,
     );
@@ -121,8 +144,10 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
-  async deleteQuotation(id: number): Promise<void> {
-    await this.quotationRepository.getRepository().softDelete(id);
+  async deleteQuotation(id: number): Promise<boolean> {
+    const quotation = await this.getQuotationAndFail(id);
+    const updateResult = await this.quotationRepository.getRepository().softDelete(quotation.id);
+    return updateResult.affected > 0;
   }
 
   async sendQuotationByMessage(

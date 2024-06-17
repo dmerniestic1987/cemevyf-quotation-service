@@ -68,8 +68,9 @@ export class QuotationsController {
   @Delete('/:id')
   @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({ summary: 'Deletes an specific quotation', operationId: 'deleteQuotation' })
-  @ApiOkResponse({ type: QuotationResponseDto })
-  async deleteQuotation(@Param('id') id): Promise<void> {
-    return this.quotationService.deleteQuotation(id);
+  @ApiOkResponse({ type: 'number', description: 'true if quotation was deleted' })
+  async deleteQuotation(@Param('id') id): Promise<boolean> {
+    const deleted = await this.quotationService.deleteQuotation(id);
+    return deleted;
   }
 }
