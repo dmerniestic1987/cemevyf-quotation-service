@@ -6,7 +6,7 @@ import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Client } from '../clients/client.entity';
-import {And, Between, LessThanOrEqual, MoreThanOrEqual, Repository} from 'typeorm';
+import { And, Between, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { Quotation } from './quotation.entity';
 import {
   CemevyfMailMessage,
@@ -88,8 +88,8 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
 
     if (filterDto.dateFrom && filterDto.dateTo) {
       where['createdAt'] = And(
-          MoreThanOrEqual(new Date(filterDto.dateFrom)),
-          LessThanOrEqual(new Date(filterDto.dateTo))
+        MoreThanOrEqual(new Date(filterDto.dateFrom)),
+        LessThanOrEqual(new Date(filterDto.dateTo)),
       );
     }
 
