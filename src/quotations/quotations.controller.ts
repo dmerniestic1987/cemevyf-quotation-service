@@ -62,7 +62,7 @@ export class QuotationsController {
     @Param('id') id,
     @Body() updateQuotationDto: SendQuotationByMessageRequestDto,
   ): Promise<QuotationSentMessageResponseDto> {
-    return this.quotationService.sendQuotationByMessage(id, updateQuotationDto);
+    return this.quotationService.sendMessageWithQuotation(id, updateQuotationDto);
   }
 
   @Delete('/:id')

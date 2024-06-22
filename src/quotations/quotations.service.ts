@@ -19,7 +19,7 @@ import { UpdateQuotationRequestDto } from './dto/update-quotation-request.dto';
 import { SendQuotationByMessageRequestDto } from './dto/send-quotation-by-message-request.dto';
 import { QuotationSentMessageResponseDto } from './dto/quotation-sent-message-response.dto';
 import { MessageChannelEnum } from '../commons/types/message-channel.enum';
-import { featureNotImplementedError, notFoundError } from '../commons/errors/exceptions';
+import { featureNotImplementedError } from '../commons/errors/exceptions';
 
 @Injectable()
 export class QuotationsService extends BaseService<Quotation, CreateQuotationRequestDto> {
@@ -116,13 +116,13 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
 
   async findQuotation(id: number): Promise<QuotationResponseDto> {
     this.logger.log('Find Quotation', { service: QuotationsService.name, id });
-    const quotation = await this.getQuotationAndFail(id);
+    const quotation = await this.quotationRepository.getQuotationAndFail(id);
     return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
   async updateQuotation(id: number, updateQuotationDto: UpdateQuotationRequestDto): Promise<QuotationResponseDto> {
     this.logger.log('Update Quotation', { service: QuotationsService.name, id });
-    let quotation = await this.getQuotationAndFail(id);
+    let quotation = await this.quotationRepository.getQuotationAndFail(id);
     if (updateQuotationDto.totalAmount) {
       quotation.totalAmount = Number(updateQuotationDto.totalAmount);
     }
@@ -145,19 +145,21 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
   }
 
   async deleteQuotation(id: number): Promise<boolean> {
-    const quotation = await this.getQuotationAndFail(id);
+    this.logger.log('Delete Quotation', { service: QuotationsService.name, id });
+    const quotation = await this.quotationRepository.getQuotationAndFail(id);
     const updateResult = await this.quotationRepository.getRepository().softDelete(quotation.id);
     return updateResult.affected > 0;
   }
 
-  async sendQuotationByMessage(
+  async sendMessageWithQuotation(
     id: number,
     sendQuotationDto: SendQuotationByMessageRequestDto,
   ): Promise<QuotationSentMessageResponseDto> {
+    this.logger.log('Send Message With Quotation', { service: QuotationsService.name, id });
     if (sendQuotationDto.channel !== MessageChannelEnum.E_MAIL) {
       throw featureNotImplementedError(`Sending messages by ${sendQuotationDto.channel} is not implemented`);
     }
-    const quotation = await this.getQuotationAndFail(id);
+    const quotation = await this.quotationRepository.getQuotationAndFail(id, ['client','quotationItems']);
 
     await this.messageService.sendMail(this.toCemevyfMailMessage(quotation));
     return {
@@ -166,29 +168,28 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     };
   }
 
-  private async getQuotationAndFail(id: number): Promise<Quotation> {
-    const quotation = await this.quotationRepository.getRepository().findOne({
-      where: {
-        id,
-      },
-      relations: ['quotationItems'],
-    });
-    if (!quotation) {
-      throw notFoundError(`Quotation ID: ${id} was not found`);
-    }
-    return quotation;
-  }
-
-  private toCemevyfMailMessage(quotation: Quotation): CemevyfMailMessage {
+  private toCemevyfMailMessage(
+    quotation: Quotation,
+    subject = 'CEMEVYF - Cotización de Análisis de Laboratorio',
+  ): CemevyfMailMessage {
+    const items = quotation.quotationItems?.map(quotationItem => {
+      return {
+        id: quotationItem.id,
+        code: quotationItem.code,
+        name: quotationItem.name,
+        itemCount: quotationItem.itemCount,
+      }
+    }) || [];
     return {
       to: quotation.client.eMail,
-      subject: 'CEMEVYF - Nueva Cotización de Análisis de Laboratorio',
+      subject,
       context: {
         clientFirstName: quotation.client.clientFirstName,
         clientLastName: quotation.client.clientLastName,
         createdAt: quotation.createdAt.toDateString(),
         quotationId: quotation.id,
         totalAmount: quotation.totalAmount,
+        items,
       },
     };
   }

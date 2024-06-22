@@ -3,7 +3,7 @@ import { Quotation } from './quotation.entity';
 import { DataSource, Repository } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { Client } from '../clients/client.entity';
-import { createQuotationInternalError } from '../commons/errors/exceptions';
+import { createQuotationInternalError, notFoundError } from '../commons/errors/exceptions';
 import { QuotationItem } from './quotation-item.entity';
 
 export class QuotationsRepository {
@@ -29,7 +29,7 @@ export class QuotationsRepository {
       await queryRunner.commitTransaction();
       return quotation;
     } catch (err) {
-      this.logger.error(JSON.stringify(err));
+      this.logger.error('Error creating quotation', JSON.stringify(err));
       await queryRunner.rollbackTransaction();
       throw createQuotationInternalError(err.message);
     } finally {
@@ -55,5 +55,18 @@ export class QuotationsRepository {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  public async getQuotationAndFail(id: number, relations = ['quotationItems']): Promise<Quotation> {
+    const quotation = await this.getRepository().findOne({
+      where: {
+        id,
+      },
+      relations,
+    });
+    if (!quotation) {
+      throw notFoundError(`Quotation ID: ${id} was not found`);
+    }
+    return quotation;
   }
 }
