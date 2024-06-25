@@ -1,8 +1,8 @@
 {
   "name": "cemevyf-quotation-service",
   "version": "0.0.1",
-  "description": "CEMEVYF simple quotation service",
-  "license": "CEMEVYF",
+  "description": "Simple quotation service",
+  "license": "BSD",
   "author": "Diego Alejandro Mernies",
   "scripts": {
     "prebuild": "rimraf dist",
@@ -80,7 +80,6 @@
       "node_modules",
       "test-config",
       "interfaces",
-      "jestGlobalMocks.ts",
       "main.ts",
       ".dto.ts",
       ".entity.ts",
