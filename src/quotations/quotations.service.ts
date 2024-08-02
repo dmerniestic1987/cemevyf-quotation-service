@@ -37,7 +37,8 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     this.logger.log('Create Quotation', { service: QuotationsService.name, createQuotationRequestDto });
     let client: Client = await this.clientsRepository.findOne({
       where: {
-        eMail: createQuotationRequestDto.client.eMail.toLowerCase(),
+        clientId: createQuotationRequestDto.client.clientId,
+        clientIdType: createQuotationRequestDto.client.clientIdType,
       },
       relations: ['quotations'],
     });
@@ -47,8 +48,6 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
       client.clientIdType = createQuotationRequestDto.client.clientIdType;
       client.clientFirstName = createQuotationRequestDto.client.clientFirstName;
       client.clientLastName = createQuotationRequestDto.client.clientLastName;
-      client.eMail = createQuotationRequestDto.client.eMail.toLowerCase();
-      client.phoneNumber = createQuotationRequestDto.client.phoneNumber;
       client = await this.clientsRepository.save(client);
     }
 
@@ -57,6 +56,7 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     quotation.currency = createQuotationRequestDto.currency;
     quotation.quotationItems = [];
     quotation.client = client;
+    quotation.eMail = createQuotationRequestDto.eMail;
     createQuotationRequestDto.quotationItems.forEach((itemDto, itemIndex) => {
       const item = QuotationEntityDtoMapper.quotationItemRequestDtoToQuotationItemDto(itemDto, itemIndex);
       item.quotation = quotation;
@@ -161,10 +161,11 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     }
     const quotation = await this.quotationRepository.getQuotationAndFail(id, ['client','quotationItems']);
 
-    await this.messageService.sendMail(this.toCemevyfMailMessage(quotation));
+    const sentMail = await this.messageService.sendMail(this.toCemevyfMailMessage(quotation));
     return {
       id,
       channel: sendQuotationDto.channel,
+      sentMail,
     };
   }
 
@@ -181,7 +182,7 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
       }
     }) || [];
     return {
-      to: quotation.client.eMail,
+      to: quotation.eMail,
       subject,
       context: {
         clientFirstName: quotation.client.clientFirstName,

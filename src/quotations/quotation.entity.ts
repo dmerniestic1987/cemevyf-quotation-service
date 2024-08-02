@@ -22,8 +22,11 @@ export class Quotation {
   @JoinColumn({ name: 'client_id', referencedColumnName: 'id' })
   client: Client;
 
-  @Column('decimal', { precision: 12, scale: 2, name: 'total_amount' })
+  @Column('decimal', { precision: 14, scale: 2, name: 'total_amount' })
   public totalAmount: number;
+
+  @Column('varchar')
+  public eMail: string;
 
   @Column('enum', { name: 'currency', enum: CurrencyEnum, default: CurrencyEnum.ARS })
   public currency: CurrencyEnum;

@@ -22,15 +22,16 @@ export class CemevyfMessageService {
    * @param transactionId from abstraction-layer.transactions
    * @param signedTransaction signed transaction
    */
-  async sendMail(message: CemevyfMailMessage): Promise<any> {
+  async sendMail(message: CemevyfMailMessage): Promise<boolean> {
     this.logger.debug({ name: CemevyfMessageService.name, message });
     try {
-      return await lastValueFrom<any>(
+      await lastValueFrom<any>(
         this.httpService.post(`${this.messageServiceUrl}/message`, message).pipe(map(result => result.data)),
       );
+      return true;
     } catch (error) {
       this.logger.error('Error sending message to cemevyf-message-service', error);
-      throw new InternalServerErrorException(error, 'Error send e-mail with message-service');
+      return false;
     }
   }
 }

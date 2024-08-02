@@ -15,4 +15,10 @@ export class QuotationSentMessageResponseDto {
     default: MessageChannelEnum.E_MAIL,
   })
   public channel: MessageChannelEnum;
+
+  @ApiProperty({
+    description: 'true if mail was sent',
+    example: true,
+  })
+  public sentMail: boolean;
 }
