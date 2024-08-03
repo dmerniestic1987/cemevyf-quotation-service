@@ -12,7 +12,6 @@ export class CreateQuotationRequestDto {
   @IsObject()
   client: CreateClientRequestDto;
 
-
   @ApiProperty({
     description: 'target e-mail to send quotation',
     required: true,

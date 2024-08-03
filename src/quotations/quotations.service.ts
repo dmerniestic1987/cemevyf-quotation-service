@@ -159,7 +159,7 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     if (sendQuotationDto.channel !== MessageChannelEnum.E_MAIL) {
       throw featureNotImplementedError(`Sending messages by ${sendQuotationDto.channel} is not implemented`);
     }
-    const quotation = await this.quotationRepository.getQuotationAndFail(id, ['client','quotationItems']);
+    const quotation = await this.quotationRepository.getQuotationAndFail(id, ['client', 'quotationItems']);
 
     const sentMail = await this.messageService.sendMail(this.toCemevyfMailMessage(quotation));
     return {
@@ -173,14 +173,15 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     quotation: Quotation,
     subject = 'CEMEVYF - Cotización de Análisis de Laboratorio',
   ): CemevyfMailMessage {
-    const items = quotation.quotationItems?.map(quotationItem => {
-      return {
-        id: quotationItem.id,
-        code: quotationItem.code,
-        name: quotationItem.name,
-        itemCount: quotationItem.itemCount,
-      }
-    }) || [];
+    const items =
+      quotation.quotationItems?.map(quotationItem => {
+        return {
+          id: quotationItem.id,
+          code: quotationItem.code,
+          name: quotationItem.name,
+          itemCount: quotationItem.itemCount,
+        };
+      }) || [];
     return {
       to: quotation.eMail,
       subject,
