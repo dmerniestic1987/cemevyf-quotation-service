@@ -1,34 +1,72 @@
 import { Logger } from '@nestjs/common';
 import { Quotation } from './quotation.entity';
-import { BaseRepository } from '../commons/repository/base-repository';
-import { Repository } from 'typeorm';
-import { CreateProviderRequestDto } from './dto/create-provider-request.dto';
-import { ProviderResponseDto } from './dto/provider-response.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { PageOptionsDto } from '../commons/dto/page-options.dto';
+import { DataSource, Repository } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { Client } from '../clients/client.entity';
+import { createQuotationInternalError, notFoundError } from '../commons/errors/exceptions';
+import { QuotationItem } from './quotation-item.entity';
 
-export class QuotationsRepository extends BaseRepository<Quotation, CreateProviderRequestDto> {
-  private readonly usersLogger = new Logger(QuotationsRepository.name);
+export class QuotationsRepository {
+  private readonly logger = new Logger(QuotationsRepository.name);
   constructor(
-    @InjectRepository(Quotation)
-    private readonly providersRepository: Repository<Quotation>,
-  ) {
-    super();
+    @InjectDataSource()
+    private dataSource: DataSource,
+  ) {}
+
+  getRepository(): Repository<Quotation> {
+    return this.dataSource.getRepository<Quotation>(Quotation);
   }
 
-  async createProvider(createProviderRequestDto: CreateProviderRequestDto): Promise<ProviderResponseDto> {
-    this.usersLogger.debug('create user', { service: QuotationsRepository.name, createProviderRequestDto });
-    const provider = await super.create(createProviderRequestDto, this.providersRepository, Quotation);
-    return ProviderResponseDto.fromProvider(provider);
+  async createQuotation(quotation: Quotation, client: Client): Promise<Quotation> {
+    this.logger.debug('Create quotation', { service: QuotationsRepository.name, id: quotation.id });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      quotation = await queryRunner.manager.save(quotation);
+      await queryRunner.manager.save(quotation.quotationItems);
+      await queryRunner.manager.save(client);
+      await queryRunner.commitTransaction();
+      return quotation;
+    } catch (err) {
+      this.logger.error('Error creating quotation', JSON.stringify(err));
+      await queryRunner.rollbackTransaction();
+      throw createQuotationInternalError(err.message);
+    } finally {
+      await queryRunner.release();
+    }
   }
 
-  async findAllProviders(pageOptionsDto: PageOptionsDto) {
-    this.usersLogger.debug('find all users', { service: QuotationsRepository.name });
-    return super.findAll(pageOptionsDto, this.providersRepository, undefined, {}, undefined, ProviderResponseDto);
+  async updateQuotation(quotation: Quotation): Promise<Quotation> {
+    this.logger.debug('Update quotation', { service: QuotationsRepository.name, id: quotation.id });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      await queryRunner.manager.delete(QuotationItem, { quotationId: quotation.id });
+      quotation = await queryRunner.manager.save(quotation);
+      await queryRunner.manager.save(quotation.quotationItems);
+      await queryRunner.commitTransaction();
+      return quotation;
+    } catch (err) {
+      this.logger.error('Error updating quotation', JSON.stringify(err));
+      await queryRunner.rollbackTransaction();
+      throw createQuotationInternalError(err.message);
+    } finally {
+      await queryRunner.release();
+    }
   }
 
-  async findOneProvider(id: number): Promise<Quotation> {
-    this.usersLogger.debug('find a user', { service: QuotationsRepository.name, id });
-    return super.findOneOrFail(this.providersRepository, { id });
+  public async getQuotationAndFail(id: number, relations = ['quotationItems']): Promise<Quotation> {
+    const quotation = await this.getRepository().findOne({
+      where: {
+        id,
+      },
+      relations,
+    });
+    if (!quotation) {
+      throw notFoundError(`Quotation ID: ${id} was not found`);
+    }
+    return quotation;
   }
 }

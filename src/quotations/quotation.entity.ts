@@ -3,31 +3,35 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import {QuotationItem} from "../commons/types/quotation-item.interface";
-import {CurrencyEnum} from "../commons/types/currency.enum";
-
+import { CurrencyEnum } from '../commons/types/currency.enum';
+import { QuotationItem } from './quotation-item.entity';
+import { Client } from '../clients/client.entity';
 
 @Entity({ name: 'quotations' })
-
 export class Quotation {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   public id: number;
 
-  @Column({ name: 'e_mail', nullable: true })
-  @Index('idx_quotations_e_mail',{ unique: false })
-  public eMail: string;
+  @ManyToOne(() => Client, client => client.quotations)
+  @JoinColumn({ name: 'client_id', referencedColumnName: 'id' })
+  client: Client;
 
-  @Column("decimal", { precision: 12, scale: 2, name: 'total_amount'})
+  @Column('decimal', { precision: 14, scale: 2, name: 'total_amount' })
   public totalAmount: number;
 
-  @Column("enum", { name: 'currency', enum: CurrencyEnum, default: CurrencyEnum.ARS})
+  @Column('varchar')
+  public eMail: string;
+
+  @Column('enum', { name: 'currency', enum: CurrencyEnum, default: CurrencyEnum.ARS })
   public currency: CurrencyEnum;
 
-  @Column({ name: 'quotation_items', type: 'json' })
+  @OneToMany(() => QuotationItem, item => item.quotation)
   public quotationItems: QuotationItem[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })

@@ -1,4 +1,5 @@
 typeOrm:
   username: root
   password: my-secret-pw
+  database: quotations_service_test
 logLevel: log

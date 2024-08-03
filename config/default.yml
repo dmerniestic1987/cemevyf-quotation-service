@@ -2,7 +2,7 @@ typeOrm:
   type: mysql
   host: localhost
   port: 3306
-  database: cemevyf_quotations_service
+  database: quotations_service
   syncronize: false
   logging: [ "error" ]
   multipleStatements: true
@@ -14,3 +14,5 @@ logLevel: warn
 crypto:
   encryptionKey: 'CEMEVYF encryption key'
   iv: 'CEK iv'
+serviceConfig:
+  messageServiceUrl: http://localhost:3000
