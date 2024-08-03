@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsNumber, IsObject } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsNumber, IsObject, IsString } from 'class-validator';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
 import { ItemQuotationRequestDto } from './item-quotation-request.dto';
 import { CreateClientRequestDto } from '../../clients/dto/create-client-request.dto';
@@ -11,6 +11,15 @@ export class CreateQuotationRequestDto {
   })
   @IsObject()
   client: CreateClientRequestDto;
+
+  @ApiProperty({
+    description: 'target e-mail to send quotation',
+    required: true,
+    example: 'example@cemevyf.com',
+  })
+  @IsString()
+  @IsEmail()
+  eMail: string;
 
   @ApiProperty({
     description: 'total amount of quotation computed by client',

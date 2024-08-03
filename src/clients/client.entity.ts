@@ -18,13 +18,6 @@ export class Client {
   @PrimaryGeneratedColumn('uuid')
   public id: string;
 
-  @Column({ name: 'phone_number', nullable: true })
-  public phoneNumber: string;
-
-  @Column({ name: 'e_mail', nullable: false })
-  @Index('idx_client_e_mail', { unique: true })
-  public eMail: string;
-
   @Column({ name: 'first_name', nullable: false })
   @Index('idx_client_first_name', { unique: false })
   public clientFirstName: string;
