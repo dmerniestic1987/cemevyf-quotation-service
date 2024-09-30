@@ -2,7 +2,8 @@ import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
-  Entity, Index,
+  Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -13,13 +14,15 @@ import { CurrencyEnum } from '../commons/types/currency.enum';
 import { HealthOrderItem } from './health-order-item.entity';
 import { Client } from '../clients/client.entity';
 import { HealthOrderStatus } from './types/health-order-status';
+import { HealthOrderResult } from './health-order-result.entity';
+import { HealthOrderFile } from './health-order-file.entity';
 
 @Entity({ name: 'health_orders' })
 export class HealthOrder {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   public id: number;
 
-  @Index({unique: false})
+  @Index({ unique: false })
   @Column('enum', { name: 'status', enum: HealthOrderStatus, default: HealthOrderStatus.QUOTED })
   public status: HealthOrderStatus;
 
@@ -35,6 +38,12 @@ export class HealthOrder {
 
   @OneToMany(() => HealthOrderItem, item => item.quotation)
   public healthOrderItems: HealthOrderItem[];
+
+  @OneToMany(() => HealthOrderResult, item => item.healthOrder)
+  public healthOrderResults: HealthOrderResult[];
+
+  @OneToMany(() => HealthOrderResult, item => item.healthOrder)
+  public healthOrderFiles: HealthOrderFile[];
 
   @Column({ name: 'executed_at', type: 'timestamp' })
   public executedAt: Date;
