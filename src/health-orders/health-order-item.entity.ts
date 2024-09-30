@@ -8,19 +8,19 @@ import {
   PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Quotation } from './quotation.entity';
+import { HealthOrder } from './health-order.entity';
 
-@Entity({ name: 'quotation_items' })
-export class QuotationItem {
+@Entity({ name: 'health_order_items' })
+export class HealthOrderItem {
   @PrimaryColumn({ type: 'integer' })
   public id: number;
 
   @PrimaryColumn({ name: 'quotation_id', type: 'bigint' })
   public quotationId: number;
 
-  @ManyToOne(() => Quotation, quotation => quotation.quotationItems)
+  @ManyToOne(() => HealthOrder, quotation => quotation.healthOrderItems)
   @JoinColumn({ name: 'quotation_id', referencedColumnName: 'id' })
-  quotation: Quotation;
+  quotation: HealthOrder;
 
   @Column({ name: 'code', nullable: true })
   public code: string;

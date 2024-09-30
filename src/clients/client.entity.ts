@@ -9,7 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { ClientIdTypeEnum } from '../commons/types/client-id-type.enum';
-import { Quotation } from '../quotations/quotation.entity';
+import { HealthOrder } from '../health-orders/health-order.entity';
 
 @Entity({ name: 'clients' })
 @Index('idx_client_type_and_id', ['clientIdType', 'clientId'], { unique: true })
@@ -18,22 +18,25 @@ export class Client {
   @PrimaryGeneratedColumn('uuid')
   public id: string;
 
-  @Column({ name: 'first_name', nullable: false })
+  @Column({ name: 'first_name', nullable: false, length: 100 })
   @Index('idx_client_first_name', { unique: false })
   public clientFirstName: string;
 
-  @Column({ name: 'last_name', nullable: false })
+  @Column({ name: 'last_name', nullable: false, length: 100 })
   @Index('idx_client_last_name', { unique: false })
   public clientLastName: string;
 
   @Column({ name: 'client_id_type', nullable: true, type: 'enum', enum: ClientIdTypeEnum })
   public clientIdType: ClientIdTypeEnum;
 
-  @Column({ name: 'client_id', nullable: true })
+  @Column({ name: 'client_id', nullable: true, length: 50 })
   public clientId: string;
 
-  @OneToMany(() => Quotation, quotation => quotation.client)
-  public quotations: Quotation[];
+  @Column({ name: 'e_mail', nullable: true })
+  public email: string;
+
+  @OneToMany(() => HealthOrder, healthOrder => healthOrder.client)
+  public healthOrders: HealthOrder[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   public createdAt: Date;

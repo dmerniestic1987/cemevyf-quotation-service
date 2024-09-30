@@ -4,16 +4,16 @@ import { ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger'
 import { QuotationResponseDto } from './dto/quotation-response.dto';
 import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
-import { QuotationsService } from './quotations.service';
+import { HealthOrderService } from './health-order.service';
 import { FilterQuotationDto } from './dto/filter-quotation.dto';
 import { UpdateQuotationRequestDto } from './dto/update-quotation-request.dto';
 import { SendQuotationByMessageRequestDto } from './dto/send-quotation-by-message-request.dto';
 import { QuotationSentMessageResponseDto } from './dto/quotation-sent-message-response.dto';
 
-@ApiTags('quotations')
-@Controller('quotations')
-export class QuotationsController {
-  constructor(private readonly quotationService: QuotationsService) {}
+@ApiTags('Health Orders')
+@Controller('health-orders')
+export class HealthOrderController {
+  constructor(private readonly quotationService: HealthOrderService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new quotation', operationId: 'createQuotation' })

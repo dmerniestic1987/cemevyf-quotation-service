@@ -1,18 +1,18 @@
 import { QuotationResponseDto } from '../quotation-response.dto';
 import { ItemQuotationResponseDto } from '../item-quotation-response.dto';
-import { Quotation } from '../../quotation.entity';
-import { QuotationItem } from '../../quotation-item.entity';
+import { HealthOrderItem } from '../../health-order-item.entity';
 import { ItemQuotationRequestDto } from '../item-quotation-request.dto';
+import { HealthOrder } from '../../health-order.entity';
 
 export class QuotationEntityDtoMapper {
-  public static quotationEntityToQuotationResponseDto(quotation: Quotation): QuotationResponseDto {
+  public static quotationEntityToQuotationResponseDto(quotation: HealthOrder): QuotationResponseDto {
     const dto = new QuotationResponseDto();
     dto.id = quotation.id;
     dto.currency = quotation.currency;
     dto.totalAmount = quotation.totalAmount;
     dto.createdAt = quotation.createdAt.toISOString();
-    if (quotation.quotationItems) {
-      dto.items = quotation.quotationItems.map(quotationItem => {
+    if (quotation.healthOrderItems) {
+      dto.items = quotation.healthOrderItems.map(quotationItem => {
         const itemDto = new ItemQuotationResponseDto();
         itemDto.name = quotationItem.name;
         itemDto.itemCount = quotationItem.itemCount;
@@ -29,8 +29,8 @@ export class QuotationEntityDtoMapper {
   public static quotationItemRequestDtoToQuotationItemDto(
     itemDto: ItemQuotationRequestDto,
     itemIndex = 0,
-  ): QuotationItem {
-    const item = new QuotationItem();
+  ): HealthOrderItem {
+    const item = new HealthOrderItem();
     item.id = itemIndex;
     item.name = itemDto.name;
     item.code = itemDto.code;

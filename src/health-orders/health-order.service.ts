@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { QuotationsRepository } from './quotations.repository';
+import { HealthOrderRepository } from './health-order.repository';
 import { CreateQuotationRequestDto } from './dto/create-quotation-request.dto';
 import { QuotationResponseDto } from './dto/quotation-response.dto';
 import { PageOptionsDto } from '../commons/dto/page-options.dto';
@@ -7,7 +7,6 @@ import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Client } from '../clients/client.entity';
 import { And, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
-import { Quotation } from './quotation.entity';
 import {
   CemevyfMailMessage,
   CemevyfMessageService,
@@ -20,12 +19,13 @@ import { SendQuotationByMessageRequestDto } from './dto/send-quotation-by-messag
 import { QuotationSentMessageResponseDto } from './dto/quotation-sent-message-response.dto';
 import { MessageChannelEnum } from '../commons/types/message-channel.enum';
 import { featureNotImplementedError } from '../commons/errors/exceptions';
+import { HealthOrder } from './health-order.entity';
 
 @Injectable()
-export class QuotationsService extends BaseService<Quotation, CreateQuotationRequestDto> {
-  private logger = new Logger(QuotationsService.name);
+export class HealthOrderService extends BaseService<HealthOrder, CreateQuotationRequestDto> {
+  private logger = new Logger(HealthOrderService.name);
   constructor(
-    private readonly quotationRepository: QuotationsRepository,
+    private readonly quotationRepository: HealthOrderRepository,
     @InjectRepository(Client)
     private readonly clientsRepository: Repository<Client>,
     private readonly messageService: CemevyfMessageService,
@@ -34,7 +34,7 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
   }
 
   async createQuotation(createQuotationRequestDto: CreateQuotationRequestDto): Promise<QuotationResponseDto> {
-    this.logger.log('Create Quotation', { service: QuotationsService.name, createQuotationRequestDto });
+    this.logger.log('Create Quotation', { service: HealthOrderService.name, createQuotationRequestDto });
     let client: Client = await this.clientsRepository.findOne({
       where: {
         clientId: createQuotationRequestDto.client.clientId,
@@ -51,28 +51,27 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
       client = await this.clientsRepository.save(client);
     }
 
-    let quotation: Quotation = new Quotation();
+    let quotation: HealthOrder = new HealthOrder();
     quotation.totalAmount = Number(createQuotationRequestDto.totalAmount); //TODO: Transform to BigDecimal
     quotation.currency = createQuotationRequestDto.currency;
-    quotation.quotationItems = [];
+    quotation.healthOrderItems = [];
     quotation.client = client;
-    quotation.eMail = createQuotationRequestDto.eMail;
     createQuotationRequestDto.quotationItems.forEach((itemDto, itemIndex) => {
       const item = QuotationEntityDtoMapper.quotationItemRequestDtoToQuotationItemDto(itemDto, itemIndex);
       item.quotation = quotation;
       item.quotationId = quotation.id;
-      quotation.quotationItems.push(item);
+      quotation.healthOrderItems.push(item);
     });
 
-    if (!client.quotations) {
-      client.quotations = [];
+    if (!client.healthOrders) {
+      client.healthOrders = [];
     }
-    client.quotations.push(quotation);
+    client.healthOrders.push(quotation);
 
     //TODO: Check client
     //TODO: We need to get client information from ClientService
     quotation = await this.quotationRepository.createQuotation(quotation, client);
-    await this.messageService.sendMail(this.toCemevyfMailMessage(quotation));
+    await this.messageService.sendMail(this.toCemevyfMailMessage(createQuotationRequestDto.eMail, quotation));
     return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
@@ -80,7 +79,7 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     filterDto: FilterQuotationDto,
     pageOptionsDto: PageOptionsDto,
   ): Promise<PageResponseDto<QuotationResponseDto>> {
-    this.logger.log('Find Quotation', { service: QuotationsService.name, filterDto, pageOptionsDto });
+    this.logger.log('Find Quotation', { service: HealthOrderService.name, filterDto, pageOptionsDto });
     const where = {};
     if (filterDto.id) {
       where['id'] = filterDto.id;
@@ -115,13 +114,13 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
   }
 
   async findQuotation(id: number): Promise<QuotationResponseDto> {
-    this.logger.log('Find Quotation', { service: QuotationsService.name, id });
+    this.logger.log('Find Quotation', { service: HealthOrderService.name, id });
     const quotation = await this.quotationRepository.getQuotationAndFail(id);
     return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
   async updateQuotation(id: number, updateQuotationDto: UpdateQuotationRequestDto): Promise<QuotationResponseDto> {
-    this.logger.log('Update Quotation', { service: QuotationsService.name, id });
+    this.logger.log('Update Quotation', { service: HealthOrderService.name, id });
     let quotation = await this.quotationRepository.getQuotationAndFail(id);
     if (updateQuotationDto.totalAmount) {
       quotation.totalAmount = Number(updateQuotationDto.totalAmount);
@@ -131,12 +130,12 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     }
 
     if (updateQuotationDto.quotationItems) {
-      quotation.quotationItems = [];
+      quotation.healthOrderItems = [];
       updateQuotationDto.quotationItems.forEach((itemDto, itemIndex) => {
         const quotationItem = QuotationEntityDtoMapper.quotationItemRequestDtoToQuotationItemDto(itemDto, itemIndex);
         quotationItem.quotation = quotation;
         quotationItem.quotationId = quotation.id;
-        quotation.quotationItems.push(quotationItem);
+        quotation.healthOrderItems.push(quotationItem);
       });
     }
 
@@ -145,7 +144,7 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
   }
 
   async deleteQuotation(id: number): Promise<boolean> {
-    this.logger.log('Delete Quotation', { service: QuotationsService.name, id });
+    this.logger.log('Delete Quotation', { service: HealthOrderService.name, id });
     const quotation = await this.quotationRepository.getQuotationAndFail(id);
     const updateResult = await this.quotationRepository.getRepository().softDelete(quotation.id);
     return updateResult.affected > 0;
@@ -155,13 +154,13 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
     id: number,
     sendQuotationDto: SendQuotationByMessageRequestDto,
   ): Promise<QuotationSentMessageResponseDto> {
-    this.logger.log('Send Message With Quotation', { service: QuotationsService.name, id });
+    this.logger.log('Send Message With Quotation', { service: HealthOrderService.name, id });
     if (sendQuotationDto.channel !== MessageChannelEnum.E_MAIL) {
       throw featureNotImplementedError(`Sending messages by ${sendQuotationDto.channel} is not implemented`);
     }
     const quotation = await this.quotationRepository.getQuotationAndFail(id, ['client', 'quotationItems']);
 
-    const sentMail = await this.messageService.sendMail(this.toCemevyfMailMessage(quotation));
+    const sentMail = await this.messageService.sendMail(this.toCemevyfMailMessage(sendQuotationDto.eMail, quotation));
     return {
       id,
       channel: sendQuotationDto.channel,
@@ -170,11 +169,12 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
   }
 
   private toCemevyfMailMessage(
-    quotation: Quotation,
+    eMail: string,
+    quotation: HealthOrder,
     subject = 'CEMEVYF - Cotización de Análisis de Laboratorio',
   ): CemevyfMailMessage {
     const items =
-      quotation.quotationItems?.map(quotationItem => {
+      quotation.healthOrderItems?.map(quotationItem => {
         return {
           id: quotationItem.id,
           code: quotationItem.code,
@@ -183,7 +183,7 @@ export class QuotationsService extends BaseService<Quotation, CreateQuotationReq
         };
       }) || [];
     return {
-      to: quotation.eMail,
+      to: eMail || quotation.client.email,
       subject,
       context: {
         clientFirstName: quotation.client.clientFirstName,
