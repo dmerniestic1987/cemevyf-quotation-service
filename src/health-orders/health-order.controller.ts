@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { CreateHealthOrderRequestDto } from './dto/create-health-order-request.dto';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { HealthOrderResponseDto } from './dto/health-order-response.dto';
@@ -6,7 +6,7 @@ import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { HealthOrderService } from './health-order.service';
 import { FilterHealthOrderDto } from './dto/filter-health-order.dto';
-import { UpdateQuotationRequestDto } from './dto/update-quotation-request.dto';
+import { UpdateHealthOrderRequestDto } from './dto/update-health-order-request.dto';
 import { SendHealthOrderEMailRequestDto } from './dto/send-health-order-e-mail-request.dto';
 import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-response.dto';
 
@@ -29,7 +29,7 @@ export class HealthOrderController {
     @Query() filterDto: FilterHealthOrderDto,
     @Query() pageOptionsDto: PageOptionsDto,
   ): Promise<PageResponseDto<HealthOrderResponseDto>> {
-    return this.healthOrderService.findQuotations(filterDto, pageOptionsDto);
+    return this.healthOrderService.findHealthOrders(filterDto, pageOptionsDto);
   }
 
   @Get('/:id')
@@ -37,7 +37,7 @@ export class HealthOrderController {
   @ApiOperation({ summary: 'Gets details of an specific quotation', operationId: 'findQuotation' })
   @ApiOkResponse({ type: HealthOrderResponseDto })
   async findQuotation(@Param('id') id): Promise<HealthOrderResponseDto> {
-    return this.healthOrderService.findQuotation(id);
+    return this.healthOrderService.findHealthOrder(id);
   }
 
   @Put('/:id')
@@ -46,9 +46,9 @@ export class HealthOrderController {
   @ApiOkResponse({ type: HealthOrderResponseDto })
   async updateQuotation(
     @Param('id') id,
-    @Body() updateQuotationDto: UpdateQuotationRequestDto,
+    @Body() updateQuotationDto: UpdateHealthOrderRequestDto,
   ): Promise<HealthOrderResponseDto> {
-    return this.healthOrderService.updateQuotation(id, updateQuotationDto);
+    return this.healthOrderService.updateHealthOrder(id, updateQuotationDto);
   }
 
   @Post('/:id/message')
@@ -62,15 +62,6 @@ export class HealthOrderController {
     @Param('id') id,
     @Body() updateQuotationDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto> {
-    return this.healthOrderService.sendMessageWithQuotation(id, updateQuotationDto);
-  }
-
-  @Delete('/:id')
-  @ApiParam({ type: 'number', name: 'id' })
-  @ApiOperation({ summary: 'Deletes an specific quotation', operationId: 'deleteQuotation' })
-  @ApiOkResponse({ type: 'number', description: 'true if quotation was deleted' })
-  async deleteQuotation(@Param('id') id): Promise<boolean> {
-    const deleted = await this.healthOrderService.deleteQuotation(id);
-    return deleted;
+    return this.healthOrderService.sendHealthOrderEMail(id, updateQuotationDto);
   }
 }

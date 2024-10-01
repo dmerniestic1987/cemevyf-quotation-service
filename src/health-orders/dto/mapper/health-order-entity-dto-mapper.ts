@@ -4,7 +4,7 @@ import { HealthOrderItem } from '../../health-order-item.entity';
 import { ItemHealthOrderRequestDto } from '../item-health-order-request.dto';
 import { HealthOrder } from '../../health-order.entity';
 
-export class QuotationEntityDtoMapper {
+export class HealthOrderEntityDtoMapper {
   public static quotationEntityToQuotationResponseDto(quotation: HealthOrder): HealthOrderResponseDto {
     const dto = new HealthOrderResponseDto();
     dto.id = quotation.id;

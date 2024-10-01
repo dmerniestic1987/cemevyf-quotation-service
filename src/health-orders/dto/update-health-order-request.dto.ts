@@ -3,7 +3,7 @@ import { IsArray, IsEnum, IsNumber } from 'class-validator';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
 import { ItemHealthOrderRequestDto } from './item-health-order-request.dto';
 
-export class UpdateQuotationRequestDto {
+export class UpdateHealthOrderRequestDto {
   @ApiProperty({
     description: 'total amount of quotation computed by client',
     required: false,

@@ -13,19 +13,23 @@ import {
 } from '../external-services/cemevyf-message-service/cemevyf-message.service';
 import { BaseService } from '../commons/service/base-service';
 import { FilterHealthOrderDto } from './dto/filter-health-order.dto';
-import { QuotationEntityDtoMapper } from './dto/mapper/quotation-entity-dto-mapper';
-import { UpdateQuotationRequestDto } from './dto/update-quotation-request.dto';
+import { HealthOrderEntityDtoMapper } from './dto/mapper/health-order-entity-dto-mapper';
+import { UpdateHealthOrderRequestDto } from './dto/update-health-order-request.dto';
 import { SendHealthOrderEMailRequestDto } from './dto/send-health-order-e-mail-request.dto';
 import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-response.dto';
 import { MessageChannelEnum } from '../commons/types/message-channel.enum';
 import { featureNotImplementedError } from '../commons/errors/exceptions';
 import { HealthOrder } from './health-order.entity';
+import { IHealthOrderService } from './i-health-order.service';
 
 @Injectable()
-export class HealthOrderService extends BaseService<HealthOrder, CreateHealthOrderRequestDto> {
+export class HealthOrderService
+  extends BaseService<HealthOrder, CreateHealthOrderRequestDto>
+  implements IHealthOrderService
+{
   private logger = new Logger(HealthOrderService.name);
   constructor(
-    private readonly quotationRepository: HealthOrderRepository,
+    private readonly healthOrderRepository: HealthOrderRepository,
     @InjectRepository(Client)
     private readonly clientsRepository: Repository<Client>,
     private readonly messageService: CemevyfMessageService,
@@ -57,7 +61,7 @@ export class HealthOrderService extends BaseService<HealthOrder, CreateHealthOrd
     quotation.healthOrderItems = [];
     quotation.client = client;
     orderDto.quotationItems.forEach((itemDto, itemIndex) => {
-      const item = QuotationEntityDtoMapper.quotationItemRequestDtoToQuotationItemDto(itemDto, itemIndex);
+      const item = HealthOrderEntityDtoMapper.quotationItemRequestDtoToQuotationItemDto(itemDto, itemIndex);
       item.quotation = quotation;
       item.quotationId = quotation.id;
       quotation.healthOrderItems.push(item);
@@ -70,16 +74,16 @@ export class HealthOrderService extends BaseService<HealthOrder, CreateHealthOrd
 
     //TODO: Check client
     //TODO: We need to get client information from ClientService
-    quotation = await this.quotationRepository.createQuotation(quotation, client);
+    quotation = await this.healthOrderRepository.createQuotation(quotation, client);
     await this.messageService.sendMail(this.toCemevyfMailMessage(orderDto.eMail, quotation));
-    return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
+    return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
-  async findQuotations(
+  async findHealthOrders(
     filterDto: FilterHealthOrderDto,
     pageOptionsDto: PageOptionsDto,
   ): Promise<PageResponseDto<HealthOrderResponseDto>> {
-    this.logger.log('Find Quotation', { service: HealthOrderService.name, filterDto, pageOptionsDto });
+    this.logger.log('Find Health Orders', { service: HealthOrderService.name, filterDto, pageOptionsDto });
     const where = {};
     if (filterDto.id) {
       where['id'] = filterDto.id;
@@ -106,22 +110,22 @@ export class HealthOrderService extends BaseService<HealthOrder, CreateHealthOrd
 
     return super.findAndPaginate(
       pageOptionsDto,
-      this.quotationRepository.getRepository(),
+      this.healthOrderRepository.getRepository(),
       where,
       undefined,
-      QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto,
+      HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto,
     );
   }
 
-  async findQuotation(id: number): Promise<HealthOrderResponseDto> {
+  async findHealthOrder(id: number): Promise<HealthOrderResponseDto> {
     this.logger.log('Find Quotation', { service: HealthOrderService.name, id });
-    const quotation = await this.quotationRepository.getQuotationAndFail(id);
-    return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
+    const quotation = await this.healthOrderRepository.getQuotationAndFail(id);
+    return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
-  async updateQuotation(id: number, updateQuotationDto: UpdateQuotationRequestDto): Promise<HealthOrderResponseDto> {
+  async updateHealthOrder(id: number, updateQuotationDto: UpdateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
     this.logger.log('Update Quotation', { service: HealthOrderService.name, id });
-    let quotation = await this.quotationRepository.getQuotationAndFail(id);
+    let quotation = await this.healthOrderRepository.getQuotationAndFail(id);
     if (updateQuotationDto.totalAmount) {
       quotation.totalAmount = Number(updateQuotationDto.totalAmount);
     }
@@ -132,25 +136,18 @@ export class HealthOrderService extends BaseService<HealthOrder, CreateHealthOrd
     if (updateQuotationDto.quotationItems) {
       quotation.healthOrderItems = [];
       updateQuotationDto.quotationItems.forEach((itemDto, itemIndex) => {
-        const quotationItem = QuotationEntityDtoMapper.quotationItemRequestDtoToQuotationItemDto(itemDto, itemIndex);
+        const quotationItem = HealthOrderEntityDtoMapper.quotationItemRequestDtoToQuotationItemDto(itemDto, itemIndex);
         quotationItem.quotation = quotation;
         quotationItem.quotationId = quotation.id;
         quotation.healthOrderItems.push(quotationItem);
       });
     }
 
-    quotation = await this.quotationRepository.updateQuotation(quotation);
-    return QuotationEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
+    quotation = await this.healthOrderRepository.updateQuotation(quotation);
+    return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
-  async deleteQuotation(id: number): Promise<boolean> {
-    this.logger.log('Delete Quotation', { service: HealthOrderService.name, id });
-    const quotation = await this.quotationRepository.getQuotationAndFail(id);
-    const updateResult = await this.quotationRepository.getRepository().softDelete(quotation.id);
-    return updateResult.affected > 0;
-  }
-
-  async sendMessageWithQuotation(
+  async sendHealthOrderEMail(
     id: number,
     sendQuotationDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto> {
@@ -158,7 +155,7 @@ export class HealthOrderService extends BaseService<HealthOrder, CreateHealthOrd
     if (sendQuotationDto.channel !== MessageChannelEnum.E_MAIL) {
       throw featureNotImplementedError(`Sending messages by ${sendQuotationDto.channel} is not implemented`);
     }
-    const quotation = await this.quotationRepository.getQuotationAndFail(id, ['client', 'quotationItems']);
+    const quotation = await this.healthOrderRepository.getQuotationAndFail(id, ['client', 'quotationItems']);
 
     const sentMail = await this.messageService.sendMail(this.toCemevyfMailMessage(sendQuotationDto.eMail, quotation));
     return {
@@ -171,7 +168,7 @@ export class HealthOrderService extends BaseService<HealthOrder, CreateHealthOrd
   private toCemevyfMailMessage(
     eMail: string,
     quotation: HealthOrder,
-    subject = 'CEMEVYF - Cotización de Análisis de Laboratorio',
+    subject = 'CEMEVYF - Cotización de estudios médicos',
   ): CemevyfMailMessage {
     const items =
       quotation.healthOrderItems?.map(quotationItem => {
