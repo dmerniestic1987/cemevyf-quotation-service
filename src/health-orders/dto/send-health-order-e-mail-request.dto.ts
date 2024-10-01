@@ -3,7 +3,7 @@ import { IsEmail, IsEnum } from 'class-validator';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
 import { MessageChannelEnum } from '../../commons/types/message-channel.enum';
 
-export class SendQuotationByMessageRequestDto {
+export class SendHealthOrderEMailRequestDto {
   @ApiProperty({
     description: 'The channel to send quotation',
     required: true,

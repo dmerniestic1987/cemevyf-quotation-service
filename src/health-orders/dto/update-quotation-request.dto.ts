@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsEnum, IsNumber } from 'class-validator';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
-import { ItemQuotationRequestDto } from './item-quotation-request.dto';
+import { ItemHealthOrderRequestDto } from './item-health-order-request.dto';
 
 export class UpdateQuotationRequestDto {
   @ApiProperty({
@@ -28,8 +28,8 @@ export class UpdateQuotationRequestDto {
     description: 'The list of items',
     required: true,
     minLength: 0,
-    type: [ItemQuotationRequestDto],
+    type: [ItemHealthOrderRequestDto],
   })
   @IsArray()
-  public quotationItems: ItemQuotationRequestDto[];
+  public quotationItems: ItemHealthOrderRequestDto[];
 }
