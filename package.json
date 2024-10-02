@@ -1,7 +1,7 @@
 {
   "name": "cemevyf-quotation-service",
   "version": "0.0.1",
-  "description": "Simple quotation service",
+  "description": "Simple health order service",
   "license": "BSD",
   "author": "Diego Alejandro Mernies",
   "scripts": {
