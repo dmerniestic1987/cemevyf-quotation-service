@@ -35,4 +35,20 @@ export class CreateClientRequestDto {
   })
   @IsString()
   clientId: string;
+
+  @ApiProperty({
+    description: 'The ID in external system',
+    required: false,
+    example: 'A847809',
+  })
+  @IsString()
+  externalId?: string;
+
+  @ApiProperty({
+    description: 'The ID in Bookly system',
+    required: false,
+    example: '88847809',
+  })
+  @IsString()
+  booklyId?: string;
 }

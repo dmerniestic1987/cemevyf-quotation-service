@@ -8,6 +8,8 @@ import { FilterHealthOrderDto } from '../health-orders/dto/filter-health-order.d
 import { UpdateHealthOrderRequestDto } from '../health-orders/dto/update-health-order-request.dto';
 import { CreateHealthOrderRequestDto } from '../health-orders/dto/create-health-order-request.dto';
 import { HealthOrderResponseDto } from '../health-orders/dto/health-order-response.dto';
+import { CreateClientResponseDto } from './dto/create-client-response.dto';
+import { CreateClientRequestDto } from './dto/create-client-request.dto';
 
 @Injectable()
 export class ClientService
@@ -15,7 +17,7 @@ export class ClientService
 {
   private logger = new Logger(ClientService.name);
 
-  async create(orderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
+  async create(orderDto: CreateClientRequestDto): Promise<CreateClientResponseDto> {
     throw featureNotImplementedError();
   }
 

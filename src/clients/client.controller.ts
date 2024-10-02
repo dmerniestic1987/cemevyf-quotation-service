@@ -7,6 +7,8 @@ import { HealthOrderResponseDto } from '../health-orders/dto/health-order-respon
 import { CreateHealthOrderRequestDto } from '../health-orders/dto/create-health-order-request.dto';
 import { FilterHealthOrderDto } from '../health-orders/dto/filter-health-order.dto';
 import { UpdateHealthOrderRequestDto } from '../health-orders/dto/update-health-order-request.dto';
+import { CreateClientResponseDto } from './dto/create-client-response.dto';
+import { CreateClientRequestDto } from './dto/create-client-request.dto';
 
 @ApiTags('Clients')
 @Controller('clients')
@@ -15,9 +17,9 @@ export class ClientController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new client', operationId: 'createClient' })
-  @ApiOkResponse({ type: HealthOrderResponseDto })
-  async createClient(@Body() createProviderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
-    return this.clientService.create(createProviderDto);
+  @ApiOkResponse({ type: CreateClientResponseDto })
+  async createClient(@Body() createClientDto: CreateClientRequestDto): Promise<CreateClientResponseDto> {
+    return this.clientService.create(createClientDto);
   }
 
   @Get()
