@@ -19,7 +19,7 @@ export class HealthOrderController {
   @ApiOperation({ summary: 'Create a new quotation', operationId: 'createQuotation' })
   @ApiOkResponse({ type: HealthOrderResponseDto })
   async create(@Body() createProviderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
-    return this.healthOrderService.createHealthOrder(createProviderDto);
+    return this.healthOrderService.create(createProviderDto);
   }
 
   @Get()
@@ -29,7 +29,7 @@ export class HealthOrderController {
     @Query() filterDto: FilterHealthOrderDto,
     @Query() pageOptionsDto: PageOptionsDto,
   ): Promise<PageResponseDto<HealthOrderResponseDto>> {
-    return this.healthOrderService.findHealthOrders(filterDto, pageOptionsDto);
+    return this.healthOrderService.findOrders(filterDto, pageOptionsDto);
   }
 
   @Get('/:id')
@@ -37,7 +37,7 @@ export class HealthOrderController {
   @ApiOperation({ summary: 'Gets details of an specific quotation', operationId: 'findQuotation' })
   @ApiOkResponse({ type: HealthOrderResponseDto })
   async findQuotation(@Param('id') id): Promise<HealthOrderResponseDto> {
-    return this.healthOrderService.findHealthOrder(id);
+    return this.healthOrderService.findOrder(id);
   }
 
   @Put('/:id')
@@ -48,7 +48,7 @@ export class HealthOrderController {
     @Param('id') id,
     @Body() updateQuotationDto: UpdateHealthOrderRequestDto,
   ): Promise<HealthOrderResponseDto> {
-    return this.healthOrderService.updateHealthOrder(id, updateQuotationDto);
+    return this.healthOrderService.update(id, updateQuotationDto);
   }
 
   @Post('/:id/message')

@@ -37,7 +37,7 @@ export class HealthOrderService
     super();
   }
 
-  async createHealthOrder(orderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
+  async create(orderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
     this.logger.log('Create Quotation', { service: HealthOrderService.name, createQuotationRequestDto: orderDto });
     let client: Client = await this.clientsRepository.findOne({
       where: {
@@ -74,12 +74,12 @@ export class HealthOrderService
 
     //TODO: Check client
     //TODO: We need to get client information from ClientService
-    quotation = await this.healthOrderRepository.createQuotation(quotation, client);
+    quotation = await this.healthOrderRepository.createHealthOrder(quotation, client);
     await this.messageService.sendMail(this.toCemevyfMailMessage(orderDto.eMail, quotation));
     return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
-  async findHealthOrders(
+  async findOrders(
     filterDto: FilterHealthOrderDto,
     pageOptionsDto: PageOptionsDto,
   ): Promise<PageResponseDto<HealthOrderResponseDto>> {
@@ -117,15 +117,15 @@ export class HealthOrderService
     );
   }
 
-  async findHealthOrder(id: number): Promise<HealthOrderResponseDto> {
+  async findOrder(id: number): Promise<HealthOrderResponseDto> {
     this.logger.log('Find Quotation', { service: HealthOrderService.name, id });
-    const quotation = await this.healthOrderRepository.getQuotationAndFail(id);
+    const quotation = await this.healthOrderRepository.getHealthOrderAndFail(id);
     return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
-  async updateHealthOrder(id: number, updateQuotationDto: UpdateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
+  async update(id: number, updateQuotationDto: UpdateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
     this.logger.log('Update Quotation', { service: HealthOrderService.name, id });
-    let quotation = await this.healthOrderRepository.getQuotationAndFail(id);
+    let quotation = await this.healthOrderRepository.getHealthOrderAndFail(id);
     if (updateQuotationDto.totalAmount) {
       quotation.totalAmount = Number(updateQuotationDto.totalAmount);
     }
@@ -133,9 +133,9 @@ export class HealthOrderService
       quotation.currency = updateQuotationDto.currency;
     }
 
-    if (updateQuotationDto.quotationItems) {
+    if (updateQuotationDto.orderItems) {
       quotation.healthOrderItems = [];
-      updateQuotationDto.quotationItems.forEach((itemDto, itemIndex) => {
+      updateQuotationDto.orderItems.forEach((itemDto, itemIndex) => {
         const quotationItem = HealthOrderEntityDtoMapper.quotationItemRequestDtoToQuotationItemDto(itemDto, itemIndex);
         quotationItem.quotation = quotation;
         quotationItem.quotationId = quotation.id;
@@ -155,7 +155,7 @@ export class HealthOrderService
     if (sendQuotationDto.channel !== MessageChannelEnum.E_MAIL) {
       throw featureNotImplementedError(`Sending messages by ${sendQuotationDto.channel} is not implemented`);
     }
-    const quotation = await this.healthOrderRepository.getQuotationAndFail(id, ['client', 'quotationItems']);
+    const quotation = await this.healthOrderRepository.getHealthOrderAndFail(id, ['client', 'quotationItems']);
 
     const sentMail = await this.messageService.sendMail(this.toCemevyfMailMessage(sendQuotationDto.eMail, quotation));
     return {
@@ -163,6 +163,22 @@ export class HealthOrderService
       channel: sendQuotationDto.channel,
       sentMail,
     };
+  }
+
+  execute(id: number): Promise<any> {
+    return null;
+  }
+
+  attachFile(id: number, fileBase64: string): Promise<any> {
+    return null;
+  }
+
+  attachResultFile(id: number, fileBase64: string): Promise<any>{
+    return null;
+  }
+
+  sendResultFilesEmail(id: number): Promise<any> {
+    return null;
   }
 
   private toCemevyfMailMessage(

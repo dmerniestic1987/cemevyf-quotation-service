@@ -8,19 +8,46 @@ import { SendHealthOrderEMailRequestDto } from './dto/send-health-order-e-mail-r
 import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-response.dto';
 
 export interface IHealthOrderService {
-  createHealthOrder(orderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto>;
+  create(orderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto>;
 
-  findHealthOrders(
+  findOrders(
     filterDto: FilterHealthOrderDto,
     pageOptionsDto: PageOptionsDto,
   ): Promise<PageResponseDto<HealthOrderResponseDto>>;
 
-  findHealthOrder(id: number): Promise<HealthOrderResponseDto>;
+  findOrder(id: number): Promise<HealthOrderResponseDto>;
 
-  updateHealthOrder(id: number, updateQuotationDto: UpdateHealthOrderRequestDto): Promise<HealthOrderResponseDto>;
+  update(id: number, updateQuotationDto: UpdateHealthOrderRequestDto): Promise<HealthOrderResponseDto>;
 
   sendHealthOrderEMail(
     id: number,
     sendQuotationDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto>;
+
+  /**
+   * The health order transitions to an executed state when a professional carries out the procedures associated
+   * with the order.
+   * @param id
+   */
+  execute(id: number): Promise<any>;
+
+  /**
+   * Attach a file to the health order.
+   * @param id
+   * @param fileBase64
+   */
+  attachFile(id: number, fileBase64: string): Promise<any>;
+
+  /**
+   * Attach a file to the health order.
+   * @param id
+   * @param fileBase64
+   */
+  attachResultFile(id: number, fileBase64: string): Promise<any>;
+
+  /**
+   * Send the results via email.
+   * @param id
+   */
+  sendResultFilesEmail(id: number): Promise<any>;
 }

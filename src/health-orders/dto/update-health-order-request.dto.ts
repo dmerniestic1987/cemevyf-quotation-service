@@ -31,5 +31,5 @@ export class UpdateHealthOrderRequestDto {
     type: [ItemHealthOrderRequestDto],
   })
   @IsArray()
-  public quotationItems: ItemHealthOrderRequestDto[];
+  public orderItems: ItemHealthOrderRequestDto[];
 }
