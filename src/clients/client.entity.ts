@@ -38,6 +38,12 @@ export class Client {
   @OneToMany(() => HealthOrder, healthOrder => healthOrder.client)
   public healthOrders: HealthOrder[];
 
+  @Column({ name: 'bookly_id', nullable: true, length: 50 })
+  public booklyId?: string;
+
+  @Column({ name: 'external_id', nullable: true, length: 50 })
+  public externalId?: string;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   public createdAt: Date;
 

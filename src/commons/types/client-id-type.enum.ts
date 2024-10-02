@@ -3,4 +3,5 @@ export enum ClientIdTypeEnum {
   PASSPORT = 'pass',
   CUIL = 'cuil',
   CUIT = 'cuit',
+  OTHER = 'other'
 }

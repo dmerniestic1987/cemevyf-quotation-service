@@ -15,11 +15,11 @@ export class HealthOrderItem {
   @PrimaryColumn({ type: 'integer' })
   public id: number;
 
-  @PrimaryColumn({ name: 'quotation_id', type: 'bigint' })
+  @PrimaryColumn({ name: 'order_id', type: 'bigint' })
   public quotationId: number;
 
   @ManyToOne(() => HealthOrder, quotation => quotation.healthOrderItems)
-  @JoinColumn({ name: 'quotation_id', referencedColumnName: 'id' })
+  @JoinColumn({ name: 'order_id', referencedColumnName: 'id' })
   quotation: HealthOrder;
 
   @Column({ name: 'code', nullable: true })
