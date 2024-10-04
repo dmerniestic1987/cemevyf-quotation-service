@@ -57,11 +57,7 @@ export class ClientService
     throw featureNotImplementedError();
   }
 
-  async findOrder(id: number): Promise<HealthOrderResponseDto> {
-    throw featureNotImplementedError();
-  }
-
-  async update(id: number, updateQuotationDto: UpdateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
+  async findOrder(id: number): Promise<ClientResponseDto> {
     throw featureNotImplementedError();
   }
 }

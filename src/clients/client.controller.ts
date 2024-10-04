@@ -25,7 +25,7 @@ export class ClientController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Gets a list of all enabled quotations', operationId: 'findClients' })
+  @ApiOperation({ summary: 'Gets a list of clients', operationId: 'findClients' })
   @ApiOkResponse({ type: [ClientResponseDto] })
   async findClients(
     @Query() filterDto: FilterClientDto,
@@ -35,10 +35,10 @@ export class ClientController {
   }
 
   @Get('/:id')
-  @ApiParam({ type: 'number', name: 'id' })
-  @ApiOperation({ summary: 'Gets details of an specific order', operationId: 'findClient' })
-  @ApiOkResponse({ type: HealthOrderResponseDto })
-  async findClient(@Param('id') id): Promise<HealthOrderResponseDto> {
+  @ApiParam({ type: 'string', name: 'id' })
+  @ApiOperation({ summary: 'Gets details of an specific client', operationId: 'findClient' })
+  @ApiOkResponse({ type: ClientResponseDto })
+  async findClient(@Param('id') id): Promise<ClientResponseDto> {
     return this.clientService.findOrder(id);
   }
 }
