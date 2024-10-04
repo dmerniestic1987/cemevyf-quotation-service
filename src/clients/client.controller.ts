@@ -1,12 +1,10 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpStatus, Param, Post, Put, Query } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { ClientService } from './client.service';
 import { HealthOrderResponseDto } from '../health-orders/dto/health-order-response.dto';
-import { CreateHealthOrderRequestDto } from '../health-orders/dto/create-health-order-request.dto';
 import { FilterHealthOrderDto } from '../health-orders/dto/filter-health-order.dto';
-import { UpdateHealthOrderRequestDto } from '../health-orders/dto/update-health-order-request.dto';
 import { CreateClientResponseDto } from './dto/create-client-response.dto';
 import { CreateClientRequestDto } from './dto/create-client-request.dto';
 
@@ -17,7 +15,11 @@ export class ClientController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new client', operationId: 'createClient' })
-  @ApiOkResponse({ type: CreateClientResponseDto })
+  @ApiOkResponse({
+    status: HttpStatus.CREATED,
+    type: CreateClientResponseDto
+  })
+  @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Conflict' })
   async createClient(@Body() createClientDto: CreateClientRequestDto): Promise<CreateClientResponseDto> {
     return this.clientService.create(createClientDto);
   }
@@ -38,16 +40,5 @@ export class ClientController {
   @ApiOkResponse({ type: HealthOrderResponseDto })
   async findClient(@Param('id') id): Promise<HealthOrderResponseDto> {
     return this.clientService.findOrder(id);
-  }
-
-  @Put('/:id')
-  @ApiParam({ type: 'number', name: 'id' })
-  @ApiOperation({ summary: 'Updates an specific quotation', operationId: 'updateClient' })
-  @ApiOkResponse({ type: HealthOrderResponseDto })
-  async updateClient(
-    @Param('id') id,
-    @Body() updateQuotationDto: UpdateHealthOrderRequestDto,
-  ): Promise<HealthOrderResponseDto> {
-    return this.clientService.update(id, updateQuotationDto);
   }
 }

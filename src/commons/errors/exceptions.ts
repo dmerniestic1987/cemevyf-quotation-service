@@ -11,3 +11,7 @@ export const featureNotImplementedError = (msg = 'Feature Not Implemented') => {
 export const notFoundError = (msg = 'Entity not found') => {
   return new HttpException({ message: msg, code: 'NOT_FOUND_ERROR' }, HttpStatus.NOT_FOUND);
 };
+
+export const resourceAlreadyExist = (msg = 'Resource already exists') => {
+  return new HttpException({ message: msg, code: 'RESOURCE_ALREADY_EXISTS' }, HttpStatus.CONFLICT);
+};
