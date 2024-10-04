@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsEmail, IsEnum, IsNumber, IsObject, IsString } from 'class-validator';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
 import { ItemHealthOrderRequestDto } from './item-health-order-request.dto';
-import { CreateClientRequestDto } from '../../clients/dto/create-client-request.dto';
+import { ClientResponseDto } from '../../clients/dto/client-response.dto';
 
 export class CreateHealthOrderRequestDto {
   @ApiProperty({
@@ -10,7 +10,7 @@ export class CreateHealthOrderRequestDto {
     required: true,
   })
   @IsObject()
-  client: CreateClientRequestDto;
+  client: ClientResponseDto;
 
   @ApiProperty({
     description: 'target e-mail to send quotation',

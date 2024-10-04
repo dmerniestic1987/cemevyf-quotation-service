@@ -1,10 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsString } from 'class-validator';
+import { IsEnum, IsString, IsUUID } from 'class-validator';
 import { ClientIdTypeEnum } from '../../commons/types/client-id-type.enum';
 
-export class CreateClientRequestDto {
+export class ClientResponseDto {
   @ApiProperty({
-    description: 'The first name of the person who will receive the quotation',
+    description: 'The ID',
+    required: true,
+    example: 'd5b13516-0557-4ca1-96f5-a6eeedec5472',
+  })
+  @IsUUID()
+  id: string;
+
+  @ApiProperty({
+    description: 'The first name',
     required: true,
     example: 'Diego',
   })
@@ -12,7 +20,7 @@ export class CreateClientRequestDto {
   clientFirstName: string;
 
   @ApiProperty({
-    description: 'The last name of the person who will receive the quotation',
+    description: 'The last name',
     required: true,
     example: 'Di Rossi',
   })
@@ -20,7 +28,7 @@ export class CreateClientRequestDto {
   clientLastName: string;
 
   @ApiProperty({
-    description: 'The type Id of patient',
+    description: 'The ID type of Patient',
     required: false,
     default: ClientIdTypeEnum.DNI,
     example: ClientIdTypeEnum.DNI,

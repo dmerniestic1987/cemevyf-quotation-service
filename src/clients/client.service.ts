@@ -8,14 +8,15 @@ import { FilterHealthOrderDto } from '../health-orders/dto/filter-health-order.d
 import { UpdateHealthOrderRequestDto } from '../health-orders/dto/update-health-order-request.dto';
 import { HealthOrderResponseDto } from '../health-orders/dto/health-order-response.dto';
 import { CreateClientResponseDto } from './dto/create-client-response.dto';
-import { CreateClientRequestDto } from './dto/create-client-request.dto';
+import { ClientResponseDto } from './dto/client-response.dto';
 import { Client } from './client.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { FilterClientDto } from './dto/filter-client.dto';
 
 @Injectable()
 export class ClientService
-  extends BaseService<HealthOrder, CreateClientRequestDto>
+  extends BaseService<HealthOrder, ClientResponseDto>
 {
   private logger = new Logger(ClientService.name);
   constructor(
@@ -25,7 +26,7 @@ export class ClientService
     super();
   }
 
-  async create(clientDto: CreateClientRequestDto): Promise<CreateClientResponseDto> {
+  async create(clientDto: ClientResponseDto): Promise<CreateClientResponseDto> {
     let client: Client = await this.clientsRepository.findOne({
       where: {
         clientId: clientDto.clientId,
@@ -49,10 +50,10 @@ export class ClientService
     }
   }
 
-  async findOrders(
-    filterDto: FilterHealthOrderDto,
+  async findClients(
+    filterDto: FilterClientDto,
     pageOptionsDto: PageOptionsDto,
-  ): Promise<PageResponseDto<HealthOrderResponseDto>> {
+  ): Promise<PageResponseDto<ClientResponseDto>> {
     throw featureNotImplementedError();
   }
 

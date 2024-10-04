@@ -1,12 +1,12 @@
-import { Body, Controller, Get, HttpStatus, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { ClientService } from './client.service';
 import { HealthOrderResponseDto } from '../health-orders/dto/health-order-response.dto';
-import { FilterHealthOrderDto } from '../health-orders/dto/filter-health-order.dto';
 import { CreateClientResponseDto } from './dto/create-client-response.dto';
-import { CreateClientRequestDto } from './dto/create-client-request.dto';
+import { ClientResponseDto } from './dto/client-response.dto';
+import { FilterClientDto } from './dto/filter-client.dto';
 
 @ApiTags('Clients')
 @Controller('clients')
@@ -20,18 +20,18 @@ export class ClientController {
     type: CreateClientResponseDto
   })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Conflict' })
-  async createClient(@Body() createClientDto: CreateClientRequestDto): Promise<CreateClientResponseDto> {
+  async createClient(@Body() createClientDto: ClientResponseDto): Promise<CreateClientResponseDto> {
     return this.clientService.create(createClientDto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Gets a list of all enabled quotations', operationId: 'findClients' })
-  @ApiOkResponse({ type: [HealthOrderResponseDto] })
+  @ApiOkResponse({ type: [ClientResponseDto] })
   async findClients(
-    @Query() filterDto: FilterHealthOrderDto,
+    @Query() filterDto: FilterClientDto,
     @Query() pageOptionsDto: PageOptionsDto,
-  ): Promise<PageResponseDto<HealthOrderResponseDto>> {
-    return this.clientService.findOrders(filterDto, pageOptionsDto);
+  ): Promise<PageResponseDto<ClientResponseDto>> {
+    return this.clientService.findClients(filterDto, pageOptionsDto);
   }
 
   @Get('/:id')
