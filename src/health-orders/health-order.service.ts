@@ -18,7 +18,7 @@ import { UpdateHealthOrderRequestDto } from './dto/update-health-order-request.d
 import { SendHealthOrderEMailRequestDto } from './dto/send-health-order-e-mail-request.dto';
 import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-response.dto';
 import { MessageChannelEnum } from '../commons/types/message-channel.enum';
-import { featureNotImplementedError } from '../commons/errors/exceptions';
+import { featureNotImplementedError, notFoundError } from '../commons/errors/exceptions';
 import { HealthOrder } from './health-order.entity';
 import { IHealthOrderService } from './i-health-order.service';
 
@@ -39,20 +39,15 @@ export class HealthOrderService
 
   async create(orderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
     this.logger.log('Create Quotation', { service: HealthOrderService.name, createQuotationRequestDto: orderDto });
-    let client: Client = await this.clientsRepository.findOne({
+    const client: Client = await this.clientsRepository.findOne({
       where: {
-        clientId: orderDto.client.clientId,
-        clientIdType: orderDto.client.clientIdType,
+        personId: orderDto.client.personId,
+        personIdType: orderDto.client.personIdType,
       },
       relations: ['quotations'],
     });
     if (!client) {
-      client = new Client();
-      client.clientId = orderDto.client.clientId;
-      client.clientIdType = orderDto.client.clientIdType;
-      client.firstName = orderDto.client.firstName;
-      client.lastName = orderDto.client.lastName;
-      client = await this.clientsRepository.save(client);
+      throw notFoundError('Client not found');
     }
 
     let quotation: HealthOrder = new HealthOrder();

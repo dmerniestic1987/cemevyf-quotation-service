@@ -8,11 +8,11 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ClientIdTypeEnum } from '../commons/types/client-id-type.enum';
+import { IdTypeEnum } from '../commons/types/id-type.enum';
 import { HealthOrder } from '../health-orders/health-order.entity';
 
 @Entity({ name: 'clients' })
-@Index('idx_client_type_and_id', ['clientIdType', 'clientId'], { unique: true })
+@Index('idx_person_type_and_id', ['personIdType', 'personId'], { unique: true })
 export class Client {
   @Column({ type: 'varchar' })
   @PrimaryGeneratedColumn('uuid')
@@ -26,11 +26,11 @@ export class Client {
   @Index('idx_client_last_name', { unique: false })
   public lastName: string;
 
-  @Column({ name: 'client_id_type', nullable: true, type: 'enum', enum: ClientIdTypeEnum })
-  public clientIdType: ClientIdTypeEnum;
+  @Column({ name: 'person_id_type', nullable: true, type: 'enum', enum: IdTypeEnum })
+  public personIdType: IdTypeEnum;
 
-  @Column({ name: 'client_id', nullable: true, length: 50 })
-  public clientId: string;
+  @Column({ name: 'person_id', nullable: true, length: 50 })
+  public personId: string;
 
   @Column({ name: 'e_mail', nullable: true })
   public email: string;

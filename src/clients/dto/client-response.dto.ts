@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsEnum, IsString, IsUUID } from 'class-validator';
-import { ClientIdTypeEnum } from '../../commons/types/client-id-type.enum';
+import { IdTypeEnum } from '../../commons/types/id-type.enum';
 
 export class ClientResponseDto {
   @ApiProperty({
@@ -30,11 +30,11 @@ export class ClientResponseDto {
   @ApiProperty({
     description: 'The ID type of Patient',
     required: false,
-    default: ClientIdTypeEnum.DNI,
-    example: ClientIdTypeEnum.DNI,
+    default: IdTypeEnum.DNI,
+    example: IdTypeEnum.DNI,
   })
-  @IsEnum(ClientIdTypeEnum)
-  clientIdType: ClientIdTypeEnum;
+  @IsEnum(IdTypeEnum)
+  personIdType: IdTypeEnum;
 
   @ApiProperty({
     description: 'The ID of Patient',
@@ -42,7 +42,7 @@ export class ClientResponseDto {
     example: '32847809',
   })
   @IsString()
-  clientId: string;
+  personId: string;
 
   @ApiProperty({
     description: 'The ID in external system',

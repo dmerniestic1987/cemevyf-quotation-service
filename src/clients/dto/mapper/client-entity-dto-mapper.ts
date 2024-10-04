@@ -5,8 +5,8 @@ export class ClientEntityDtoMapper {
   public static clientToQuotationResponseDto(client: Client): ClientResponseDto {
     return {
       id: client.id,
-      clientId: client.clientId,
-      clientIdType: client.clientIdType,
+      personId: client.personId,
+      personIdType: client.personIdType,
       firstName: client.firstName,
       lastName: client.lastName,
       externalId: client.externalId,
