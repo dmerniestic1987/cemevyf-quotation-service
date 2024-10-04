@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
-import { ItemQuotationResponseDto } from './item-quotation-response.dto';
+import { ItemHealthOrderResponseDto } from './item-health-order-response.dto';
 
-export class QuotationResponseDto {
+export class HealthOrderResponseDto {
   @ApiProperty({
     description: `Quotation ID`,
     example: 12001,
@@ -30,5 +30,5 @@ export class QuotationResponseDto {
   @ApiProperty({
     description: 'The list of items',
   })
-  public items?: ItemQuotationResponseDto[];
+  public items?: ItemHealthOrderResponseDto[];
 }

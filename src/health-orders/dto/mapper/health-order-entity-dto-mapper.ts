@@ -1,19 +1,19 @@
-import { QuotationResponseDto } from '../quotation-response.dto';
-import { ItemQuotationResponseDto } from '../item-quotation-response.dto';
-import { Quotation } from '../../quotation.entity';
-import { QuotationItem } from '../../quotation-item.entity';
-import { ItemQuotationRequestDto } from '../item-quotation-request.dto';
+import { HealthOrderResponseDto } from '../health-order-response.dto';
+import { ItemHealthOrderResponseDto } from '../item-health-order-response.dto';
+import { HealthOrderItem } from '../../health-order-item.entity';
+import { ItemHealthOrderRequestDto } from '../item-health-order-request.dto';
+import { HealthOrder } from '../../health-order.entity';
 
-export class QuotationEntityDtoMapper {
-  public static quotationEntityToQuotationResponseDto(quotation: Quotation): QuotationResponseDto {
-    const dto = new QuotationResponseDto();
+export class HealthOrderEntityDtoMapper {
+  public static quotationEntityToQuotationResponseDto(quotation: HealthOrder): HealthOrderResponseDto {
+    const dto = new HealthOrderResponseDto();
     dto.id = quotation.id;
     dto.currency = quotation.currency;
     dto.totalAmount = quotation.totalAmount;
     dto.createdAt = quotation.createdAt.toISOString();
-    if (quotation.quotationItems) {
-      dto.items = quotation.quotationItems.map(quotationItem => {
-        const itemDto = new ItemQuotationResponseDto();
+    if (quotation.healthOrderItems) {
+      dto.items = quotation.healthOrderItems.map(quotationItem => {
+        const itemDto = new ItemHealthOrderResponseDto();
         itemDto.name = quotationItem.name;
         itemDto.itemCount = quotationItem.itemCount;
         itemDto.code = quotationItem.code;
@@ -27,10 +27,10 @@ export class QuotationEntityDtoMapper {
   }
 
   public static quotationItemRequestDtoToQuotationItemDto(
-    itemDto: ItemQuotationRequestDto,
+    itemDto: ItemHealthOrderRequestDto,
     itemIndex = 0,
-  ): QuotationItem {
-    const item = new QuotationItem();
+  ): HealthOrderItem {
+    const item = new HealthOrderItem();
     item.id = itemIndex;
     item.name = itemDto.name;
     item.code = itemDto.code;

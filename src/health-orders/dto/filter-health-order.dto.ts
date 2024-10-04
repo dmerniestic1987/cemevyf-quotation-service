@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsEnum, IsInt } from 'class-validator';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
 
-export class FilterQuotationDto {
+export class FilterHealthOrderDto {
   @ApiProperty({
     description: 'The first name of the person who will receive the quotation',
     required: false,

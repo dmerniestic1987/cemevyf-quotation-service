@@ -8,8 +8,8 @@ async function bootstrap() {
     logger: [logLevel],
   });
   const options = new DocumentBuilder()
-    .setTitle('CEMEVYF Quotation Service')
-    .setDescription('A service to provide basic management of CEMEVYF quotations')
+    .setTitle('CEMEVYF Health Orders Service')
+    .setDescription('A service to provide basic management of CEMEVYF health orders')
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, options);

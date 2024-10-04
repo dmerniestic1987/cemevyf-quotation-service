@@ -1,14 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsNumber, IsString } from 'class-validator';
 
-export class ItemQuotationRequestDto {
+export class ItemHealthOrderResponseDto {
   @ApiProperty({
     description: 'The code of item',
     required: false,
     example: 'T4L',
   })
   @IsString()
-  code?: string;
+  code: string;
 
   @ApiProperty({
     description: 'The name of item',
@@ -19,12 +19,20 @@ export class ItemQuotationRequestDto {
   name: string;
 
   @ApiProperty({
-    description: 'total amount of quotation computed by client',
+    description: 'Unit price of item',
     required: true,
     example: '37500.50',
   })
   @IsNumber({ allowNaN: false, allowInfinity: false, maxDecimalPlaces: 2 })
   unitPrice: string;
+
+  @ApiProperty({
+    description: 'Total amount of quotation computed by client',
+    required: true,
+    example: '37500.50',
+  })
+  @IsNumber({ maxDecimalPlaces: 2 })
+  totalPrice: string;
 
   @ApiProperty({
     description: 'total number of items',
