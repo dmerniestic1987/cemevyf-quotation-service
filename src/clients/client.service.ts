@@ -2,11 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { BaseService } from '../commons/service/base-service';
-import { featureNotImplementedError, resourceAlreadyExist } from '../commons/errors/exceptions';
+import { featureNotImplementedError, notFoundError, resourceAlreadyExist } from '../commons/errors/exceptions';
 import { HealthOrder } from '../health-orders/health-order.entity';
-import { FilterHealthOrderDto } from '../health-orders/dto/filter-health-order.dto';
-import { UpdateHealthOrderRequestDto } from '../health-orders/dto/update-health-order-request.dto';
-import { HealthOrderResponseDto } from '../health-orders/dto/health-order-response.dto';
 import { CreateClientResponseDto } from './dto/create-client-response.dto';
 import { ClientResponseDto } from './dto/client-response.dto';
 import { Client } from './client.entity';
@@ -15,23 +12,22 @@ import { Repository } from 'typeorm';
 import { FilterClientDto } from './dto/filter-client.dto';
 
 @Injectable()
-export class ClientService
-  extends BaseService<HealthOrder, ClientResponseDto>
-{
+export class ClientService extends BaseService<HealthOrder, ClientResponseDto> {
   private logger = new Logger(ClientService.name);
   constructor(
     @InjectRepository(Client)
-    private readonly clientsRepository: Repository<Client>
+    private readonly clientsRepository: Repository<Client>,
   ) {
     super();
   }
 
   async create(clientDto: ClientResponseDto): Promise<CreateClientResponseDto> {
+    this.logger.debug('Create Client', { service: ClientService.name, clientDto });
     let client: Client = await this.clientsRepository.findOne({
       where: {
         clientId: clientDto.clientId,
         clientIdType: clientDto.clientIdType,
-      }
+      },
     });
     if (client) {
       throw resourceAlreadyExist('Client already exists');
@@ -40,14 +36,15 @@ export class ClientService
     client = new Client();
     client.clientId = clientDto.clientId;
     client.clientIdType = clientDto.clientIdType;
-    client.clientFirstName = clientDto.clientFirstName;
-    client.clientLastName = clientDto.clientLastName;
+    client.firstName = clientDto.firstName;
+    client.lastName = clientDto.lastName;
     client.externalId = clientDto.externalId;
-    clientDto.booklyId = clientDto.booklyId;
+    client.booklyId = clientDto.booklyId;
+    client.email = clientDto.email;
     client = await this.clientsRepository.save(client);
     return {
       id: client.id,
-    }
+    };
   }
 
   async findClients(
@@ -57,7 +54,24 @@ export class ClientService
     throw featureNotImplementedError();
   }
 
-  async findOrder(id: number): Promise<ClientResponseDto> {
-    throw featureNotImplementedError();
+  async findOrder(id: string): Promise<ClientResponseDto> {
+    const client = await this.clientsRepository.findOne({
+      where: {
+        id,
+      },
+    });
+    if (!client) {
+      throw notFoundError(`Client ID: ${id} was not found`);
+    }
+    return {
+      id: client.id,
+      clientId: client.clientId,
+      clientIdType: client.clientIdType,
+      firstName: client.firstName,
+      lastName: client.lastName,
+      externalId: client.externalId,
+      booklyId: client.booklyId,
+      email: client.email,
+    };
   }
 }

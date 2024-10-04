@@ -20,11 +20,11 @@ export class Client {
 
   @Column({ name: 'first_name', nullable: false, length: 100 })
   @Index('idx_client_first_name', { unique: false })
-  public clientFirstName: string;
+  public firstName: string;
 
   @Column({ name: 'last_name', nullable: false, length: 100 })
   @Index('idx_client_last_name', { unique: false })
-  public clientLastName: string;
+  public lastName: string;
 
   @Column({ name: 'client_id_type', nullable: true, type: 'enum', enum: ClientIdTypeEnum })
   public clientIdType: ClientIdTypeEnum;

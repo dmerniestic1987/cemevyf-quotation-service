@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsString, IsUUID } from 'class-validator';
+import { IsEmail, IsEnum, IsString, IsUUID } from 'class-validator';
 import { ClientIdTypeEnum } from '../../commons/types/client-id-type.enum';
 
 export class ClientResponseDto {
@@ -17,7 +17,7 @@ export class ClientResponseDto {
     example: 'Diego',
   })
   @IsString()
-  clientFirstName: string;
+  firstName: string;
 
   @ApiProperty({
     description: 'The last name',
@@ -25,7 +25,7 @@ export class ClientResponseDto {
     example: 'Di Rossi',
   })
   @IsString()
-  clientLastName: string;
+  lastName: string;
 
   @ApiProperty({
     description: 'The ID type of Patient',
@@ -59,4 +59,12 @@ export class ClientResponseDto {
   })
   @IsString()
   booklyId?: string;
+
+  @ApiProperty({
+    description: 'The email of the client',
+    required: false,
+    example: 'example@hola.com',
+  })
+  @IsEmail()
+  email?: string;
 }

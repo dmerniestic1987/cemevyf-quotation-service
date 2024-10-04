@@ -50,8 +50,8 @@ export class HealthOrderService
       client = new Client();
       client.clientId = orderDto.client.clientId;
       client.clientIdType = orderDto.client.clientIdType;
-      client.clientFirstName = orderDto.client.clientFirstName;
-      client.clientLastName = orderDto.client.clientLastName;
+      client.firstName = orderDto.client.firstName;
+      client.lastName = orderDto.client.lastName;
       client = await this.clientsRepository.save(client);
     }
 
@@ -173,7 +173,7 @@ export class HealthOrderService
     return null;
   }
 
-  attachResultFile(id: number, fileBase64: string): Promise<any>{
+  attachResultFile(id: number, fileBase64: string): Promise<any> {
     return null;
   }
 
@@ -199,8 +199,8 @@ export class HealthOrderService
       to: eMail || quotation.client.email,
       subject,
       context: {
-        clientFirstName: quotation.client.clientFirstName,
-        clientLastName: quotation.client.clientLastName,
+        clientFirstName: quotation.client.firstName,
+        clientLastName: quotation.client.lastName,
         createdAt: quotation.createdAt.toDateString(),
         quotationId: quotation.id,
         totalAmount: quotation.totalAmount,
