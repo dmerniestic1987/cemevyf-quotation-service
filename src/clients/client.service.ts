@@ -10,6 +10,7 @@ import { Client } from './client.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FilterClientDto } from './dto/filter-client.dto';
+import { ClientEntityDtoMapper } from './dto/mapper/client-entity-dto-mapper';
 
 @Injectable()
 export class ClientService extends BaseService<HealthOrder, ClientResponseDto> {
@@ -63,15 +64,6 @@ export class ClientService extends BaseService<HealthOrder, ClientResponseDto> {
     if (!client) {
       throw notFoundError(`Client ID: ${id} was not found`);
     }
-    return {
-      id: client.id,
-      clientId: client.clientId,
-      clientIdType: client.clientIdType,
-      firstName: client.firstName,
-      lastName: client.lastName,
-      externalId: client.externalId,
-      booklyId: client.booklyId,
-      email: client.email,
-    };
+    return ClientEntityDtoMapper.clientToQuotationResponseDto(client);
   }
 }
