@@ -45,10 +45,10 @@ export class HealthOrder {
   @OneToMany(() => HealthOrderResult, item => item.healthOrder)
   public healthOrderFiles: HealthOrderFile[];
 
-  @Column({ name: 'executed_at', type: 'timestamp' })
+  @Column({ name: 'executed_at', type: 'timestamp', nullable: true })
   public executedAt: Date;
 
-  @Column({ name: 'results_uploaded_at', type: 'timestamp' })
+  @Column({ name: 'results_uploaded_at', type: 'timestamp', nullable: true })
   public resultsUploadedAt: Date;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })

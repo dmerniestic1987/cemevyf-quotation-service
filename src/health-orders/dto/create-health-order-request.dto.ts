@@ -1,25 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsEmail, IsEnum, IsNumber, IsObject, IsString } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsNumber, IsString } from 'class-validator';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
 import { ItemHealthOrderRequestDto } from './item-health-order-request.dto';
-import { ClientResponseDto } from '../../clients/dto/client-response.dto';
 
 export class CreateHealthOrderRequestDto {
   @ApiProperty({
-    description: 'Personal information of the client',
+    description: 'The ID of the client',
     required: true,
-  })
-  @IsObject()
-  client: ClientResponseDto;
-
-  @ApiProperty({
-    description: 'target e-mail to send quotation',
-    required: true,
-    example: 'example@cemevyf.com',
+    example: '14e7b437-3c5c-44a6-8d99-a0fab3ef6c40',
   })
   @IsString()
   @IsEmail()
-  eMail: string;
+  clientId: string;
 
   @ApiProperty({
     description: 'total amount of quotation computed by client',

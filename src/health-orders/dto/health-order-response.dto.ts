@@ -31,4 +31,10 @@ export class HealthOrderResponseDto {
     description: 'The list of items',
   })
   public items?: ItemHealthOrderResponseDto[];
+
+  @ApiProperty({
+    description: 'True if e-mail was sent to the client',
+    example: true,
+  })
+  public sentMail?: boolean;
 }

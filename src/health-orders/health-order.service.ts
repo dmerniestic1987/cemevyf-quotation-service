@@ -41,10 +41,9 @@ export class HealthOrderService
     this.logger.log('Create Quotation', { service: HealthOrderService.name, createQuotationRequestDto: orderDto });
     const client: Client = await this.clientsRepository.findOne({
       where: {
-        personId: orderDto.client.personId,
-        personIdType: orderDto.client.personIdType,
+        id: orderDto.clientId,
       },
-      relations: ['quotations'],
+      relations: ['healthOrders'],
     });
     if (!client) {
       throw notFoundError('Client not found');
@@ -67,11 +66,12 @@ export class HealthOrderService
     }
     client.healthOrders.push(quotation);
 
-    //TODO: Check client
-    //TODO: We need to get client information from ClientService
     quotation = await this.healthOrderRepository.createHealthOrder(quotation, client);
-    await this.messageService.sendMail(this.toCemevyfMailMessage(orderDto.eMail, quotation));
-    return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
+    let sentMail = false;
+    if (client.email) {
+      sentMail = await this.messageService.sendMail(this.toCemevyfMailMessage(client.email, quotation));
+    }
+    return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation, sentMail);
   }
 
   async findOrders(

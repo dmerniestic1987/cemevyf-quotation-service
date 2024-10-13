@@ -5,12 +5,13 @@ import { ItemHealthOrderRequestDto } from '../item-health-order-request.dto';
 import { HealthOrder } from '../../health-order.entity';
 
 export class HealthOrderEntityDtoMapper {
-  public static quotationEntityToQuotationResponseDto(quotation: HealthOrder): HealthOrderResponseDto {
+  public static quotationEntityToQuotationResponseDto(quotation: HealthOrder, sentMail = null): HealthOrderResponseDto {
     const dto = new HealthOrderResponseDto();
     dto.id = quotation.id;
     dto.currency = quotation.currency;
     dto.totalAmount = quotation.totalAmount;
     dto.createdAt = quotation.createdAt.toISOString();
+    dto.sentMail = sentMail;
     if (quotation.healthOrderItems) {
       dto.items = quotation.healthOrderItems.map(quotationItem => {
         const itemDto = new ItemHealthOrderResponseDto();
