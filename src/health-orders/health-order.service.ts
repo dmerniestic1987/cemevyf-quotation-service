@@ -150,7 +150,7 @@ export class HealthOrderService
     if (sendQuotationDto.channel !== MessageChannelEnum.E_MAIL) {
       throw featureNotImplementedError(`Sending messages by ${sendQuotationDto.channel} is not implemented`);
     }
-    const quotation = await this.healthOrderRepository.getHealthOrderAndFail(id, ['client', 'quotationItems']);
+    const quotation = await this.healthOrderRepository.getHealthOrderAndFail(id, ['client', 'healthOrderItems']);
 
     const sentMail = await this.messageService.sendMail(this.toCemevyfMailMessage(sendQuotationDto.eMail, quotation));
     return {
