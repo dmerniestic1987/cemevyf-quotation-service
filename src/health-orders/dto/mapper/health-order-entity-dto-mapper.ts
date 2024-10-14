@@ -15,6 +15,7 @@ export class HealthOrderEntityDtoMapper {
     dto.totalAmount = quotation.totalAmount;
     dto.createdAt = quotation.createdAt.toISOString();
     dto.sentMail = sentMail;
+    dto.status = quotation.status;
     if (quotation.healthOrderItems) {
       dto.items = quotation.healthOrderItems.map(quotationItem => {
         const itemDto = new ItemHealthOrderResponseDto();

@@ -18,9 +18,14 @@ import { UpdateHealthOrderRequestDto } from './dto/update-health-order-request.d
 import { SendHealthOrderEMailRequestDto } from './dto/send-health-order-e-mail-request.dto';
 import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-response.dto';
 import { MessageChannelEnum } from '../commons/types/message-channel.enum';
-import { featureNotImplementedError, notFoundError } from '../commons/errors/exceptions';
+import {
+  featureNotImplementedError,
+  healthOrderIncorrectStatusError,
+  notFoundError,
+} from '../commons/errors/exceptions';
 import { HealthOrder } from './health-order.entity';
 import { IHealthOrderService } from './i-health-order.service';
+import { HealthOrderStatus } from './types/health-order-status';
 
 @Injectable()
 export class HealthOrderService
@@ -160,8 +165,14 @@ export class HealthOrderService
     };
   }
 
-  execute(id: number): Promise<any> {
-    return null;
+  async execute(id: number): Promise<HealthOrderResponseDto> {
+    this.logger.log('Execute order', { service: HealthOrderService.name, id });
+    let healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(id, []);
+    if (healthOrder.status !== HealthOrderStatus.QUOTED) {
+      throw healthOrderIncorrectStatusError();
+    }
+    healthOrder = await this.healthOrderRepository.executeOrder(id);
+    return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(healthOrder);
   }
 
   attachFile(id: number, fileBase64: string): Promise<any> {

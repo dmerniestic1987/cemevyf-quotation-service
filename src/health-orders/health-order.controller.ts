@@ -10,22 +10,30 @@ import { UpdateHealthOrderRequestDto } from './dto/update-health-order-request.d
 import { SendHealthOrderEMailRequestDto } from './dto/send-health-order-e-mail-request.dto';
 import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-response.dto';
 
-@ApiTags('Health Orders')
+@ApiTags('health-orders')
 @Controller('health-orders')
 export class HealthOrderController {
   constructor(private readonly healthOrderService: HealthOrderService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new quotation', operationId: 'createQuotation' })
+  @ApiOperation({ summary: 'Create a new health order', operationId: 'createHealthOrder' })
   @ApiOkResponse({ type: HealthOrderResponseDto })
   async create(@Body() createProviderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
     return this.healthOrderService.create(createProviderDto);
   }
 
+  @Post('/:id/execution')
+  @ApiParam({ type: 'number', name: 'id' })
+  @ApiOperation({ summary: 'Marks a health order as executed', operationId: 'executeHealthOrder' })
+  @ApiOkResponse({ type: HealthOrderResponseDto })
+  async executeHealthOrder(@Param('id') id: number,): Promise<HealthOrderResponseDto> {
+    return this.healthOrderService.execute(id);
+  }
+
   @Get()
-  @ApiOperation({ summary: 'Gets a list of all enabled quotations', operationId: 'findQuotations' })
+  @ApiOperation({ summary: 'Gets a list of all enabled health orders', operationId: 'findHealthOrders' })
   @ApiOkResponse({ type: [HealthOrderResponseDto] })
-  async findQuotations(
+  async findHealthOrders(
     @Query() filterDto: FilterHealthOrderDto,
     @Query() pageOptionsDto: PageOptionsDto,
   ): Promise<PageResponseDto<HealthOrderResponseDto>> {
@@ -34,18 +42,18 @@ export class HealthOrderController {
 
   @Get('/:id')
   @ApiParam({ type: 'number', name: 'id' })
-  @ApiOperation({ summary: 'Gets details of an specific quotation', operationId: 'findQuotation' })
+  @ApiOperation({ summary: 'Gets details of an specific health order', operationId: 'findHealthOrder' })
   @ApiOkResponse({ type: HealthOrderResponseDto })
-  async findQuotation(@Param('id') id): Promise<HealthOrderResponseDto> {
+  async findHealthOrder(@Param('id') id: number): Promise<HealthOrderResponseDto> {
     return this.healthOrderService.findOrder(id);
   }
 
   @Put('/:id')
   @ApiParam({ type: 'number', name: 'id' })
-  @ApiOperation({ summary: 'Updates an specific quotation', operationId: 'updateQuotation' })
+  @ApiOperation({ summary: 'Updates an specific health order', operationId: 'updateHealthOrder' })
   @ApiOkResponse({ type: HealthOrderResponseDto })
-  async updateQuotation(
-    @Param('id') id,
+  async updateHealthOrder(
+    @Param('id') id: number,
     @Body() updateQuotationDto: UpdateHealthOrderRequestDto,
   ): Promise<HealthOrderResponseDto> {
     return this.healthOrderService.update(id, updateQuotationDto);
@@ -55,13 +63,13 @@ export class HealthOrderController {
   @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({
     summary: 'Send a message with quotation to the customer or the supplier',
-    operationId: 'sendQuotationByMessage',
+    operationId: 'sendHealthOrder',
   })
   @ApiOkResponse({ type: HealthOrderEmailSentResponseDto })
-  async sendQuotationByMessage(
-    @Param('id') id,
-    @Body() updateQuotationDto: SendHealthOrderEMailRequestDto,
+  async sendHealthOrder(
+    @Param('id') id: number,
+    @Body() sendDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto> {
-    return this.healthOrderService.sendHealthOrderEMail(id, updateQuotationDto);
+    return this.healthOrderService.sendHealthOrderEMail(id, sendDto);
   }
 }

@@ -5,6 +5,7 @@ import { Client } from '../clients/client.entity';
 import { createQuotationInternalError, notFoundError } from '../commons/errors/exceptions';
 import { HealthOrderItem } from './health-order-item.entity';
 import { HealthOrder } from './health-order.entity';
+import { HealthOrderStatus } from './types/health-order-status';
 
 export class HealthOrderRepository {
   private readonly logger = new Logger(HealthOrderRepository.name);
@@ -67,6 +68,21 @@ export class HealthOrderRepository {
     if (!healthOrder) {
       throw notFoundError(`Health Order ID: ${id} was not found`);
     }
+    return healthOrder;
+  }
+
+  async executeOrder(id: number): Promise<HealthOrder> {
+    let healthOrder: HealthOrder = undefined;
+    await this.dataSource.transaction(async entityManager => {
+      healthOrder = await entityManager.findOne(HealthOrder, {
+        where: {
+          id,
+        },
+      });
+      healthOrder.status = HealthOrderStatus.EXECUTED;
+      healthOrder.executedAt = new Date();
+      await entityManager.save(healthOrder);
+    });
     return healthOrder;
   }
 }
