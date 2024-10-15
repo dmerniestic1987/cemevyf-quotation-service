@@ -6,6 +6,7 @@ import { HealthOrderItem } from './health-order-item.entity';
 import { HealthOrder } from './health-order.entity';
 import { HealthOrderStatus } from './types/health-order-status';
 import { HealthOrderFile } from './health-order-file.entity';
+import { HealthOrderResult } from './health-order-result.entity';
 
 export class HealthOrderRepository {
   private readonly logger = new Logger(HealthOrderRepository.name);
@@ -99,6 +100,27 @@ export class HealthOrderRepository {
       file = await entityManager.save(file);
       await entityManager.save(healthOrder);
       return file.id;
+    });
+  }
+
+  async attachHealthResultFile(id: number, base64File: string): Promise<string> {
+    this.logger.debug('Attach result file to health order', { service: HealthOrderRepository.name, id });
+    return await this.dataSource.transaction(async entityManager => {
+      const healthOrder = await entityManager.findOne(HealthOrder, {
+        where: {
+          id,
+        },
+        relations: ['healthOrderResults'],
+      });
+      let result = new HealthOrderResult();
+      result.healthOrder = healthOrder;
+      result.fileData = Buffer.from(base64File, 'base64');
+      result.createdAt = new Date();
+
+      healthOrder.healthOrderResults.push(result)
+      result = await entityManager.save(result);
+      await entityManager.save(healthOrder);
+      return result.id;
     });
   }
 }

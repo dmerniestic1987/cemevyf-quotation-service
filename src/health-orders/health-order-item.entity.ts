@@ -16,7 +16,7 @@ export class HealthOrderItem {
   public id: number;
 
   @PrimaryColumn({ name: 'order_id', type: 'bigint' })
-  public quotationId: number;
+  public orderId: number;
 
   @ManyToOne(() => HealthOrder, quotation => quotation.healthOrderItems)
   @JoinColumn({ name: 'order_id', referencedColumnName: 'id' })

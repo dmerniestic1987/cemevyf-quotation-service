@@ -62,7 +62,7 @@ export class HealthOrderService
     orderDto.quotationItems.forEach((itemDto, itemIndex) => {
       const item = HealthOrderEntityDtoMapper.healthOrderItemRequestDtoToItemDto(itemDto, itemIndex);
       item.healthOrder = healthOrder;
-      item.quotationId = healthOrder.id;
+      item.orderId = healthOrder.id;
       healthOrder.healthOrderItems.push(item);
     });
 
@@ -138,7 +138,7 @@ export class HealthOrderService
       updateDto.orderItems.forEach((itemDto, itemIndex) => {
         const quotationItem = HealthOrderEntityDtoMapper.healthOrderItemRequestDtoToItemDto(itemDto, itemIndex);
         quotationItem.healthOrder = healthOrder;
-        quotationItem.quotationId = healthOrder.id;
+        quotationItem.orderId = healthOrder.id;
         healthOrder.healthOrderItems.push(quotationItem);
       });
     }
@@ -184,14 +184,13 @@ export class HealthOrderService
     return this.healthOrderRepository.attachHealthOrderFile(orderId, fileBase64);
   }
 
-  async attachResultFile(id: number, fileBase64: string): Promise<any> {
+  async attachResultFile(id: number, fileBase64: string): Promise<string> {
     const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(id, []);
     if (healthOrder.status !== HealthOrderStatus.PENDING_RESULTS) {
       throw healthOrderIncorrectStatusError();
     }
 
-
-    return null;
+    return this.healthOrderRepository.attachHealthResultFile(id, fileBase64);
   }
 
   sendResultFilesEmail(id: number): Promise<any> {
