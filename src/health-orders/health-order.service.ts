@@ -43,7 +43,7 @@ export class HealthOrderService
   }
 
   async create(orderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
-    this.logger.log('Create Quotation', { service: HealthOrderService.name, createQuotationRequestDto: orderDto });
+    this.logger.debug('Create Quotation', { service: HealthOrderService.name, createQuotationRequestDto: orderDto });
     const client: Client = await this.clientsRepository.findOne({
       where: {
         id: orderDto.clientId,
@@ -83,7 +83,7 @@ export class HealthOrderService
     filterDto: FilterHealthOrderDto,
     pageOptionsDto: PageOptionsDto,
   ): Promise<PageResponseDto<HealthOrderResponseDto>> {
-    this.logger.log('Find Health Orders', { service: HealthOrderService.name, filterDto, pageOptionsDto });
+    this.logger.debug('Find Health Orders', { service: HealthOrderService.name, filterDto, pageOptionsDto });
     const where = {};
     if (filterDto.id) {
       where['id'] = filterDto.id;
@@ -118,13 +118,13 @@ export class HealthOrderService
   }
 
   async findOrder(id: number): Promise<HealthOrderResponseDto> {
-    this.logger.log('Find Quotation', { service: HealthOrderService.name, id });
+    this.logger.debug('Find Health Order', { service: HealthOrderService.name, id });
     const quotation = await this.healthOrderRepository.getHealthOrderAndFail(id);
     return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
   async update(id: number, updateQuotationDto: UpdateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
-    this.logger.log('Update Quotation', { service: HealthOrderService.name, id });
+    this.logger.log('Update Health Order', { service: HealthOrderService.name, id });
     let quotation = await this.healthOrderRepository.getHealthOrderAndFail(id);
     if (updateQuotationDto.totalAmount) {
       quotation.totalAmount = Number(updateQuotationDto.totalAmount);
@@ -147,7 +147,7 @@ export class HealthOrderService
     return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
-  async sendHealthOrderEMail(
+  async sendHealthOrderToClient(
     id: number,
     sendQuotationDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto> {

@@ -62,14 +62,14 @@ export class HealthOrderController {
   @Post('/:id/message')
   @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({
-    summary: 'Send a message with quotation to the customer or the supplier',
+    summary: 'Send a message with health order to the client',
     operationId: 'sendHealthOrder',
   })
   @ApiOkResponse({ type: HealthOrderEmailSentResponseDto })
-  async sendHealthOrder(
+  async sendHealthOrderToClient(
     @Param('id') id: number,
     @Body() sendDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto> {
-    return this.healthOrderService.sendHealthOrderEMail(id, sendDto);
+    return this.healthOrderService.sendHealthOrderToClient(id, sendDto);
   }
 }

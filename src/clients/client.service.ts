@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { BaseService } from '../commons/service/base-service';
-import { featureNotImplementedError, notFoundError, resourceAlreadyExist } from '../commons/errors/exceptions';
+import { notFoundError, resourceAlreadyExist } from '../commons/errors/exceptions';
 import { HealthOrder } from '../health-orders/health-order.entity';
 import { CreateClientResponseDto } from './dto/create-client-response.dto';
 import { ClientResponseDto } from './dto/client-response.dto';
@@ -84,6 +84,7 @@ export class ClientService extends BaseService<HealthOrder, ClientResponseDto> {
   }
 
   async findOrder(id: string): Promise<ClientResponseDto> {
+    this.logger.debug('Find Order', { service: ClientService.name, id });
     const client = await this.clientsRepository.findOne({
       where: {
         id,
