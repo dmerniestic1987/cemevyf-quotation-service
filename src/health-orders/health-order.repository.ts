@@ -7,6 +7,7 @@ import { HealthOrder } from './health-order.entity';
 import { HealthOrderStatus } from './types/health-order-status';
 import { HealthOrderFile } from './health-order-file.entity';
 import { HealthOrderResult } from './health-order-result.entity';
+import { Client } from '../clients/client.entity';
 
 export class HealthOrderRepository {
   private readonly logger = new Logger(HealthOrderRepository.name);

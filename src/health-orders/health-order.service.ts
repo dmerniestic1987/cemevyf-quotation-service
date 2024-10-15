@@ -48,7 +48,7 @@ export class HealthOrderService
       where: {
         id: orderDto.clientId,
       },
-      relations: ['healthOrders'],
+      relations: [],
     });
     if (!client) {
       throw notFoundError('Client not found');
@@ -65,11 +65,6 @@ export class HealthOrderService
       item.orderId = healthOrder.id;
       healthOrder.healthOrderItems.push(item);
     });
-
-    if (!client.healthOrders) {
-      client.healthOrders = [];
-    }
-    client.healthOrders.push(healthOrder);
 
     healthOrder = await this.healthOrderRepository.createHealthOrder(healthOrder);
     let sentMail = false;
