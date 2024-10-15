@@ -26,7 +26,7 @@ export class HealthOrderController {
   @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({ summary: 'Marks a health order as executed', operationId: 'executeHealthOrder' })
   @ApiOkResponse({ type: HealthOrderResponseDto })
-  async executeHealthOrder(@Param('id') id: number,): Promise<HealthOrderResponseDto> {
+  async executeHealthOrder(@Param('id') id: number): Promise<HealthOrderResponseDto> {
     return this.healthOrderService.execute(id);
   }
 
