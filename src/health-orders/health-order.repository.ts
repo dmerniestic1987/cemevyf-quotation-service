@@ -5,6 +5,7 @@ import { createQuotationInternalError, notFoundError } from '../commons/errors/e
 import { HealthOrderItem } from './health-order-item.entity';
 import { HealthOrder } from './health-order.entity';
 import { HealthOrderStatus } from './types/health-order-status';
+import { HealthOrderFile } from './health-order-file.entity';
 
 export class HealthOrderRepository {
   private readonly logger = new Logger(HealthOrderRepository.name);
@@ -66,6 +67,7 @@ export class HealthOrderRepository {
   }
 
   async executeOrder(id: number): Promise<HealthOrder> {
+    this.logger.debug('Execute Health Order', { service: HealthOrderRepository.name, id });
     return await this.dataSource.transaction(async entityManager => {
       const healthOrder = await entityManager.findOne(HealthOrder, {
         where: {
@@ -76,6 +78,27 @@ export class HealthOrderRepository {
       healthOrder.executedAt = new Date();
       await entityManager.save(healthOrder);
       return healthOrder;
+    });
+  }
+
+  async attachHealthOrderFile(id: number, base64File: string): Promise<string> {
+    this.logger.debug('Attach file to health order', { service: HealthOrderRepository.name, id });
+    return await this.dataSource.transaction(async entityManager => {
+      const healthOrder = await entityManager.findOne(HealthOrder, {
+        where: {
+          id,
+        },
+        relations: ['healthOrderFiles'],
+      });
+      let file = new HealthOrderFile();
+      file.healthOrder = healthOrder;
+      file.fileData = Buffer.from(base64File, 'base64');
+      file.createdAt = new Date();
+
+      healthOrder.healthOrderFiles.push(file)
+      file = await entityManager.save(file);
+      await entityManager.save(healthOrder);
+      return file.id;
     });
   }
 }

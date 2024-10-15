@@ -175,11 +175,21 @@ export class HealthOrderService
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 
-  attachFile(id: number, fileBase64: string): Promise<any> {
-    return null;
+  async attachFile(orderId: number, fileBase64: string): Promise<string> {
+    this.logger.log('Attach file to health order', { service: HealthOrderService.name, orderId });
+    const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(orderId, []);
+    if (healthOrder.status === HealthOrderStatus.RESULTS_DONE) {
+      throw healthOrderIncorrectStatusError();
+    }
+    return this.healthOrderRepository.attachHealthOrderFile(orderId, fileBase64);
   }
 
-  attachResultFile(id: number, fileBase64: string): Promise<any> {
+  async attachResultFile(id: number, fileBase64: string): Promise<any> {
+    const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(id, []);
+    if (healthOrder.status !== HealthOrderStatus.PENDING_RESULTS) {
+      throw healthOrderIncorrectStatusError();
+    }
+
 
     return null;
   }
