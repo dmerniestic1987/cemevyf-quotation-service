@@ -36,7 +36,7 @@ export class HealthOrder {
   @Column('enum', { name: 'currency', enum: CurrencyEnum, default: CurrencyEnum.ARS })
   public currency: CurrencyEnum;
 
-  @OneToMany(() => HealthOrderItem, item => item.quotation)
+  @OneToMany(() => HealthOrderItem, item => item.healthOrder)
   public healthOrderItems: HealthOrderItem[];
 
   @OneToMany(() => HealthOrderResult, item => item.healthOrder)

@@ -20,7 +20,7 @@ export class HealthOrderItem {
 
   @ManyToOne(() => HealthOrder, quotation => quotation.healthOrderItems)
   @JoinColumn({ name: 'order_id', referencedColumnName: 'id' })
-  quotation: HealthOrder;
+  healthOrder: HealthOrder;
 
   @Column({ name: 'code', nullable: true })
   public code: string;

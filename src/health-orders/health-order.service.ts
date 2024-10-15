@@ -43,7 +43,7 @@ export class HealthOrderService
   }
 
   async create(orderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
-    this.logger.debug('Create Quotation', { service: HealthOrderService.name, createQuotationRequestDto: orderDto });
+    this.logger.debug('Create health order', { service: HealthOrderService.name, createQuotationRequestDto: orderDto });
     const client: Client = await this.clientsRepository.findOne({
       where: {
         id: orderDto.clientId,
@@ -54,29 +54,29 @@ export class HealthOrderService
       throw notFoundError('Client not found');
     }
 
-    let quotation: HealthOrder = new HealthOrder();
-    quotation.totalAmount = Number(orderDto.totalAmount); //TODO: Transform to BigDecimal
-    quotation.currency = orderDto.currency;
-    quotation.healthOrderItems = [];
-    quotation.client = client;
+    let healthOrder: HealthOrder = new HealthOrder();
+    healthOrder.totalAmount = Number(orderDto.totalAmount); //TODO: Transform to BigDecimal
+    healthOrder.currency = orderDto.currency;
+    healthOrder.healthOrderItems = [];
+    healthOrder.client = client;
     orderDto.quotationItems.forEach((itemDto, itemIndex) => {
       const item = HealthOrderEntityDtoMapper.quotationItemRequestDtoToQuotationItemDto(itemDto, itemIndex);
-      item.quotation = quotation;
-      item.quotationId = quotation.id;
-      quotation.healthOrderItems.push(item);
+      item.healthOrder = healthOrder;
+      item.quotationId = healthOrder.id;
+      healthOrder.healthOrderItems.push(item);
     });
 
     if (!client.healthOrders) {
       client.healthOrders = [];
     }
-    client.healthOrders.push(quotation);
+    client.healthOrders.push(healthOrder);
 
-    quotation = await this.healthOrderRepository.createHealthOrder(quotation, client);
+    healthOrder = await this.healthOrderRepository.createHealthOrder(healthOrder);
     let sentMail = false;
     if (client.email) {
-      sentMail = await this.messageService.sendMail(this.toCemevyfMailMessage(client.email, quotation));
+      sentMail = await this.messageService.sendMail(this.toCemevyfMailMessage(client.email, healthOrder));
     }
-    return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation, sentMail);
+    return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(healthOrder, sentMail);
   }
 
   async findOrders(
@@ -123,28 +123,28 @@ export class HealthOrderService
     return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
   }
 
-  async update(id: number, updateQuotationDto: UpdateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
+  async update(id: number, updateDto: UpdateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
     this.logger.log('Update Health Order', { service: HealthOrderService.name, id });
-    let quotation = await this.healthOrderRepository.getHealthOrderAndFail(id);
-    if (updateQuotationDto.totalAmount) {
-      quotation.totalAmount = Number(updateQuotationDto.totalAmount);
+    let healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(id);
+    if (updateDto.totalAmount) {
+      healthOrder.totalAmount = Number(updateDto.totalAmount);
     }
-    if (updateQuotationDto.currency) {
-      quotation.currency = updateQuotationDto.currency;
+    if (updateDto.currency) {
+      healthOrder.currency = updateDto.currency;
     }
 
-    if (updateQuotationDto.orderItems) {
-      quotation.healthOrderItems = [];
-      updateQuotationDto.orderItems.forEach((itemDto, itemIndex) => {
+    if (updateDto.orderItems) {
+      healthOrder.healthOrderItems = [];
+      updateDto.orderItems.forEach((itemDto, itemIndex) => {
         const quotationItem = HealthOrderEntityDtoMapper.quotationItemRequestDtoToQuotationItemDto(itemDto, itemIndex);
-        quotationItem.quotation = quotation;
-        quotationItem.quotationId = quotation.id;
-        quotation.healthOrderItems.push(quotationItem);
+        quotationItem.healthOrder = healthOrder;
+        quotationItem.quotationId = healthOrder.id;
+        healthOrder.healthOrderItems.push(quotationItem);
       });
     }
 
-    quotation = await this.healthOrderRepository.updateQuotation(quotation);
-    return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
+    healthOrder = await this.healthOrderRepository.updateQuotation(healthOrder);
+    return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(healthOrder);
   }
 
   async sendHealthOrderToClient(

@@ -18,26 +18,6 @@ export class HealthOrderRepository {
     return this.dataSource.getRepository<HealthOrder>(HealthOrder);
   }
 
-  async createHealthOrder(healthOrder: HealthOrder, client: Client): Promise<HealthOrder> {
-    this.logger.debug('Create Health Order', { service: HealthOrderRepository.name, id: healthOrder.id });
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      healthOrder = await queryRunner.manager.save(healthOrder);
-      await queryRunner.manager.save(healthOrder.healthOrderItems);
-      await queryRunner.manager.save(client);
-      await queryRunner.commitTransaction();
-      return healthOrder;
-    } catch (err) {
-      this.logger.error('Error creating quotation', JSON.stringify(err));
-      await queryRunner.rollbackTransaction();
-      throw createQuotationInternalError(err.message);
-    } finally {
-      await queryRunner.release();
-    }
-  }
-
   async updateQuotation(healthOrder: HealthOrder): Promise<HealthOrder> {
     this.logger.debug('Update healthOrder', { service: HealthOrderRepository.name, id: healthOrder.id });
     const queryRunner = this.dataSource.createQueryRunner();
@@ -71,10 +51,24 @@ export class HealthOrderRepository {
     return healthOrder;
   }
 
+  async createHealthOrder(healthOrder: HealthOrder): Promise<HealthOrder> {
+    this.logger.debug('Create Health Order', { service: HealthOrderRepository.name, id: healthOrder.id });
+    try {
+      return await this.dataSource.transaction(async entityManager => {
+        const savedHealthOrder = await entityManager.save(healthOrder);
+        await entityManager.save(healthOrder.healthOrderItems);
+        return savedHealthOrder;
+      });
+    }
+    catch (err) {
+      this.logger.error('Error creating health order', JSON.stringify(err));
+      throw createQuotationInternalError(err.message);
+    }
+  }
+
   async executeOrder(id: number): Promise<HealthOrder> {
-    let healthOrder: HealthOrder = undefined;
-    await this.dataSource.transaction(async entityManager => {
-      healthOrder = await entityManager.findOne(HealthOrder, {
+    return await this.dataSource.transaction(async entityManager => {
+      const healthOrder = await entityManager.findOne(HealthOrder, {
         where: {
           id,
         },
@@ -82,7 +76,7 @@ export class HealthOrderRepository {
       healthOrder.status = HealthOrderStatus.EXECUTED;
       healthOrder.executedAt = new Date();
       await entityManager.save(healthOrder);
+      return healthOrder;
     });
-    return healthOrder;
   }
 }
