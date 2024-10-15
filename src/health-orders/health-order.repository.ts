@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { Client } from '../clients/client.entity';
 import { createQuotationInternalError, notFoundError } from '../commons/errors/exceptions';
 import { HealthOrderItem } from './health-order-item.entity';
 import { HealthOrder } from './health-order.entity';
@@ -18,7 +17,7 @@ export class HealthOrderRepository {
     return this.dataSource.getRepository<HealthOrder>(HealthOrder);
   }
 
-  async updateQuotation(healthOrder: HealthOrder): Promise<HealthOrder> {
+  async updateHealthOrder(healthOrder: HealthOrder): Promise<HealthOrder> {
     this.logger.debug('Update healthOrder', { service: HealthOrderRepository.name, id: healthOrder.id });
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();

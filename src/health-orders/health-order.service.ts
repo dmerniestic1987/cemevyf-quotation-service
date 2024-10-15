@@ -60,7 +60,7 @@ export class HealthOrderService
     healthOrder.healthOrderItems = [];
     healthOrder.client = client;
     orderDto.quotationItems.forEach((itemDto, itemIndex) => {
-      const item = HealthOrderEntityDtoMapper.quotationItemRequestDtoToQuotationItemDto(itemDto, itemIndex);
+      const item = HealthOrderEntityDtoMapper.healthOrderItemRequestDtoToItemDto(itemDto, itemIndex);
       item.healthOrder = healthOrder;
       item.quotationId = healthOrder.id;
       healthOrder.healthOrderItems.push(item);
@@ -76,7 +76,7 @@ export class HealthOrderService
     if (client.email) {
       sentMail = await this.messageService.sendMail(this.toCemevyfMailMessage(client.email, healthOrder));
     }
-    return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(healthOrder, sentMail);
+    return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder, sentMail);
   }
 
   async findOrders(
@@ -113,14 +113,14 @@ export class HealthOrderService
       this.healthOrderRepository.getRepository(),
       where,
       undefined,
-      HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto,
+      HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto,
     );
   }
 
   async findOrder(id: number): Promise<HealthOrderResponseDto> {
     this.logger.debug('Find Health Order', { service: HealthOrderService.name, id });
     const quotation = await this.healthOrderRepository.getHealthOrderAndFail(id);
-    return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(quotation);
+    return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(quotation);
   }
 
   async update(id: number, updateDto: UpdateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
@@ -136,15 +136,15 @@ export class HealthOrderService
     if (updateDto.orderItems) {
       healthOrder.healthOrderItems = [];
       updateDto.orderItems.forEach((itemDto, itemIndex) => {
-        const quotationItem = HealthOrderEntityDtoMapper.quotationItemRequestDtoToQuotationItemDto(itemDto, itemIndex);
+        const quotationItem = HealthOrderEntityDtoMapper.healthOrderItemRequestDtoToItemDto(itemDto, itemIndex);
         quotationItem.healthOrder = healthOrder;
         quotationItem.quotationId = healthOrder.id;
         healthOrder.healthOrderItems.push(quotationItem);
       });
     }
 
-    healthOrder = await this.healthOrderRepository.updateQuotation(healthOrder);
-    return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(healthOrder);
+    healthOrder = await this.healthOrderRepository.updateHealthOrder(healthOrder);
+    return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 
   async sendHealthOrderToClient(
@@ -172,7 +172,7 @@ export class HealthOrderService
       throw healthOrderIncorrectStatusError();
     }
     healthOrder = await this.healthOrderRepository.executeOrder(id);
-    return HealthOrderEntityDtoMapper.quotationEntityToQuotationResponseDto(healthOrder);
+    return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 
   attachFile(id: number, fileBase64: string): Promise<any> {
@@ -180,6 +180,7 @@ export class HealthOrderService
   }
 
   attachResultFile(id: number, fileBase64: string): Promise<any> {
+
     return null;
   }
 

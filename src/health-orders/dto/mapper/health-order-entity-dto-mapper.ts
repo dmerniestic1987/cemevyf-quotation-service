@@ -5,7 +5,7 @@ import { ItemHealthOrderRequestDto } from '../item-health-order-request.dto';
 import { HealthOrder } from '../../health-order.entity';
 
 export class HealthOrderEntityDtoMapper {
-  public static quotationEntityToQuotationResponseDto(
+  public static healthOrderEntityToResponseDto(
     quotation: HealthOrder,
     sentMail = undefined,
   ): HealthOrderResponseDto {
@@ -31,7 +31,7 @@ export class HealthOrderEntityDtoMapper {
     return dto;
   }
 
-  public static quotationItemRequestDtoToQuotationItemDto(
+  public static healthOrderItemRequestDtoToItemDto(
     itemDto: ItemHealthOrderRequestDto,
     itemIndex = 0,
   ): HealthOrderItem {
