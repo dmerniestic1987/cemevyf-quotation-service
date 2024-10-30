@@ -14,7 +14,7 @@ import { HealthOrder } from '../health-orders/health-order.entity';
 @Entity({ name: 'clients' })
 @Index('idx_person_type_and_id', ['personIdType', 'personId'], { unique: true })
 export class Client {
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   @PrimaryGeneratedColumn('uuid')
   public id: string;
 

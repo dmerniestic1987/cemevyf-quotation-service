@@ -1,6 +1,17 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller, FileTypeValidator,
+  Get, MaxFileSizeValidator,
+  Param, ParseFilePipe,
+  ParseFilePipeBuilder,
+  Post,
+  Put,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { CreateHealthOrderRequestDto } from './dto/create-health-order-request.dto';
-import { ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { HealthOrderResponseDto } from './dto/health-order-response.dto';
 import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
@@ -9,6 +20,8 @@ import { FilterHealthOrderDto } from './dto/filter-health-order.dto';
 import { UpdateHealthOrderRequestDto } from './dto/update-health-order-request.dto';
 import { SendHealthOrderEMailRequestDto } from './dto/send-health-order-e-mail-request.dto';
 import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-response.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ParseHealthOrderFilePipeDocument } from '../commons/validator/parse-health-order-file-pipe-document';
 
 @ApiTags('health-orders')
 @Controller('health-orders')
@@ -71,5 +84,34 @@ export class HealthOrderController {
     @Body() sendDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto> {
     return this.healthOrderService.sendHealthOrderToClient(id, sendDto);
+  }
+
+  @UseInterceptors(FileInterceptor('file'))
+  @Post('/:id/file')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+      required: ['file']
+    },
+  })
+  async uploadFileAndPassValidation(
+    @Param('id') id: number,
+    @UploadedFile(
+      new ParseHealthOrderFilePipeDocument(),
+    )
+      file: Express.Multer.File,
+  ) {
+    const fileId = await this.healthOrderService.attachHealthOrderFile(id, file);
+    return {
+      id: fileId,
+      filename: file.filename,
+    };
   }
 }

@@ -1,11 +1,15 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { HealthOrder } from './health-order.entity';
 
 @Entity({ name: 'health_order_files' })
 export class HealthOrderFile {
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 36 })
   @PrimaryGeneratedColumn('uuid')
   public id: string;
+
+  @Column({ type: 'varchar', length: 70 })
+  @Index({ unique: false })
+  public mimeType: string;
 
   @ManyToOne(() => HealthOrder, order => order.healthOrderFiles)
   @JoinColumn({ name: 'order_id', referencedColumnName: 'id' })

@@ -170,13 +170,13 @@ export class HealthOrderService
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 
-  async attachFile(orderId: number, fileBase64: string): Promise<string> {
+  async attachHealthOrderFile(orderId: number, file: Express.Multer.File): Promise<string> {
     this.logger.log('Attach file to health order', { service: HealthOrderService.name, orderId });
     const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(orderId, []);
     if (healthOrder.status === HealthOrderStatus.RESULTS_DONE) {
       throw healthOrderIncorrectStatusError();
     }
-    return this.healthOrderRepository.attachHealthOrderFile(orderId, fileBase64);
+    return this.healthOrderRepository.attachHealthOrderFile(orderId, file.buffer, file.mimetype);
   }
 
   async attachResultFile(id: number, fileBase64: string): Promise<string> {
