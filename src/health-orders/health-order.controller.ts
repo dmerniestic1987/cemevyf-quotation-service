@@ -88,6 +88,7 @@ export class HealthOrderController {
 
   @UseInterceptors(FileInterceptor('file'))
   @Post('/:id/file')
+  @ApiOperation({ summary: 'Adds a file to a health order. The file could be jpg, png or pdf file', operationId: 'attachHealthOrderFile' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -100,8 +101,9 @@ export class HealthOrderController {
       },
       required: ['file']
     },
+
   })
-  async uploadFileAndPassValidation(
+  async attachHealthOrderFile(
     @Param('id') id: number,
     @UploadedFile(
       new ParseHealthOrderFilePipeDocument(),
