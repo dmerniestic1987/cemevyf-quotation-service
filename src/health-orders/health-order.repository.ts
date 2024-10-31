@@ -8,6 +8,12 @@ import { HealthOrderStatus } from './types/health-order-status';
 import { HealthOrderFile } from './health-order-file.entity';
 import { HealthOrderResult } from './health-order-result.entity';
 
+export interface HealthOrderFileData {
+  mimeType: string;
+  fileData: Buffer;
+  additionalNotes?: string;
+}
+
 export class HealthOrderRepository {
   private readonly logger = new Logger(HealthOrderRepository.name);
   constructor(
@@ -81,7 +87,7 @@ export class HealthOrderRepository {
     });
   }
 
-  async attachHealthOrderFile(id: number, bufferFile: Buffer, mimeType: string): Promise<string> {
+  async attachHealthOrderFile(id: number, healthOrderFile: HealthOrderFileData): Promise<string> {
     this.logger.debug('Attach file to health order', { service: HealthOrderRepository.name, id });
     return await this.dataSource.transaction(async entityManager => {
       const healthOrder = await entityManager.findOne(HealthOrder, {
@@ -92,8 +98,9 @@ export class HealthOrderRepository {
       });
       let file = new HealthOrderFile();
       file.healthOrder = healthOrder;
-      file.mimeType = mimeType;
-      file.fileData = bufferFile;
+      file.mimeType = healthOrderFile.mimeType;
+      file.fileData = healthOrderFile.fileData;
+      file.additionalNotes = healthOrderFile.additionalNotes;
       file.createdAt = new Date();
 
       healthOrder.healthOrderFiles.push(file);
@@ -103,18 +110,20 @@ export class HealthOrderRepository {
     });
   }
 
-  async attachHealthResultFile(id: number, base64File: string): Promise<string> {
+  async attachHealthResultFile(id: number, healthOrderFile: HealthOrderFileData): Promise<string> {
     this.logger.debug('Attach result file to health order', { service: HealthOrderRepository.name, id });
     return await this.dataSource.transaction(async entityManager => {
       const healthOrder = await entityManager.findOne(HealthOrder, {
         where: {
-          id,
+          id: id,
         },
         relations: ['healthOrderResults'],
       });
       let result = new HealthOrderResult();
       result.healthOrder = healthOrder;
-      result.fileData = Buffer.from(base64File, 'base64');
+      result.fileData = healthOrderFile.fileData;
+      result.mimeType = healthOrderFile.mimeType;
+      result.additionalNotes = healthOrderFile.additionalNotes || null;
       result.createdAt = new Date();
 
       healthOrder.healthOrderResults.push(result);

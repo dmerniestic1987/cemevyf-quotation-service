@@ -42,10 +42,11 @@ export interface IHealthOrderService {
   /**
    * Attach a file to the health order.
    * @param id
-   * @param fileBase64
+   * @param resultFile
+   * @param additionalNotes
    * @returns id of attached file
    */
-  attachResultFile(id: number, fileBase64: string): Promise<string>;
+  attachResultFile(id: number, resultFile: Express.Multer.File, additionalNotes: string): Promise<string>;
 
   /**
    * Send the results via email.

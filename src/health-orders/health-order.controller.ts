@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-  UploadedFile,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { CreateHealthOrderRequestDto } from './dto/create-health-order-request.dto';
 import { ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { HealthOrderResponseDto } from './dto/health-order-response.dto';
@@ -21,6 +11,7 @@ import { SendHealthOrderEMailRequestDto } from './dto/send-health-order-e-mail-r
 import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-response.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ParseHealthOrderFilePipeDocument } from '../commons/validator/parse-health-order-file-pipe-document';
+import { AdditionalDataDto } from './dto/additional-data.dto';
 
 @ApiTags('health-orders')
 @Controller('health-orders')
@@ -110,6 +101,42 @@ export class HealthOrderController {
     file: Express.Multer.File,
   ) {
     const fileId = await this.healthOrderService.attachHealthOrderFile(id, file);
+    return {
+      id: fileId,
+      filename: file.filename,
+    };
+  }
+
+  @UseInterceptors(FileInterceptor('file'))
+  @Post('/:id/result')
+  @ApiOperation({
+    summary: 'Adds a result file to a health order. The file could be jpg, png or pdf file',
+    operationId: 'attachHealthOrderResult',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+        additionalNotes: {
+          type: 'string',
+          example: 'We are still pending total Glucose example'
+        },
+      },
+      required: ['file'],
+    },
+  })
+  async attachHealthOrderResult(
+    @Param('id') id: number,
+    @UploadedFile(new ParseHealthOrderFilePipeDocument())
+    file: Express.Multer.File,
+    @Body() dto: AdditionalDataDto,
+  ) {
+    const fileId = await this.healthOrderService.attachResultFile(id, file, dto.additionalNotes);
     return {
       id: fileId,
       filename: file.filename,

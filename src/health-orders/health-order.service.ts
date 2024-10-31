@@ -176,16 +176,24 @@ export class HealthOrderService
     if (healthOrder.status === HealthOrderStatus.RESULTS_DONE) {
       throw healthOrderIncorrectStatusError();
     }
-    return this.healthOrderRepository.attachHealthOrderFile(orderId, file.buffer, file.mimetype);
+    return this.healthOrderRepository.attachHealthOrderFile(orderId, {
+      fileData: file.buffer,
+      additionalNotes: 'additional notes',
+      mimeType: file.mimetype,
+    });
   }
 
-  async attachResultFile(id: number, fileBase64: string): Promise<string> {
+  async attachResultFile(id: number, resultFile: Express.Multer.File, additionalNotes: string): Promise<string> {
     const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(id, []);
-    if (healthOrder.status !== HealthOrderStatus.PENDING_RESULTS) {
+    if (healthOrder.status !== HealthOrderStatus.EXECUTED) {
       throw healthOrderIncorrectStatusError();
     }
 
-    return this.healthOrderRepository.attachHealthResultFile(id, fileBase64);
+    return this.healthOrderRepository.attachHealthResultFile(id, {
+      fileData: resultFile.buffer,
+      mimeType: resultFile.mimetype,
+      additionalNotes,
+    });
   }
 
   sendResultFilesEmail(id: number): Promise<any> {

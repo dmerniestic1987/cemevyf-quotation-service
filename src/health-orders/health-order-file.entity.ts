@@ -18,6 +18,9 @@ export class HealthOrderFile {
   @Column({ name: 'file_data', type: 'mediumblob', nullable: true })
   public fileData?: Buffer;
 
+  @Column({ name: 'additional_notes', type: 'text', nullable: true })
+  public additionalNotes?: string;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   public createdAt: Date;
 }
