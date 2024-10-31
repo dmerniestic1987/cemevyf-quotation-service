@@ -121,6 +121,7 @@ export class HealthOrderController {
         file: {
           type: 'string',
           format: 'binary',
+          default: 'A file with .png, .jpg and .pdf extension is allowed',
         },
         additionalNotes: {
           type: 'string',

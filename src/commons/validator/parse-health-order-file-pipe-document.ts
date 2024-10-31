@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 import { extname } from 'path';
+import { files as filesConfig } from 'config';
 
-const MAX_FILE_SIZE_IN_MB = 3;
-const MAX_FILE_SIZE_IN_BYTES = 1024 * 1024 * MAX_FILE_SIZE_IN_MB;
+const MAX_FILE_SIZE_IN_BYTES = 1024 * 1024 * Number(filesConfig.maxFileSizeInMb);
 
 @Injectable()
 export class ParseHealthOrderFilePipeDocument implements PipeTransform {
@@ -15,7 +15,7 @@ export class ParseHealthOrderFilePipeDocument implements PipeTransform {
     }
 
     if (value.size > MAX_FILE_SIZE_IN_BYTES) {
-      throw new BadRequestException(`File too big. Max allowed size in : ${MAX_FILE_SIZE_IN_MB} MB`);
+      throw new BadRequestException(`File too big. Max allowed size in : ${filesConfig.maxFileSizeInMb} MB`);
     }
     return value;
   }
