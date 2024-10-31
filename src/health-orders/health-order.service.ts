@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotImplementedException } from '@nestjs/common';
 import { HealthOrderRepository } from './health-order.repository';
 import { CreateHealthOrderRequestDto } from './dto/create-health-order-request.dto';
 import { HealthOrderResponseDto } from './dto/health-order-response.dto';
@@ -197,7 +197,7 @@ export class HealthOrderService
   }
 
   sendResultFilesEmail(id: number): Promise<any> {
-    return null;
+    throw new NotImplementedException(`Service not implemented ID: ${id}`)
   }
 
   private toCemevyfMailMessage(

@@ -124,7 +124,7 @@ export class HealthOrderController {
         },
         additionalNotes: {
           type: 'string',
-          example: 'We are still pending total Glucose example'
+          example: 'We are still pending total Glucose example',
         },
       },
       required: ['file'],
