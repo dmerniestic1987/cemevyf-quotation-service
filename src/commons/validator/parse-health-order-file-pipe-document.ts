@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
-import {extname} from 'path';
+import { extname } from 'path';
 
 const MAX_FILE_SIZE_IN_MB = 3;
 const MAX_FILE_SIZE_IN_BYTES = 1024 * 1024 * MAX_FILE_SIZE_IN_MB;

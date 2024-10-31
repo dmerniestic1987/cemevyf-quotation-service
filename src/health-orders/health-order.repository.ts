@@ -60,8 +60,7 @@ export class HealthOrderRepository {
         await entityManager.save(healthOrder.healthOrderItems);
         return savedHealthOrder;
       });
-    }
-    catch (err) {
+    } catch (err) {
       this.logger.error('Error creating health order', JSON.stringify(err));
       throw createQuotationInternalError(err.message);
     }
@@ -93,11 +92,11 @@ export class HealthOrderRepository {
       });
       let file = new HealthOrderFile();
       file.healthOrder = healthOrder;
-      file.mimeType = mimeType
+      file.mimeType = mimeType;
       file.fileData = bufferFile;
       file.createdAt = new Date();
 
-      healthOrder.healthOrderFiles.push(file)
+      healthOrder.healthOrderFiles.push(file);
       file = await entityManager.save(file);
       await entityManager.save(healthOrder);
       return file.id;
@@ -118,7 +117,7 @@ export class HealthOrderRepository {
       result.fileData = Buffer.from(base64File, 'base64');
       result.createdAt = new Date();
 
-      healthOrder.healthOrderResults.push(result)
+      healthOrder.healthOrderResults.push(result);
       result = await entityManager.save(result);
       await entityManager.save(healthOrder);
       return result.id;

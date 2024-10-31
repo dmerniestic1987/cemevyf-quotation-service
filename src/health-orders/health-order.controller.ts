@@ -1,9 +1,8 @@
 import {
   Body,
-  Controller, FileTypeValidator,
-  Get, MaxFileSizeValidator,
-  Param, ParseFilePipe,
-  ParseFilePipeBuilder,
+  Controller,
+  Get,
+  Param,
   Post,
   Put,
   Query,
@@ -88,7 +87,10 @@ export class HealthOrderController {
 
   @UseInterceptors(FileInterceptor('file'))
   @Post('/:id/file')
-  @ApiOperation({ summary: 'Adds a file to a health order. The file could be jpg, png or pdf file', operationId: 'attachHealthOrderFile' })
+  @ApiOperation({
+    summary: 'Adds a file to a health order. The file could be jpg, png or pdf file',
+    operationId: 'attachHealthOrderFile',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -99,16 +101,13 @@ export class HealthOrderController {
           format: 'binary',
         },
       },
-      required: ['file']
+      required: ['file'],
     },
-
   })
   async attachHealthOrderFile(
     @Param('id') id: number,
-    @UploadedFile(
-      new ParseHealthOrderFilePipeDocument(),
-    )
-      file: Express.Multer.File,
+    @UploadedFile(new ParseHealthOrderFilePipeDocument())
+    file: Express.Multer.File,
   ) {
     const fileId = await this.healthOrderService.attachHealthOrderFile(id, file);
     return {

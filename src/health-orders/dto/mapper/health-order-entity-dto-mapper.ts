@@ -5,10 +5,7 @@ import { ItemHealthOrderRequestDto } from '../item-health-order-request.dto';
 import { HealthOrder } from '../../health-order.entity';
 
 export class HealthOrderEntityDtoMapper {
-  public static healthOrderEntityToResponseDto(
-    quotation: HealthOrder,
-    sentMail = undefined,
-  ): HealthOrderResponseDto {
+  public static healthOrderEntityToResponseDto(quotation: HealthOrder, sentMail = undefined): HealthOrderResponseDto {
     const dto = new HealthOrderResponseDto();
     dto.id = quotation.id;
     dto.currency = quotation.currency;
@@ -31,10 +28,7 @@ export class HealthOrderEntityDtoMapper {
     return dto;
   }
 
-  public static healthOrderItemRequestDtoToItemDto(
-    itemDto: ItemHealthOrderRequestDto,
-    itemIndex = 0,
-  ): HealthOrderItem {
+  public static healthOrderItemRequestDtoToItemDto(itemDto: ItemHealthOrderRequestDto, itemIndex = 0): HealthOrderItem {
     const item = new HealthOrderItem();
     item.id = itemIndex;
     item.name = itemDto.name;
