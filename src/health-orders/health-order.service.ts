@@ -143,7 +143,7 @@ export class HealthOrderService
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 
-  async sendHealthOrderQuotationToClient(
+  async sendHealthOrderPrescriptionToClient(
     id: number,
     sendQuotationDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto> {
@@ -207,6 +207,7 @@ export class HealthOrderService
   }
 
   sendHealthOrderResultsToClient(id: number, sendQuotationDto: SendHealthOrderEMailRequestDto): Promise<any> {
+    //TODO: implement
     this.logger.log('Send health order results', { service: HealthOrderService.name, id, sendQuotationDto });
     throw new NotImplementedException(`Service not implemented ID: ${id}`);
   }

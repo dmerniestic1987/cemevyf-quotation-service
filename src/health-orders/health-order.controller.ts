@@ -63,18 +63,18 @@ export class HealthOrderController {
     return this.healthOrderService.update(id, updateQuotationDto);
   }
 
-  @Post('/:id/quotation/e-mail')
+  @Post('/:id/prescription/e-mail')
   @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({
-    summary: 'Send a e-mail with health order quotation to the client',
-    operationId: 'sendHealthOrderQuotationToClient',
+    summary: 'Send a e-mail with health order prescription to the client',
+    operationId: 'sendHealthOrderPrescriptionToClient',
   })
   @ApiOkResponse({ type: HealthOrderEmailSentResponseDto })
-  async sendHealthOrderQuotationToClient(
+  async sendHealthOrderPrescriptionToClient(
     @Param('id') id: number,
     @Body() sendDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto> {
-    return this.healthOrderService.sendHealthOrderQuotationToClient(id, sendDto);
+    return this.healthOrderService.sendHealthOrderPrescriptionToClient(id, sendDto);
   }
 
   @Post('/:id/results/e-mail')
