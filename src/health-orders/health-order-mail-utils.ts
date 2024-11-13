@@ -2,7 +2,6 @@ import { HealthOrder } from './health-order.entity';
 import { CemevyfMailMessage } from '../external-services/cemevyf-message-service/cemevyf-message.service';
 
 export class HealthOrderMailUtils {
-
   public static toCemevyfMailMessage(
     eMail: string,
     quotation: HealthOrder,

@@ -63,18 +63,32 @@ export class HealthOrderController {
     return this.healthOrderService.update(id, updateQuotationDto);
   }
 
-  @Post('/:id/message')
+  @Post('/:id/quotation/e-mail')
   @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({
-    summary: 'Send a message with health order to the client',
-    operationId: 'sendHealthOrder',
+    summary: 'Send a e-mail with health order quotation to the client',
+    operationId: 'sendHealthOrderQuotationToClient',
   })
   @ApiOkResponse({ type: HealthOrderEmailSentResponseDto })
-  async sendHealthOrderToClient(
+  async sendHealthOrderQuotationToClient(
     @Param('id') id: number,
     @Body() sendDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto> {
     return this.healthOrderService.sendHealthOrderQuotationToClient(id, sendDto);
+  }
+
+  @Post('/:id/results/e-mail')
+  @ApiParam({ type: 'number', name: 'id' })
+  @ApiOperation({
+    summary: 'Send a e-mail with health order results to the client',
+    operationId: 'sendHealthOrderResultsToClient',
+  })
+  @ApiOkResponse({ type: HealthOrderEmailSentResponseDto })
+  async sendHealthOrderResultsToClient(
+    @Param('id') id: number,
+    @Body() sendDto: SendHealthOrderEMailRequestDto,
+  ): Promise<HealthOrderEmailSentResponseDto> {
+    return this.healthOrderService.sendHealthOrderResultsToClient(id, sendDto);
   }
 
   @UseInterceptors(FileInterceptor('file'))
@@ -101,7 +115,7 @@ export class HealthOrderController {
   }
 
   @UseInterceptors(FileInterceptor('file'))
-  @Post('/:id/result')
+  @Post('/:id/results')
   @ApiOperation({
     summary: 'Adds a result file to a health order. The file could be jpg, png or pdf file',
     operationId: 'attachHealthOrderResult',

@@ -38,7 +38,6 @@ export class HealthOrder {
   @OneToMany(() => HealthOrderItem, item => item.healthOrder)
   public healthOrderItems: HealthOrderItem[];
 
-
   @OneToMany(() => HealthOrderFile, item => item.healthOrder)
   public healthOrderFiles: HealthOrderFile[];
 

@@ -54,5 +54,5 @@ export interface IHealthOrderService {
    * @param id
    * @returns id of result file
    */
-  sendResultFilesEmail(id: number): Promise<string>;
+  sendHealthOrderResultsToClient(id: number, sendQuotationDto: SendHealthOrderEMailRequestDto): Promise<string>;
 }

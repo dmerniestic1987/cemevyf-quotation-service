@@ -7,9 +7,7 @@ import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Client } from '../clients/client.entity';
 import { And, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
-import {
-  CemevyfMessageService,
-} from '../external-services/cemevyf-message-service/cemevyf-message.service';
+import { CemevyfMessageService } from '../external-services/cemevyf-message-service/cemevyf-message.service';
 import { BaseService } from '../commons/service/base-service';
 import { FilterHealthOrderDto } from './dto/filter-health-order.dto';
 import { HealthOrderEntityDtoMapper } from './dto/mapper/health-order-entity-dto-mapper';
@@ -70,7 +68,9 @@ export class HealthOrderService
     healthOrder = await this.healthOrderRepository.createHealthOrder(healthOrder);
     let sentMail = false;
     if (client.email) {
-      sentMail = await this.messageService.sendMail(HealthOrderMailUtils.toCemevyfMailMessage(client.email, healthOrder));
+      sentMail = await this.messageService.sendMail(
+        HealthOrderMailUtils.toCemevyfMailMessage(client.email, healthOrder),
+      );
     }
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder, sentMail);
   }
@@ -153,7 +153,9 @@ export class HealthOrderService
     }
     const quotation = await this.healthOrderRepository.getHealthOrderAndFail(id, ['client', 'healthOrderItems']);
 
-    const sentMail = await this.messageService.sendMail(HealthOrderMailUtils.toCemevyfMailMessage(sendQuotationDto.eMail, quotation));
+    const sentMail = await this.messageService.sendMail(
+      HealthOrderMailUtils.toCemevyfMailMessage(sendQuotationDto.eMail, quotation),
+    );
     return {
       id,
       channel: sendQuotationDto.channel,
@@ -171,7 +173,11 @@ export class HealthOrderService
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 
-  async attachHealthOrderPrescription(orderId: number, file: Express.Multer.File, additionalNotes: string): Promise<string> {
+  async attachHealthOrderPrescription(
+    orderId: number,
+    file: Express.Multer.File,
+    additionalNotes: string,
+  ): Promise<string> {
     this.logger.log('Attach file to health order', { service: HealthOrderService.name, orderId });
     const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(orderId, []);
     if (healthOrder.status === HealthOrderStatus.RESULTS_DONE) {
@@ -186,6 +192,7 @@ export class HealthOrderService
   }
 
   async attachResultFile(orderId: number, file: Express.Multer.File, additionalNotes: string): Promise<string> {
+    this.logger.log('Attach result file', { service: HealthOrderService.name, orderId });
     const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(orderId, []);
     if (healthOrder.status !== HealthOrderStatus.EXECUTED) {
       throw healthOrderIncorrectStatusError();
@@ -199,7 +206,8 @@ export class HealthOrderService
     });
   }
 
-  sendResultFilesEmail(id: number): Promise<any> {
-    throw new NotImplementedException(`Service not implemented ID: ${id}`)
+  sendHealthOrderResultsToClient(id: number, sendQuotationDto: SendHealthOrderEMailRequestDto): Promise<any> {
+    this.logger.log('Send health order results', { service: HealthOrderService.name, id, sendQuotationDto });
+    throw new NotImplementedException(`Service not implemented ID: ${id}`);
   }
 }
