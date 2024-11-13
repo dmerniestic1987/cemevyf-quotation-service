@@ -14,7 +14,6 @@ import { CurrencyEnum } from '../commons/types/currency.enum';
 import { HealthOrderItem } from './health-order-item.entity';
 import { Client } from '../clients/client.entity';
 import { HealthOrderStatus } from './types/health-order-status';
-import { HealthOrderResult } from './health-order-result.entity';
 import { HealthOrderFile } from './health-order-file.entity';
 
 @Entity({ name: 'health_orders' })
@@ -36,19 +35,16 @@ export class HealthOrder {
   @Column('enum', { name: 'currency', enum: CurrencyEnum, default: CurrencyEnum.ARS })
   public currency: CurrencyEnum;
 
-  @OneToMany(() => HealthOrderItem, item => item.quotation)
+  @OneToMany(() => HealthOrderItem, item => item.healthOrder)
   public healthOrderItems: HealthOrderItem[];
 
-  @OneToMany(() => HealthOrderResult, item => item.healthOrder)
-  public healthOrderResults: HealthOrderResult[];
-
-  @OneToMany(() => HealthOrderResult, item => item.healthOrder)
+  @OneToMany(() => HealthOrderFile, item => item.healthOrder)
   public healthOrderFiles: HealthOrderFile[];
 
-  @Column({ name: 'executed_at', type: 'timestamp' })
+  @Column({ name: 'executed_at', type: 'timestamp', nullable: true })
   public executedAt: Date;
 
-  @Column({ name: 'results_uploaded_at', type: 'timestamp' })
+  @Column({ name: 'results_uploaded_at', type: 'timestamp', nullable: true })
   public resultsUploadedAt: Date;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })

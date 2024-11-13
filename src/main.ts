@@ -9,12 +9,11 @@ async function bootstrap() {
   });
   const options = new DocumentBuilder()
     .setTitle('CEMEVYF Health Orders Service')
-    .setDescription('A service to provide basic management of CEMEVYF health orders')
+    .setDescription('A service to provide basic management of CEMEVYF Health Orders')
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('swagger', app, document);
-
   await app.listen(parseInt(port, 10));
   console.log(`Application is running on: ${await app.getUrl()}`);
 }

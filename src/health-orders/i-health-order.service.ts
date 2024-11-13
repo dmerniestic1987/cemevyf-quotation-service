@@ -19,7 +19,7 @@ export interface IHealthOrderService {
 
   update(id: number, updateQuotationDto: UpdateHealthOrderRequestDto): Promise<HealthOrderResponseDto>;
 
-  sendHealthOrderEMail(
+  sendHealthOrderPrescriptionToClient(
     id: number,
     sendQuotationDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto>;
@@ -34,20 +34,25 @@ export interface IHealthOrderService {
   /**
    * Attach a file to the health order.
    * @param id
-   * @param fileBase64
+   * @param file
+   * @param additionalNotes
+   * @returns id of attached file
    */
-  attachFile(id: number, fileBase64: string): Promise<any>;
+  attachHealthOrderPrescription(id: number, file: Express.Multer.File, additionalNotes: string): Promise<string>;
 
   /**
    * Attach a file to the health order.
    * @param id
-   * @param fileBase64
+   * @param resultFile
+   * @param additionalNotes
+   * @returns id of attached file
    */
-  attachResultFile(id: number, fileBase64: string): Promise<any>;
+  attachResultFile(id: number, resultFile: Express.Multer.File, additionalNotes: string): Promise<string>;
 
   /**
    * Send the results via email.
    * @param id
+   * @returns id of result file
    */
-  sendResultFilesEmail(id: number): Promise<any>;
+  sendHealthOrderResultsToClient(id: number, sendQuotationDto: SendHealthOrderEMailRequestDto): Promise<string>;
 }

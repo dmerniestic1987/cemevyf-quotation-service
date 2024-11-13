@@ -3,7 +3,11 @@ import { CemevyfMessageService } from './cemevyf-message.service';
 import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [HttpModule],
+  imports: [
+    HttpModule.register({
+      timeout: 5000,
+    }),
+  ],
   providers: [CemevyfMessageService],
   exports: [CemevyfMessageService],
 })

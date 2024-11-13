@@ -16,3 +16,5 @@ crypto:
   iv: 'CEK iv'
 serviceConfig:
   messageServiceUrl: http://localhost:3000
+files:
+  maxFileSizeInMb: 5
