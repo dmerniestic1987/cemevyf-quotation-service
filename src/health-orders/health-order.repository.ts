@@ -6,11 +6,12 @@ import { HealthOrderItem } from './health-order-item.entity';
 import { HealthOrder } from './health-order.entity';
 import { HealthOrderStatus } from './types/health-order-status';
 import { HealthOrderFile } from './health-order-file.entity';
-import { HealthOrderResult } from './health-order-result.entity';
+import { HealthOrderFileType } from './types/health-order-file-type';
 
 export interface HealthOrderFileData {
   mimeType: string;
   fileData: Buffer;
+  fileType: HealthOrderFileType;
   additionalNotes?: string;
 }
 
@@ -102,34 +103,12 @@ export class HealthOrderRepository {
       file.fileData = healthOrderFile.fileData;
       file.additionalNotes = healthOrderFile.additionalNotes;
       file.createdAt = new Date();
+      file.fileType = healthOrderFile.fileType || HealthOrderFileType.HEALTH_ORDER_PRESCRIPTION;
 
       healthOrder.healthOrderFiles.push(file);
       file = await entityManager.save(file);
       await entityManager.save(healthOrder);
       return file.id;
-    });
-  }
-
-  async attachHealthResultFile(id: number, healthOrderFile: HealthOrderFileData): Promise<string> {
-    this.logger.debug('Attach result file to health order', { service: HealthOrderRepository.name, id });
-    return await this.dataSource.transaction(async entityManager => {
-      const healthOrder = await entityManager.findOne(HealthOrder, {
-        where: {
-          id: id,
-        },
-        relations: ['healthOrderResults'],
-      });
-      let result = new HealthOrderResult();
-      result.healthOrder = healthOrder;
-      result.fileData = healthOrderFile.fileData;
-      result.mimeType = healthOrderFile.mimeType;
-      result.additionalNotes = healthOrderFile.additionalNotes || null;
-      result.createdAt = new Date();
-
-      healthOrder.healthOrderResults.push(result);
-      result = await entityManager.save(result);
-      await entityManager.save(healthOrder);
-      return result.id;
     });
   }
 }

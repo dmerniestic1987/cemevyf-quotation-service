@@ -35,9 +35,10 @@ export interface IHealthOrderService {
    * Attach a file to the health order.
    * @param id
    * @param file
+   * @param additionalNotes
    * @returns id of attached file
    */
-  attachHealthOrderFile(id: number, file: Express.Multer.File): Promise<string>;
+  attachHealthOrderPrescription(id: number, file: Express.Multer.File, additionalNotes: string): Promise<string>;
 
   /**
    * Attach a file to the health order.

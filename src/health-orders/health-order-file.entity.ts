@@ -1,5 +1,6 @@
 import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { HealthOrder } from './health-order.entity';
+import { HealthOrderFileType } from './types/health-order-file-type';
 
 @Entity({ name: 'health_order_files' })
 export class HealthOrderFile {
@@ -14,6 +15,10 @@ export class HealthOrderFile {
   @ManyToOne(() => HealthOrder, order => order.healthOrderFiles)
   @JoinColumn({ name: 'order_id', referencedColumnName: 'id' })
   public healthOrder: HealthOrder;
+
+  @Column({ name: 'file_type', type: 'enum', enum: HealthOrderFileType })
+  @Index({ unique: false })
+  public fileType: HealthOrderFileType;
 
   @Column({ name: 'file_data', type: 'mediumblob', nullable: true })
   public fileData?: Buffer;

@@ -26,6 +26,7 @@ import {
 import { HealthOrder } from './health-order.entity';
 import { IHealthOrderService } from './i-health-order.service';
 import { HealthOrderStatus } from './types/health-order-status';
+import { HealthOrderFileType } from './types/health-order-file-type';
 
 @Injectable()
 export class HealthOrderService
@@ -170,7 +171,7 @@ export class HealthOrderService
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 
-  async attachHealthOrderFile(orderId: number, file: Express.Multer.File): Promise<string> {
+  async attachHealthOrderPrescription(orderId: number, file: Express.Multer.File, additionalNotes: string): Promise<string> {
     this.logger.log('Attach file to health order', { service: HealthOrderService.name, orderId });
     const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(orderId, []);
     if (healthOrder.status === HealthOrderStatus.RESULTS_DONE) {
@@ -178,21 +179,23 @@ export class HealthOrderService
     }
     return this.healthOrderRepository.attachHealthOrderFile(orderId, {
       fileData: file.buffer,
-      additionalNotes: 'additional notes',
+      additionalNotes,
       mimeType: file.mimetype,
+      fileType: HealthOrderFileType.HEALTH_ORDER_PRESCRIPTION,
     });
   }
 
-  async attachResultFile(id: number, resultFile: Express.Multer.File, additionalNotes: string): Promise<string> {
-    const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(id, []);
+  async attachResultFile(orderId: number, file: Express.Multer.File, additionalNotes: string): Promise<string> {
+    const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(orderId, []);
     if (healthOrder.status !== HealthOrderStatus.EXECUTED) {
       throw healthOrderIncorrectStatusError();
     }
 
-    return this.healthOrderRepository.attachHealthResultFile(id, {
-      fileData: resultFile.buffer,
-      mimeType: resultFile.mimetype,
+    return this.healthOrderRepository.attachHealthOrderFile(orderId, {
+      fileData: file.buffer,
       additionalNotes,
+      mimeType: file.mimetype,
+      fileType: HealthOrderFileType.HEALTH_ORDER_RESULT,
     });
   }
 

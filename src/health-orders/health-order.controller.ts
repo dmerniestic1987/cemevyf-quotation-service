@@ -12,6 +12,7 @@ import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-r
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ParseHealthOrderFilePipeDocument } from '../commons/validator/parse-health-order-file-pipe-document';
 import { AdditionalDataDto } from './dto/additional-data.dto';
+import { inputFileSchema } from './types/input-file-schema';
 
 @ApiTags('health-orders')
 @Controller('health-orders')
@@ -77,30 +78,22 @@ export class HealthOrderController {
   }
 
   @UseInterceptors(FileInterceptor('file'))
-  @Post('/:id/file')
+  @Post('/:id/prescription')
   @ApiOperation({
-    summary: 'Adds a file to a health order. The file could be jpg, png or pdf file',
-    operationId: 'attachHealthOrderFile',
+    summary: 'Adds a prescription file to a health order. The file could be jpg, png or pdf file',
+    operationId: 'attachHealthOrderPrescription',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-        },
-      },
-      required: ['file'],
-    },
+    schema: inputFileSchema,
   })
-  async attachHealthOrderFile(
+  async attachHealthOrderPrescription(
     @Param('id') id: number,
     @UploadedFile(new ParseHealthOrderFilePipeDocument())
     file: Express.Multer.File,
+    @Body() dto: AdditionalDataDto,
   ) {
-    const fileId = await this.healthOrderService.attachHealthOrderFile(id, file);
+    const fileId = await this.healthOrderService.attachHealthOrderPrescription(id, file, dto.additionalNotes);
     return {
       id: fileId,
       filename: file.filename,
@@ -115,21 +108,7 @@ export class HealthOrderController {
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-          default: 'A file with .png, .jpg and .pdf extension is allowed',
-        },
-        additionalNotes: {
-          type: 'string',
-          example: 'We are still pending total Glucose example',
-        },
-      },
-      required: ['file'],
-    },
+    schema: inputFileSchema,
   })
   async attachHealthOrderResult(
     @Param('id') id: number,
