@@ -19,7 +19,7 @@ export interface IHealthOrderService {
 
   update(id: number, updateQuotationDto: UpdateHealthOrderRequestDto): Promise<HealthOrderResponseDto>;
 
-  sendHealthOrderToClient(
+  sendHealthOrderQuotationToClient(
     id: number,
     sendQuotationDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto>;

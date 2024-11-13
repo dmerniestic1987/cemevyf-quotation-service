@@ -74,7 +74,7 @@ export class HealthOrderController {
     @Param('id') id: number,
     @Body() sendDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto> {
-    return this.healthOrderService.sendHealthOrderToClient(id, sendDto);
+    return this.healthOrderService.sendHealthOrderQuotationToClient(id, sendDto);
   }
 
   @UseInterceptors(FileInterceptor('file'))

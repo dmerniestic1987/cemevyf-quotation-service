@@ -8,7 +8,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Client } from '../clients/client.entity';
 import { And, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import {
-  CemevyfMailMessage,
   CemevyfMessageService,
 } from '../external-services/cemevyf-message-service/cemevyf-message.service';
 import { BaseService } from '../commons/service/base-service';
@@ -27,6 +26,7 @@ import { HealthOrder } from './health-order.entity';
 import { IHealthOrderService } from './i-health-order.service';
 import { HealthOrderStatus } from './types/health-order-status';
 import { HealthOrderFileType } from './types/health-order-file-type';
+import { HealthOrderMailUtils } from './health-order-mail-utils';
 
 @Injectable()
 export class HealthOrderService
@@ -70,7 +70,7 @@ export class HealthOrderService
     healthOrder = await this.healthOrderRepository.createHealthOrder(healthOrder);
     let sentMail = false;
     if (client.email) {
-      sentMail = await this.messageService.sendMail(this.toCemevyfMailMessage(client.email, healthOrder));
+      sentMail = await this.messageService.sendMail(HealthOrderMailUtils.toCemevyfMailMessage(client.email, healthOrder));
     }
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder, sentMail);
   }
@@ -143,7 +143,7 @@ export class HealthOrderService
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 
-  async sendHealthOrderToClient(
+  async sendHealthOrderQuotationToClient(
     id: number,
     sendQuotationDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto> {
@@ -153,7 +153,7 @@ export class HealthOrderService
     }
     const quotation = await this.healthOrderRepository.getHealthOrderAndFail(id, ['client', 'healthOrderItems']);
 
-    const sentMail = await this.messageService.sendMail(this.toCemevyfMailMessage(sendQuotationDto.eMail, quotation));
+    const sentMail = await this.messageService.sendMail(HealthOrderMailUtils.toCemevyfMailMessage(sendQuotationDto.eMail, quotation));
     return {
       id,
       channel: sendQuotationDto.channel,
@@ -201,33 +201,5 @@ export class HealthOrderService
 
   sendResultFilesEmail(id: number): Promise<any> {
     throw new NotImplementedException(`Service not implemented ID: ${id}`)
-  }
-
-  private toCemevyfMailMessage(
-    eMail: string,
-    quotation: HealthOrder,
-    subject = 'CEMEVYF - Cotización de estudios médicos',
-  ): CemevyfMailMessage {
-    const items =
-      quotation.healthOrderItems?.map(quotationItem => {
-        return {
-          id: quotationItem.id,
-          code: quotationItem.code,
-          name: quotationItem.name,
-          itemCount: quotationItem.itemCount,
-        };
-      }) || [];
-    return {
-      to: eMail || quotation.client.email,
-      subject,
-      context: {
-        clientFirstName: quotation.client.firstName,
-        clientLastName: quotation.client.lastName,
-        createdAt: quotation.createdAt.toDateString(),
-        quotationId: quotation.id,
-        totalAmount: quotation.totalAmount,
-        items,
-      },
-    };
   }
 }
