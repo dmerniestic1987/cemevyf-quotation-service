@@ -6,6 +6,7 @@ import { ClientService } from './client.service';
 import { CreateClientResponseDto } from './dto/create-client-response.dto';
 import { ClientResponseDto } from './dto/client-response.dto';
 import { FilterClientDto } from './dto/filter-client.dto';
+import { ClientRequestDto } from './dto/client-request.dto';
 
 @ApiTags('Clients')
 @Controller('clients')
@@ -19,7 +20,7 @@ export class ClientController {
     type: CreateClientResponseDto,
   })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Conflict' })
-  async createClient(@Body() createClientDto: ClientResponseDto): Promise<CreateClientResponseDto> {
+  async createClient(@Body() createClientDto: ClientRequestDto): Promise<CreateClientResponseDto> {
     return this.clientService.create(createClientDto);
   }
 
