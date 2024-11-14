@@ -73,15 +73,15 @@ export class HealthOrderRepository {
     }
   }
 
-  async executeOrder(id: number): Promise<HealthOrder> {
-    this.logger.debug('Execute Health Order', { service: HealthOrderRepository.name, id });
+  async updateHealthOrderStatus(id: number, newStatus = HealthOrderStatus.QUOTED): Promise<HealthOrder> {
+    this.logger.debug('Update Health Order status', { service: HealthOrderRepository.name, id });
     return await this.dataSource.transaction(async entityManager => {
       const healthOrder = await entityManager.findOne(HealthOrder, {
         where: {
           id,
         },
       });
-      healthOrder.status = HealthOrderStatus.EXECUTED;
+      healthOrder.status = newStatus;
       healthOrder.executedAt = new Date();
       await entityManager.save(healthOrder);
       return healthOrder;

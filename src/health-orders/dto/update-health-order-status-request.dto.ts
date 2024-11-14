@@ -7,7 +7,7 @@ export class UpdateHealthOrderStatusRequestDto {
     description: 'The health order status',
     required: true,
     example: HealthOrderStatus.PENDING_RESULTS,
-    default: HealthOrderStatus.EXECUTED,
+    enum: HealthOrderStatus,
   })
   @IsEnum(HealthOrderStatus)
   public status: HealthOrderStatus;
