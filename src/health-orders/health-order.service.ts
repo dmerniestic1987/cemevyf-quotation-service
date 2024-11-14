@@ -163,7 +163,7 @@ export class HealthOrderService
     };
   }
 
-  async execute(id: number): Promise<HealthOrderResponseDto> {
+  async updateHealthOrderStatus(id: number, newStatus: HealthOrderStatus = HealthOrderStatus.QUOTED): Promise<HealthOrderResponseDto> {
     this.logger.log('Execute order', { service: HealthOrderService.name, id });
     let healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(id, []);
     if (healthOrder.status !== HealthOrderStatus.QUOTED) {

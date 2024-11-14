@@ -1,6 +1,6 @@
 export enum HealthOrderStatus {
-  QUOTED = 1,
-  EXECUTED = 2,
-  PENDING_RESULTS = 3,
-  RESULTS_DONE = 4,
+  QUOTED = 'quoted',
+  EXECUTED = 'executed',
+  PENDING_RESULTS = 'pending_results',
+  RESULTS_DONE = 'results_done',
 }
