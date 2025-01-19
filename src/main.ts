@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-const { port, logLevel } = require('config');
+const { port, logLevel, cors } = require('config');
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -14,6 +14,10 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('swagger', app, document);
+  app.enableCors({
+    origin: cors.allowedOrigins.split(','),
+    methods: ["GET", "POST", "PUT"],
+  }),
   await app.listen(parseInt(port, 10));
   console.log(`Application is running on: ${await app.getUrl()}`);
 }
