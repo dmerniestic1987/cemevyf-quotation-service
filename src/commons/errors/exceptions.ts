@@ -11,3 +11,11 @@ export const featureNotImplementedError = (msg = 'Feature Not Implemented') => {
 export const notFoundError = (msg = 'Entity not found') => {
   return new HttpException({ message: msg, code: 'NOT_FOUND_ERROR' }, HttpStatus.NOT_FOUND);
 };
+
+export const healthOrderIncorrectStatusError = (msg = 'Health order not in correct status') => {
+  return new HttpException({ message: msg, code: 'INCORRECT_STATUS_ERROR' }, HttpStatus.BAD_REQUEST);
+};
+
+export const resourceAlreadyExist = (msg = 'Resource already exists') => {
+  return new HttpException({ message: msg, code: 'RESOURCE_ALREADY_EXISTS' }, HttpStatus.CONFLICT);
+};

@@ -1,9 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsNumber } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsNumber, IsString } from 'class-validator';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
-import { ItemQuotationRequestDto } from './item-quotation-request.dto';
+import { ItemHealthOrderRequestDto } from './item-health-order-request.dto';
 
-export class UpdateQuotationRequestDto {
+export class CreateHealthOrderRequestDto {
+  @ApiProperty({
+    description: 'The ID of the client',
+    required: true,
+    example: '14e7b437-3c5c-44a6-8d99-a0fab3ef6c40',
+  })
+  @IsString()
+  @IsEmail()
+  clientId: string;
+
   @ApiProperty({
     description: 'total amount of quotation computed by client',
     required: false,
@@ -28,8 +37,8 @@ export class UpdateQuotationRequestDto {
     description: 'The list of items',
     required: true,
     minLength: 0,
-    type: [ItemQuotationRequestDto],
+    type: [ItemHealthOrderRequestDto],
   })
   @IsArray()
-  public quotationItems: ItemQuotationRequestDto[];
+  public quotationItems: ItemHealthOrderRequestDto[];
 }

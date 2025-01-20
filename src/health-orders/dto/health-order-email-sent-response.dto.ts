@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MessageChannelEnum } from '../../commons/types/message-channel.enum';
 
-export class QuotationSentMessageResponseDto {
+export class HealthOrderEmailSentResponseDto {
   @ApiProperty({
     description: `Quotation ID`,
     example: 12001,

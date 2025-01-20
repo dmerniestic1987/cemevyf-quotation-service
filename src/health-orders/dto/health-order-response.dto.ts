@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
-import { ItemQuotationResponseDto } from './item-quotation-response.dto';
+import { ItemHealthOrderResponseDto } from './item-health-order-response.dto';
+import { HealthOrderStatus } from '../types/health-order-status';
 
-export class QuotationResponseDto {
+export class HealthOrderResponseDto {
   @ApiProperty({
     description: `Quotation ID`,
     example: 12001,
@@ -14,6 +15,12 @@ export class QuotationResponseDto {
     example: 4,
   })
   public currency: CurrencyEnum;
+
+  @ApiProperty({
+    description: 'The status of the quotation',
+    example: HealthOrderStatus.QUOTED,
+  })
+  public status: HealthOrderStatus;
 
   @ApiProperty({
     description: 'The total amount of the the quotation',
@@ -30,5 +37,11 @@ export class QuotationResponseDto {
   @ApiProperty({
     description: 'The list of items',
   })
-  public items?: ItemQuotationResponseDto[];
+  public items?: ItemHealthOrderResponseDto[];
+
+  @ApiProperty({
+    description: 'True if e-mail was sent to the client',
+    example: true,
+  })
+  public sentMail?: boolean;
 }

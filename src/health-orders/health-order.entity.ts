@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -10,29 +11,41 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { CurrencyEnum } from '../commons/types/currency.enum';
-import { QuotationItem } from './quotation-item.entity';
+import { HealthOrderItem } from './health-order-item.entity';
 import { Client } from '../clients/client.entity';
+import { HealthOrderStatus } from './types/health-order-status';
+import { HealthOrderFile } from './health-order-file.entity';
 
-@Entity({ name: 'quotations' })
-export class Quotation {
+@Entity({ name: 'health_orders' })
+export class HealthOrder {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   public id: number;
 
-  @ManyToOne(() => Client, client => client.quotations)
+  @Index({ unique: false })
+  @Column('enum', { name: 'status', enum: HealthOrderStatus, default: HealthOrderStatus.QUOTED })
+  public status: HealthOrderStatus;
+
+  @ManyToOne(() => Client, client => client.healthOrders)
   @JoinColumn({ name: 'client_id', referencedColumnName: 'id' })
   client: Client;
 
   @Column('decimal', { precision: 14, scale: 2, name: 'total_amount' })
   public totalAmount: number;
 
-  @Column('varchar')
-  public eMail: string;
-
   @Column('enum', { name: 'currency', enum: CurrencyEnum, default: CurrencyEnum.ARS })
   public currency: CurrencyEnum;
 
-  @OneToMany(() => QuotationItem, item => item.quotation)
-  public quotationItems: QuotationItem[];
+  @OneToMany(() => HealthOrderItem, item => item.healthOrder)
+  public healthOrderItems: HealthOrderItem[];
+
+  @OneToMany(() => HealthOrderFile, item => item.healthOrder)
+  public healthOrderFiles: HealthOrderFile[];
+
+  @Column({ name: 'executed_at', type: 'timestamp', nullable: true })
+  public executedAt: Date;
+
+  @Column({ name: 'results_uploaded_at', type: 'timestamp', nullable: true })
+  public resultsUploadedAt: Date;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   public createdAt: Date;
