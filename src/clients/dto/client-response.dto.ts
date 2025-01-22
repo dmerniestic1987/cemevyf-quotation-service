@@ -45,6 +45,14 @@ export class ClientResponseDto {
   personId: string;
 
   @ApiProperty({
+    description: 'Phone number',
+    required: false,
+    example: '1158386983',
+  })
+  @IsString()
+  phoneNumber: string;
+
+  @ApiProperty({
     description: 'The ID in external system',
     required: false,
     example: 'A847809',

@@ -9,8 +9,7 @@ export class ClientEntityDtoMapper {
       personIdType: client.personIdType,
       firstName: client.firstName,
       lastName: client.lastName,
-      externalId: client.externalId,
-      booklyId: client.booklyId,
+      phoneNumber: client.phoneNumber,
       email: client.email,
     };
   }

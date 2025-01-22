@@ -42,6 +42,7 @@ export class ClientService extends BaseService<HealthOrder, ClientResponseDto> {
     client.externalId = clientDto.externalId;
     client.booklyId = clientDto.booklyId;
     client.email = clientDto.email;
+    client.phoneNumber = clientDto.phoneNumber;
     client = await this.clientsRepository.save(client);
     return {
       id: client.id,
