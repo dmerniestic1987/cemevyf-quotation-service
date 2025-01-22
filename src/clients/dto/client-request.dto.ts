@@ -1,16 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsString, IsUUID } from 'class-validator';
+import { IsEmail, IsEnum, IsPhoneNumber, IsString } from 'class-validator';
 import { IdTypeEnum } from '../../commons/types/id-type.enum';
 
-export class ClientResponseDto {
-  @ApiProperty({
-    description: 'The ID',
-    required: true,
-    example: 'd5b13516-0557-4ca1-96f5-a6eeedec5472',
-  })
-  @IsUUID()
-  id: string;
-
+export class ClientRequestDto {
   @ApiProperty({
     description: 'The first name',
     required: true,
@@ -45,6 +37,22 @@ export class ClientResponseDto {
   personId: string;
 
   @ApiProperty({
+    description: 'The ID in external system',
+    required: false,
+    example: 'A847809',
+  })
+  @IsString()
+  externalId?: string;
+
+  @ApiProperty({
+    description: 'The ID in Bookly system',
+    required: false,
+    example: '88847809',
+  })
+  @IsString()
+  booklyId?: string;
+
+  @ApiProperty({
     description: 'The email of the client',
     required: false,
     example: 'example@hola.com',
@@ -55,8 +63,7 @@ export class ClientResponseDto {
   @ApiProperty({
     description: 'The phone number of the client',
     required: false,
-    example: '1158586969',
+    example: '1155667788',
   })
-  @IsEmail()
   phoneNumber?: string;
 }

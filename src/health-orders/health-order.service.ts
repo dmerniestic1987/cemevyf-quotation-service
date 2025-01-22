@@ -22,7 +22,7 @@ import {
 } from '../commons/errors/exceptions';
 import { HealthOrder } from './health-order.entity';
 import { IHealthOrderService } from './i-health-order.service';
-import { HealthOrderStatus } from './types/health-order-status';
+import { HealthOrderStatus, nextStatusMap } from './types/health-order-status';
 import { HealthOrderFileType } from './types/health-order-file-type';
 import { HealthOrderMailUtils } from './health-order-mail-utils';
 
@@ -163,13 +163,14 @@ export class HealthOrderService
     };
   }
 
-  async execute(id: number): Promise<HealthOrderResponseDto> {
-    this.logger.log('Execute order', { service: HealthOrderService.name, id });
+  async updateHealthOrderStatus(id: number, newStatus: HealthOrderStatus = HealthOrderStatus.QUOTED): Promise<HealthOrderResponseDto> {
+    this.logger.log('Update health order status', { service: HealthOrderService.name, id, newStatus });
     let healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(id, []);
-    if (healthOrder.status !== HealthOrderStatus.QUOTED) {
+    const expectedNewStatus =  nextStatusMap.get(healthOrder.status);
+    if (newStatus !== expectedNewStatus) {
       throw healthOrderIncorrectStatusError();
     }
-    healthOrder = await this.healthOrderRepository.executeOrder(id);
+    healthOrder = await this.healthOrderRepository.updateHealthOrderStatus(id, newStatus);
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 

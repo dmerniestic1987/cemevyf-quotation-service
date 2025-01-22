@@ -11,6 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { FilterClientDto } from './dto/filter-client.dto';
 import { ClientEntityDtoMapper } from './dto/mapper/client-entity-dto-mapper';
+import { ClientRequestDto } from './dto/client-request.dto';
 
 @Injectable()
 export class ClientService extends BaseService<HealthOrder, ClientResponseDto> {
@@ -22,7 +23,7 @@ export class ClientService extends BaseService<HealthOrder, ClientResponseDto> {
     super();
   }
 
-  async create(clientDto: ClientResponseDto): Promise<CreateClientResponseDto> {
+  async create(clientDto: ClientRequestDto): Promise<CreateClientResponseDto> {
     this.logger.debug('Create Client', { service: ClientService.name, clientDto });
     let client: Client = await this.clientsRepository.findOne({
       where: {
@@ -42,6 +43,7 @@ export class ClientService extends BaseService<HealthOrder, ClientResponseDto> {
     client.externalId = clientDto.externalId;
     client.booklyId = clientDto.booklyId;
     client.email = clientDto.email;
+    client.phoneNumber = clientDto.phoneNumber;
     client = await this.clientsRepository.save(client);
     return {
       id: client.id,
