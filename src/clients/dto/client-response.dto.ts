@@ -45,26 +45,18 @@ export class ClientResponseDto {
   personId: string;
 
   @ApiProperty({
-    description: 'The ID in external system',
-    required: false,
-    example: 'A847809',
-  })
-  @IsString()
-  externalId?: string;
-
-  @ApiProperty({
-    description: 'The ID in Bookly system',
-    required: false,
-    example: '88847809',
-  })
-  @IsString()
-  booklyId?: string;
-
-  @ApiProperty({
     description: 'The email of the client',
     required: false,
     example: 'example@hola.com',
   })
   @IsEmail()
   email?: string;
+
+  @ApiProperty({
+    description: 'The phone number of the client',
+    required: false,
+    example: '1158586969',
+  })
+  @IsEmail()
+  phoneNumber?: string;
 }
