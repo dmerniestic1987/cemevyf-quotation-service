@@ -108,7 +108,7 @@ export class HealthOrderService
       pageOptionsDto,
       this.healthOrderRepository.getRepository(),
       where,
-      undefined,
+      ['client'],
       HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto,
     );
   }

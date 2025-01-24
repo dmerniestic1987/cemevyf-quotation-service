@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsPhoneNumber, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsString } from 'class-validator';
 import { IdTypeEnum } from '../../commons/types/id-type.enum';
 
 export class ClientRequestDto {

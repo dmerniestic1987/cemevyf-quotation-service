@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
 import { ItemHealthOrderResponseDto } from './item-health-order-response.dto';
 import { HealthOrderStatus } from '../types/health-order-status';
+import { HealthOrderClientDto } from './health-order-client.dto';
 
 export class HealthOrderResponseDto {
   @ApiProperty({
@@ -35,9 +36,20 @@ export class HealthOrderResponseDto {
   public createdAt: string;
 
   @ApiProperty({
+    description: 'Execution date in ISO 8601 format',
+    example: '2025-05-30T00:00:00.000Z',
+  })
+  public executedAt: string;
+
+  @ApiProperty({
     description: 'The list of items',
   })
   public items?: ItemHealthOrderResponseDto[];
+
+  @ApiProperty({
+    description: 'The client who requested the health order',
+  })
+  public client?: HealthOrderClientDto;
 
   @ApiProperty({
     description: 'True if e-mail was sent to the client',
