@@ -21,7 +21,7 @@ async function bootstrap() {
   }
   app.enableCors({
     origin: cors.allowedOrigins.split(','),
-    methods: ["GET", "POST", "PUT"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   }),
   await app.listen(parseInt(port, 10));
   console.log(`Application is running on: ${await app.getUrl()}`);

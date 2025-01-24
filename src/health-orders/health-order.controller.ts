@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { CreateHealthOrderRequestDto } from './dto/create-health-order-request.dto';
 import { ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { HealthOrderResponseDto } from './dto/health-order-response.dto';
@@ -27,7 +27,7 @@ export class HealthOrderController {
     return this.healthOrderService.create(createProviderDto);
   }
 
-  @Put('/:id/status')
+  @Patch('/:id/status')
   @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({
     summary: 'Updates the status of the order',
