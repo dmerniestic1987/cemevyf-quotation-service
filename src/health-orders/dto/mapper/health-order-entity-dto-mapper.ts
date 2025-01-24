@@ -11,6 +11,7 @@ export class HealthOrderEntityDtoMapper {
     dto.currency = quotation.currency;
     dto.totalAmount = quotation.totalAmount;
     dto.createdAt = quotation.createdAt.toISOString();
+    dto.executedAt = quotation.executedAt ? quotation.executedAt.toISOString() : undefined;
     dto.sentMail = sentMail;
     dto.status = quotation.status;
     if (quotation.healthOrderItems) {

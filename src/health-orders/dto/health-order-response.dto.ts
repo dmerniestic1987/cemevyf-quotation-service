@@ -35,6 +35,12 @@ export class HealthOrderResponseDto {
   public createdAt: string;
 
   @ApiProperty({
+    description: 'Execution date in ISO 8601 format',
+    example: '2025-05-30T00:00:00.000Z',
+  })
+  public executedAt: string;
+
+  @ApiProperty({
     description: 'The list of items',
   })
   public items?: ItemHealthOrderResponseDto[];
