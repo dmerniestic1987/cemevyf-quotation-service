@@ -3,6 +3,7 @@ import { ItemHealthOrderResponseDto } from '../item-health-order-response.dto';
 import { HealthOrderItem } from '../../health-order-item.entity';
 import { ItemHealthOrderRequestDto } from '../item-health-order-request.dto';
 import { HealthOrder } from '../../health-order.entity';
+import { HealthOrderClientDto } from '../health-order-client.dto';
 
 export class HealthOrderEntityDtoMapper {
   public static healthOrderEntityToResponseDto(quotation: HealthOrder, sentMail = undefined): HealthOrderResponseDto {
@@ -24,6 +25,14 @@ export class HealthOrderEntityDtoMapper {
         itemDto.totalPrice = (quotationItem.unitPrice * itemDto.itemCount).toString();
         return itemDto;
       });
+    }
+
+    if (quotation.client) {
+      dto.client = new HealthOrderClientDto(
+        quotation.client.id,
+        quotation.client.firstName,
+        quotation.client.lastName
+      );
     }
 
     return dto;
