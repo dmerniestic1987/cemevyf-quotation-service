@@ -6,6 +6,7 @@ import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { UpdateHealthOrderRequestDto } from './dto/update-health-order-request.dto';
 import { SendHealthOrderEMailRequestDto } from './dto/send-health-order-e-mail-request.dto';
 import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-response.dto';
+import { HealthOrderStatus } from './types/health-order-status';
 
 export interface IHealthOrderService {
   create(orderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto>;
@@ -28,8 +29,9 @@ export interface IHealthOrderService {
    * The health order transitions to an executed state when a professional carries out the procedures associated
    * with the order.
    * @param id
+   * @param newStatus
    */
-  execute(id: number): Promise<any>;
+  updateHealthOrderStatus(id: number, newStatus: HealthOrderStatus): Promise<any>;
 
   /**
    * Attach a file to the health order.

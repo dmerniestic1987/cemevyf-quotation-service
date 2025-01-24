@@ -5,6 +5,7 @@ import { PageResponseDto } from '../dto/page-response.dto';
 import { PageMetaDataDto } from '../dto/page-meta-data.dto';
 
 @Injectable()
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export class BaseService<T, U> {
   async findAndPaginate<T, V>(
     pageOptionsDto: PageOptionsDto,

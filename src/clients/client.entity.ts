@@ -35,6 +35,9 @@ export class Client {
   @Column({ name: 'e_mail', nullable: true })
   public email: string;
 
+  @Column({ name: 'phone_number', nullable: true })
+  public phoneNumber: string;
+
   @OneToMany(() => HealthOrder, healthOrder => healthOrder.client)
   public healthOrders: HealthOrder[];
 

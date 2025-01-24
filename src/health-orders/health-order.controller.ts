@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { CreateHealthOrderRequestDto } from './dto/create-health-order-request.dto';
 import { ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { HealthOrderResponseDto } from './dto/health-order-response.dto';
@@ -13,6 +13,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ParseHealthOrderFilePipeDocument } from '../commons/validator/parse-health-order-file-pipe-document';
 import { AdditionalDataDto } from './dto/additional-data.dto';
 import { inputFileSchema } from './types/input-file-schema';
+import { UpdateHealthOrderStatusRequestDto } from './dto/update-health-order-status-request.dto';
 
 @ApiTags('health-orders')
 @Controller('health-orders')
@@ -26,12 +27,18 @@ export class HealthOrderController {
     return this.healthOrderService.create(createProviderDto);
   }
 
-  @Post('/:id/execution')
+  @Patch('/:id/status')
   @ApiParam({ type: 'number', name: 'id' })
-  @ApiOperation({ summary: 'Marks a health order as executed', operationId: 'executeHealthOrder' })
+  @ApiOperation({
+    summary: 'Updates the status of the order',
+    operationId: 'updateHealthOrderStatus',
+    description:
+      'The health orders have four possible statuses: quoted, executed, results pending, and results ready. This endpoint validates and updates an order',
+  })
   @ApiOkResponse({ type: HealthOrderResponseDto })
-  async executeHealthOrder(@Param('id') id: number): Promise<HealthOrderResponseDto> {
-    return this.healthOrderService.execute(id);
+  async updateHealthOrderStatus(
+    @Param('id') id: number, @Body() updateStatusDto: UpdateHealthOrderStatusRequestDto): Promise<HealthOrderResponseDto> {
+    return this.healthOrderService.updateHealthOrderStatus(id, updateStatusDto.status);
   }
 
   @Get()
@@ -63,34 +70,6 @@ export class HealthOrderController {
     return this.healthOrderService.update(id, updateQuotationDto);
   }
 
-  @Post('/:id/prescription/e-mail')
-  @ApiParam({ type: 'number', name: 'id' })
-  @ApiOperation({
-    summary: 'Send a e-mail with health order prescription to the client',
-    operationId: 'sendHealthOrderPrescriptionToClient',
-  })
-  @ApiOkResponse({ type: HealthOrderEmailSentResponseDto })
-  async sendHealthOrderPrescriptionToClient(
-    @Param('id') id: number,
-    @Body() sendDto: SendHealthOrderEMailRequestDto,
-  ): Promise<HealthOrderEmailSentResponseDto> {
-    return this.healthOrderService.sendHealthOrderPrescriptionToClient(id, sendDto);
-  }
-
-  @Post('/:id/results/e-mail')
-  @ApiParam({ type: 'number', name: 'id' })
-  @ApiOperation({
-    summary: 'Send a e-mail with health order results to the client',
-    operationId: 'sendHealthOrderResultsToClient',
-  })
-  @ApiOkResponse({ type: HealthOrderEmailSentResponseDto })
-  async sendHealthOrderResultsToClient(
-    @Param('id') id: number,
-    @Body() sendDto: SendHealthOrderEMailRequestDto,
-  ): Promise<HealthOrderEmailSentResponseDto> {
-    return this.healthOrderService.sendHealthOrderResultsToClient(id, sendDto);
-  }
-
   @UseInterceptors(FileInterceptor('file'))
   @Post('/:id/prescription')
   @ApiOperation({
@@ -114,6 +93,20 @@ export class HealthOrderController {
     };
   }
 
+  @Post('/:id/prescription/e-mail')
+  @ApiParam({ type: 'number', name: 'id' })
+  @ApiOperation({
+    summary: 'Send a e-mail with health order prescription to the client',
+    operationId: 'sendHealthOrderPrescriptionToClient',
+  })
+  @ApiOkResponse({ type: HealthOrderEmailSentResponseDto })
+  async sendHealthOrderPrescriptionToClient(
+    @Param('id') id: number,
+    @Body() sendDto: SendHealthOrderEMailRequestDto,
+  ): Promise<HealthOrderEmailSentResponseDto> {
+    return this.healthOrderService.sendHealthOrderPrescriptionToClient(id, sendDto);
+  }
+
   @UseInterceptors(FileInterceptor('file'))
   @Post('/:id/results')
   @ApiOperation({
@@ -135,5 +128,19 @@ export class HealthOrderController {
       id: fileId,
       filename: file.filename,
     };
+  }
+
+  @Post('/:id/results/e-mail')
+  @ApiParam({ type: 'number', name: 'id' })
+  @ApiOperation({
+    summary: 'Send a e-mail with health order results to the client',
+    operationId: 'sendHealthOrderResultsToClient',
+  })
+  @ApiOkResponse({ type: HealthOrderEmailSentResponseDto })
+  async sendHealthOrderResultsToClient(
+    @Param('id') id: number,
+    @Body() sendDto: SendHealthOrderEMailRequestDto,
+  ): Promise<HealthOrderEmailSentResponseDto> {
+    return this.healthOrderService.sendHealthOrderResultsToClient(id, sendDto);
   }
 }
