@@ -15,7 +15,7 @@ crypto:
   encryptionKey: 'CEMEVYF encryption key'
   iv: 'CEK iv'
 serviceConfig:
-  messageServiceUrl: http://localhost:6000
+  messageServiceUrl: http://localhost:9800
 files:
   maxFileSizeInMb: 5
 cors:

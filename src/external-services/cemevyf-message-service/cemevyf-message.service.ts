@@ -7,6 +7,7 @@ export interface CemevyfMailMessage {
   to: string;
   subject: string;
   context: any;
+  template: string;
 }
 
 @Injectable()

@@ -1,5 +1,6 @@
 import { HealthOrder } from './health-order.entity';
 import { CemevyfMailMessage } from '../external-services/cemevyf-message-service/cemevyf-message.service';
+import { FormatUtils } from '../utils/format-utils';
 
 export class HealthOrderMailUtils {
   public static toCemevyfMailMessage(
@@ -19,12 +20,13 @@ export class HealthOrderMailUtils {
     return {
       to: eMail || quotation.client.email,
       subject,
+      template: 'health-order-quotation-client',
       context: {
         clientFirstName: quotation.client.firstName,
         clientLastName: quotation.client.lastName,
-        createdAt: quotation.createdAt.toDateString(),
+        createdAt: quotation.createdAt.toLocaleString(),
         quotationId: quotation.id,
-        totalAmount: quotation.totalAmount,
+        totalAmount: FormatUtils.formatCurrency(quotation.totalAmount || 0),
         items,
       },
     };
