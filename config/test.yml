@@ -3,3 +3,5 @@ typeOrm:
   password: my-secret-pw
   database: health_orders_test
 logLevel: log
+files:
+  uploadDir: /tmp/cemevyf-uploaded-files-test

@@ -7,6 +7,8 @@ import { UpdateHealthOrderRequestDto } from './dto/update-health-order-request.d
 import { SendHealthOrderEMailRequestDto } from './dto/send-health-order-e-mail-request.dto';
 import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-response.dto';
 import { HealthOrderStatus } from './types/health-order-status';
+import { HealthOrderFileResponseDto } from './dto/health-order-file-response.dto';
+import { HealthOrderFileDownload } from './types/health-order-file-download';
 
 export interface IHealthOrderService {
   create(orderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto>;
@@ -50,6 +52,18 @@ export interface IHealthOrderService {
    * @returns id of attached file
    */
   attachResultFile(id: number, resultFile: Express.Multer.File, additionalNotes: string): Promise<string>;
+
+  /**
+   * Lists the metadata of the files attached to the health order.
+   */
+  findOrderFiles(id: number): Promise<HealthOrderFileResponseDto[]>;
+
+  /**
+   * Opens an attached file for download.
+   * @param id health order id
+   * @param fileId id of the attached file
+   */
+  downloadOrderFile(id: number, fileId: string): Promise<HealthOrderFileDownload>;
 
   /**
    * Send the results via email.

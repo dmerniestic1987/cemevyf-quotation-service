@@ -1,4 +1,5 @@
-import { Injectable, Logger, NotImplementedException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotImplementedException } from '@nestjs/common';
+import { createHash } from 'crypto';
 import { HealthOrderRepository } from './health-order.repository';
 import { CreateHealthOrderRequestDto } from './dto/create-health-order-request.dto';
 import { HealthOrderResponseDto } from './dto/health-order-response.dto';
@@ -22,9 +23,15 @@ import {
 } from '../commons/errors/exceptions';
 import { HealthOrder } from './health-order.entity';
 import { IHealthOrderService } from './i-health-order.service';
-import { HealthOrderStatus, nextStatusMap } from './types/health-order-status';
+import { HealthOrderStatus } from './types/health-order-status';
 import { HealthOrderFileType } from './types/health-order-file-type';
 import { HealthOrderMailUtils } from './health-order-mail-utils';
+import { ItemHealthOrderRequestDto } from './dto/item-health-order-request.dto';
+import { computeTotal } from '../commons/utils/money';
+import { FILE_STORAGE, FileStorage } from '../commons/file-storage/file-storage';
+import { detectFileType } from '../commons/file-storage/detect-file-type';
+import { HealthOrderFileResponseDto } from './dto/health-order-file-response.dto';
+import { HealthOrderFileDownload } from './types/health-order-file-download';
 
 @Injectable()
 export class HealthOrderService
@@ -37,6 +44,8 @@ export class HealthOrderService
     @InjectRepository(Client)
     private readonly clientsRepository: Repository<Client>,
     private readonly messageService: CemevyfMessageService,
+    @Inject(FILE_STORAGE)
+    private readonly fileStorage: FileStorage,
   ) {
     super();
   }
@@ -54,16 +63,9 @@ export class HealthOrderService
     }
 
     let healthOrder: HealthOrder = new HealthOrder();
-    healthOrder.totalAmount = Number(orderDto.totalAmount); //TODO: Transform to BigDecimal
     healthOrder.currency = orderDto.currency;
-    healthOrder.healthOrderItems = [];
     healthOrder.client = client;
-    orderDto.quotationItems.forEach((itemDto, itemIndex) => {
-      const item = HealthOrderEntityDtoMapper.healthOrderItemRequestDtoToItemDto(itemDto, itemIndex);
-      item.healthOrder = healthOrder;
-      item.orderId = healthOrder.id;
-      healthOrder.healthOrderItems.push(item);
-    });
+    this.setHealthOrderItems(healthOrder, orderDto.quotationItems);
 
     healthOrder = await this.healthOrderRepository.createHealthOrder(healthOrder);
     let sentMail = false;
@@ -122,24 +124,16 @@ export class HealthOrderService
   async update(id: number, updateDto: UpdateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
     this.logger.log('Update Health Order', { service: HealthOrderService.name, id });
     let healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(id);
-    if (updateDto.totalAmount) {
-      healthOrder.totalAmount = Number(updateDto.totalAmount);
-    }
     if (updateDto.currency) {
       healthOrder.currency = updateDto.currency;
     }
 
-    if (updateDto.orderItems) {
-      healthOrder.healthOrderItems = [];
-      updateDto.orderItems.forEach((itemDto, itemIndex) => {
-        const quotationItem = HealthOrderEntityDtoMapper.healthOrderItemRequestDtoToItemDto(itemDto, itemIndex);
-        quotationItem.healthOrder = healthOrder;
-        quotationItem.orderId = healthOrder.id;
-        healthOrder.healthOrderItems.push(quotationItem);
-      });
+    const replaceItems = Boolean(updateDto.orderItems);
+    if (replaceItems) {
+      this.setHealthOrderItems(healthOrder, updateDto.orderItems);
     }
 
-    healthOrder = await this.healthOrderRepository.updateHealthOrder(healthOrder);
+    healthOrder = await this.healthOrderRepository.updateHealthOrder(healthOrder, replaceItems);
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 
@@ -163,14 +157,9 @@ export class HealthOrderService
     };
   }
 
-  async updateHealthOrderStatus(id: number, newStatus: HealthOrderStatus = HealthOrderStatus.QUOTED): Promise<HealthOrderResponseDto> {
+  async updateHealthOrderStatus(id: number, newStatus: HealthOrderStatus): Promise<HealthOrderResponseDto> {
     this.logger.log('Update health order status', { service: HealthOrderService.name, id, newStatus });
-    let healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(id, []);
-    const expectedNewStatus =  nextStatusMap.get(healthOrder.status);
-    if (newStatus !== expectedNewStatus) {
-      throw healthOrderIncorrectStatusError();
-    }
-    healthOrder = await this.healthOrderRepository.updateHealthOrderStatus(id, newStatus);
+    const healthOrder = await this.healthOrderRepository.updateHealthOrderStatus(id, newStatus);
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 
@@ -184,12 +173,7 @@ export class HealthOrderService
     if (healthOrder.status === HealthOrderStatus.RESULTS_DONE) {
       throw healthOrderIncorrectStatusError();
     }
-    return this.healthOrderRepository.attachHealthOrderFile(orderId, {
-      fileData: file.buffer,
-      additionalNotes,
-      mimeType: file.mimetype,
-      fileType: HealthOrderFileType.HEALTH_ORDER_PRESCRIPTION,
-    });
+    return this.storeAndAttachFile(orderId, file, additionalNotes, HealthOrderFileType.HEALTH_ORDER_PRESCRIPTION);
   }
 
   async attachResultFile(orderId: number, file: Express.Multer.File, additionalNotes: string): Promise<string> {
@@ -198,18 +182,76 @@ export class HealthOrderService
     if (healthOrder.status !== HealthOrderStatus.EXECUTED) {
       throw healthOrderIncorrectStatusError();
     }
+    return this.storeAndAttachFile(orderId, file, additionalNotes, HealthOrderFileType.HEALTH_ORDER_RESULT);
+  }
 
-    return this.healthOrderRepository.attachHealthOrderFile(orderId, {
-      fileData: file.buffer,
-      additionalNotes,
-      mimeType: file.mimetype,
-      fileType: HealthOrderFileType.HEALTH_ORDER_RESULT,
-    });
+  async findOrderFiles(orderId: number): Promise<HealthOrderFileResponseDto[]> {
+    this.logger.debug('Find health order files', { service: HealthOrderService.name, orderId });
+    await this.healthOrderRepository.getHealthOrderAndFail(orderId, []);
+    const files = await this.healthOrderRepository.findHealthOrderFiles(orderId);
+    return files.map(HealthOrderEntityDtoMapper.healthOrderFileToResponseDto);
+  }
+
+  async downloadOrderFile(orderId: number, fileId: string): Promise<HealthOrderFileDownload> {
+    this.logger.debug('Download health order file', { service: HealthOrderService.name, orderId, fileId });
+    const file = await this.healthOrderRepository.findHealthOrderFile(orderId, fileId);
+    if (!file) {
+      throw notFoundError(`File ID: ${fileId} was not found in Health Order ID: ${orderId}`);
+    }
+    return {
+      stream: await this.fileStorage.createReadStream(file.storedFileName),
+      mimeType: file.mimeType,
+      originalName: file.originalName,
+      sizeBytes: file.sizeBytes,
+    };
   }
 
   sendHealthOrderResultsToClient(id: number, sendQuotationDto: SendHealthOrderEMailRequestDto): Promise<any> {
     //TODO: implement
     this.logger.log('Send health order results', { service: HealthOrderService.name, id, sendQuotationDto });
     throw new NotImplementedException(`Service not implemented ID: ${id}`);
+  }
+
+  /**
+   * Writes the file to the storage and registers it in the database. If the registration fails the stored file is
+   * removed, so no orphan file is left on disk.
+   */
+  private async storeAndAttachFile(
+    orderId: number,
+    file: Express.Multer.File,
+    additionalNotes: string,
+    fileType: HealthOrderFileType,
+  ): Promise<string> {
+    const detectedType = detectFileType(file.buffer);
+    const storedFileName = await this.fileStorage.save(file.buffer, detectedType.extension);
+    try {
+      return await this.healthOrderRepository.attachHealthOrderFile(orderId, {
+        mimeType: detectedType.mimeType,
+        storedFileName,
+        originalName: file.originalname,
+        sizeBytes: file.buffer.length,
+        checksumSha256: createHash('sha256').update(file.buffer).digest('hex'),
+        additionalNotes,
+        fileType,
+      });
+    } catch (error) {
+      await this.fileStorage.delete(storedFileName).catch(deleteError => {
+        this.logger.error(`Could not remove stored file ${storedFileName} after a failed insert`, deleteError);
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Replaces the items of the health order and recomputes its total amount on the server side.
+   */
+  private setHealthOrderItems(healthOrder: HealthOrder, itemDtos: ItemHealthOrderRequestDto[]): void {
+    healthOrder.healthOrderItems = itemDtos.map((itemDto, itemIndex) => {
+      const item = HealthOrderEntityDtoMapper.healthOrderItemRequestDtoToItemDto(itemDto, itemIndex);
+      item.healthOrder = healthOrder;
+      item.orderId = healthOrder.id;
+      return item;
+    });
+    healthOrder.totalAmount = Number(computeTotal(itemDtos));
   }
 }

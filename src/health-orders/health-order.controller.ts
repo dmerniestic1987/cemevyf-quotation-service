@@ -1,8 +1,23 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Put,
+  Query,
+  Res,
+  StreamableFile,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { Response } from 'express';
 import { CreateHealthOrderRequestDto } from './dto/create-health-order-request.dto';
-import { ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { HealthOrderResponseDto } from './dto/health-order-response.dto';
-import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { HealthOrderService } from './health-order.service';
 import { FilterHealthOrderDto } from './dto/filter-health-order.dto';
@@ -10,10 +25,18 @@ import { UpdateHealthOrderRequestDto } from './dto/update-health-order-request.d
 import { SendHealthOrderEMailRequestDto } from './dto/send-health-order-e-mail-request.dto';
 import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-response.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ParseHealthOrderFilePipeDocument } from '../commons/validator/parse-health-order-file-pipe-document';
+import {
+  MAX_FILE_SIZE_IN_BYTES,
+  ParseHealthOrderFilePipeDocument,
+} from '../commons/validator/parse-health-order-file-pipe-document';
 import { AdditionalDataDto } from './dto/additional-data.dto';
 import { inputFileSchema } from './types/input-file-schema';
 import { UpdateHealthOrderStatusRequestDto } from './dto/update-health-order-status-request.dto';
+import { AttachedFileResponseDto } from './dto/attached-file-response.dto';
+import { HealthOrderFileResponseDto } from './dto/health-order-file-response.dto';
+
+// Multer keeps the upload in memory, so the limit aborts oversized requests (413) before they are fully buffered
+const FILE_UPLOAD_OPTIONS = { limits: { fileSize: MAX_FILE_SIZE_IN_BYTES, files: 1 } };
 
 @ApiTags('health-orders')
 @Controller('health-orders')
@@ -23,8 +46,8 @@ export class HealthOrderController {
   @Post()
   @ApiOperation({ summary: 'Create a new health order', operationId: 'createHealthOrder' })
   @ApiOkResponse({ type: HealthOrderResponseDto })
-  async create(@Body() createProviderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
-    return this.healthOrderService.create(createProviderDto);
+  async create(@Body() createHealthOrderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
+    return this.healthOrderService.create(createHealthOrderDto);
   }
 
   @Patch('/:id/status')
@@ -37,25 +60,24 @@ export class HealthOrderController {
   })
   @ApiOkResponse({ type: HealthOrderResponseDto })
   async updateHealthOrderStatus(
-    @Param('id') id: number, @Body() updateStatusDto: UpdateHealthOrderStatusRequestDto): Promise<HealthOrderResponseDto> {
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateStatusDto: UpdateHealthOrderStatusRequestDto,
+  ): Promise<HealthOrderResponseDto> {
     return this.healthOrderService.updateHealthOrderStatus(id, updateStatusDto.status);
   }
 
   @Get()
   @ApiOperation({ summary: 'Gets a list of all enabled health orders', operationId: 'findHealthOrders' })
   @ApiOkResponse({ type: [HealthOrderResponseDto] })
-  async findHealthOrders(
-    @Query() filterDto: FilterHealthOrderDto,
-    @Query() pageOptionsDto: PageOptionsDto,
-  ): Promise<PageResponseDto<HealthOrderResponseDto>> {
-    return this.healthOrderService.findOrders(filterDto, pageOptionsDto);
+  async findHealthOrders(@Query() filterDto: FilterHealthOrderDto): Promise<PageResponseDto<HealthOrderResponseDto>> {
+    return this.healthOrderService.findOrders(filterDto, filterDto);
   }
 
   @Get('/:id')
   @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({ summary: 'Gets details of an specific health order', operationId: 'findHealthOrder' })
   @ApiOkResponse({ type: HealthOrderResponseDto })
-  async findHealthOrder(@Param('id') id: number): Promise<HealthOrderResponseDto> {
+  async findHealthOrder(@Param('id', ParseIntPipe) id: number): Promise<HealthOrderResponseDto> {
     return this.healthOrderService.findOrder(id);
   }
 
@@ -64,14 +86,15 @@ export class HealthOrderController {
   @ApiOperation({ summary: 'Updates an specific health order', operationId: 'updateHealthOrder' })
   @ApiOkResponse({ type: HealthOrderResponseDto })
   async updateHealthOrder(
-    @Param('id') id: number,
-    @Body() updateQuotationDto: UpdateHealthOrderRequestDto,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateHealthOrderDto: UpdateHealthOrderRequestDto,
   ): Promise<HealthOrderResponseDto> {
-    return this.healthOrderService.update(id, updateQuotationDto);
+    return this.healthOrderService.update(id, updateHealthOrderDto);
   }
 
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', FILE_UPLOAD_OPTIONS))
   @Post('/:id/prescription')
+  @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({
     summary: 'Adds a prescription file to a health order. The file could be jpg, png or pdf file',
     operationId: 'attachHealthOrderPrescription',
@@ -80,17 +103,46 @@ export class HealthOrderController {
   @ApiBody({
     schema: inputFileSchema,
   })
+  @ApiOkResponse({ type: AttachedFileResponseDto })
   async attachHealthOrderPrescription(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @UploadedFile(new ParseHealthOrderFilePipeDocument())
     file: Express.Multer.File,
     @Body() dto: AdditionalDataDto,
-  ) {
+  ): Promise<AttachedFileResponseDto> {
     const fileId = await this.healthOrderService.attachHealthOrderPrescription(id, file, dto.additionalNotes);
     return {
       id: fileId,
-      filename: file.filename,
+      originalName: file.originalname,
     };
+  }
+
+  @Get('/:id/files')
+  @ApiParam({ type: 'number', name: 'id' })
+  @ApiOperation({ summary: 'Lists the files attached to a health order', operationId: 'findHealthOrderFiles' })
+  @ApiOkResponse({ type: [HealthOrderFileResponseDto] })
+  async findHealthOrderFiles(@Param('id', ParseIntPipe) id: number): Promise<HealthOrderFileResponseDto[]> {
+    return this.healthOrderService.findOrderFiles(id);
+  }
+
+  @Get('/:id/files/:fileId')
+  @ApiParam({ type: 'number', name: 'id' })
+  @ApiParam({ type: 'string', name: 'fileId' })
+  @ApiOperation({ summary: 'Downloads a file attached to a health order', operationId: 'downloadHealthOrderFile' })
+  @ApiProduces('application/pdf', 'image/png', 'image/jpeg')
+  async downloadHealthOrderFile(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('fileId', ParseUUIDPipe) fileId: string,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<StreamableFile> {
+    const file = await this.healthOrderService.downloadOrderFile(id, fileId);
+    response.set({
+      'Content-Type': file.mimeType,
+      'Content-Length': String(file.sizeBytes),
+      'Content-Disposition': `inline; filename*=UTF-8''${encodeURIComponent(file.originalName)}`,
+      'X-Content-Type-Options': 'nosniff',
+    });
+    return new StreamableFile(file.stream);
   }
 
   @Post('/:id/prescription/e-mail')
@@ -101,14 +153,15 @@ export class HealthOrderController {
   })
   @ApiOkResponse({ type: HealthOrderEmailSentResponseDto })
   async sendHealthOrderPrescriptionToClient(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() sendDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto> {
     return this.healthOrderService.sendHealthOrderPrescriptionToClient(id, sendDto);
   }
 
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', FILE_UPLOAD_OPTIONS))
   @Post('/:id/results')
+  @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({
     summary: 'Adds a result file to a health order. The file could be jpg, png or pdf file',
     operationId: 'attachHealthOrderResult',
@@ -117,16 +170,17 @@ export class HealthOrderController {
   @ApiBody({
     schema: inputFileSchema,
   })
+  @ApiOkResponse({ type: AttachedFileResponseDto })
   async attachHealthOrderResult(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @UploadedFile(new ParseHealthOrderFilePipeDocument())
     file: Express.Multer.File,
     @Body() dto: AdditionalDataDto,
-  ) {
+  ): Promise<AttachedFileResponseDto> {
     const fileId = await this.healthOrderService.attachResultFile(id, file, dto.additionalNotes);
     return {
       id: fileId,
-      filename: file.filename,
+      originalName: file.originalname,
     };
   }
 
@@ -138,7 +192,7 @@ export class HealthOrderController {
   })
   @ApiOkResponse({ type: HealthOrderEmailSentResponseDto })
   async sendHealthOrderResultsToClient(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() sendDto: SendHealthOrderEMailRequestDto,
   ): Promise<HealthOrderEmailSentResponseDto> {
     return this.healthOrderService.sendHealthOrderResultsToClient(id, sendDto);

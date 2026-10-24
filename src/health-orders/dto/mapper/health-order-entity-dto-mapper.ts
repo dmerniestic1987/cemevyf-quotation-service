@@ -4,13 +4,17 @@ import { HealthOrderItem } from '../../health-order-item.entity';
 import { ItemHealthOrderRequestDto } from '../item-health-order-request.dto';
 import { HealthOrder } from '../../health-order.entity';
 import { HealthOrderClientDto } from '../health-order-client.dto';
+import { HealthOrderFile } from '../../health-order-file.entity';
+import { HealthOrderFileResponseDto } from '../health-order-file-response.dto';
+import { fromCents, toCents } from '../../../commons/utils/money';
 
 export class HealthOrderEntityDtoMapper {
   public static healthOrderEntityToResponseDto(quotation: HealthOrder, sentMail = undefined): HealthOrderResponseDto {
     const dto = new HealthOrderResponseDto();
     dto.id = quotation.id;
     dto.currency = quotation.currency;
-    dto.totalAmount = quotation.totalAmount;
+    // MySQL returns decimal columns as strings, so the value is normalized to match the response contract
+    dto.totalAmount = Number(quotation.totalAmount);
     dto.createdAt = quotation.createdAt.toISOString();
     dto.executedAt = quotation.executedAt ? quotation.executedAt.toISOString() : undefined;
     dto.sentMail = sentMail;
@@ -21,18 +25,15 @@ export class HealthOrderEntityDtoMapper {
         itemDto.name = quotationItem.name;
         itemDto.itemCount = quotationItem.itemCount;
         itemDto.code = quotationItem.code;
-        itemDto.unitPrice = quotationItem.unitPrice.toString();
-        itemDto.totalPrice = (quotationItem.unitPrice * itemDto.itemCount).toString();
+        const unitPriceInCents = toCents(quotationItem.unitPrice);
+        itemDto.unitPrice = fromCents(unitPriceInCents);
+        itemDto.totalPrice = fromCents(unitPriceInCents * quotationItem.itemCount);
         return itemDto;
       });
     }
 
     if (quotation.client) {
-      dto.client = new HealthOrderClientDto(
-        quotation.client.id,
-        quotation.client.firstName,
-        quotation.client.lastName
-      );
+      dto.client = new HealthOrderClientDto(quotation.client.id, quotation.client.firstName, quotation.client.lastName);
     }
 
     return dto;
@@ -46,5 +47,17 @@ export class HealthOrderEntityDtoMapper {
     item.unitPrice = Number(itemDto.unitPrice); //TODO: Transform to BigDecimal
     item.itemCount = itemDto.itemCount;
     return item;
+  }
+
+  public static healthOrderFileToResponseDto(file: HealthOrderFile): HealthOrderFileResponseDto {
+    const dto = new HealthOrderFileResponseDto();
+    dto.id = file.id;
+    dto.fileType = file.fileType;
+    dto.originalName = file.originalName;
+    dto.mimeType = file.mimeType;
+    dto.sizeBytes = file.sizeBytes;
+    dto.additionalNotes = file.additionalNotes ?? undefined;
+    dto.createdAt = file.createdAt.toISOString();
+    return dto;
   }
 }
