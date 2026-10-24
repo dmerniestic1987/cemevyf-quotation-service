@@ -1,4 +1,5 @@
-import { Injectable, Logger, NotImplementedException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotImplementedException } from '@nestjs/common';
+import { createHash } from 'crypto';
 import { HealthOrderRepository } from './health-order.repository';
 import { CreateHealthOrderRequestDto } from './dto/create-health-order-request.dto';
 import { HealthOrderResponseDto } from './dto/health-order-response.dto';
@@ -27,6 +28,10 @@ import { HealthOrderFileType } from './types/health-order-file-type';
 import { HealthOrderMailUtils } from './health-order-mail-utils';
 import { ItemHealthOrderRequestDto } from './dto/item-health-order-request.dto';
 import { computeTotal } from '../commons/utils/money';
+import { FILE_STORAGE, FileStorage } from '../commons/file-storage/file-storage';
+import { detectFileType } from '../commons/file-storage/detect-file-type';
+import { HealthOrderFileResponseDto } from './dto/health-order-file-response.dto';
+import { HealthOrderFileDownload } from './types/health-order-file-download';
 
 @Injectable()
 export class HealthOrderService
@@ -39,6 +44,8 @@ export class HealthOrderService
     @InjectRepository(Client)
     private readonly clientsRepository: Repository<Client>,
     private readonly messageService: CemevyfMessageService,
+    @Inject(FILE_STORAGE)
+    private readonly fileStorage: FileStorage,
   ) {
     super();
   }
@@ -166,12 +173,7 @@ export class HealthOrderService
     if (healthOrder.status === HealthOrderStatus.RESULTS_DONE) {
       throw healthOrderIncorrectStatusError();
     }
-    return this.healthOrderRepository.attachHealthOrderFile(orderId, {
-      fileData: file.buffer,
-      additionalNotes,
-      mimeType: file.mimetype,
-      fileType: HealthOrderFileType.HEALTH_ORDER_PRESCRIPTION,
-    });
+    return this.storeAndAttachFile(orderId, file, additionalNotes, HealthOrderFileType.HEALTH_ORDER_PRESCRIPTION);
   }
 
   async attachResultFile(orderId: number, file: Express.Multer.File, additionalNotes: string): Promise<string> {
@@ -180,19 +182,64 @@ export class HealthOrderService
     if (healthOrder.status !== HealthOrderStatus.EXECUTED) {
       throw healthOrderIncorrectStatusError();
     }
+    return this.storeAndAttachFile(orderId, file, additionalNotes, HealthOrderFileType.HEALTH_ORDER_RESULT);
+  }
 
-    return this.healthOrderRepository.attachHealthOrderFile(orderId, {
-      fileData: file.buffer,
-      additionalNotes,
-      mimeType: file.mimetype,
-      fileType: HealthOrderFileType.HEALTH_ORDER_RESULT,
-    });
+  async findOrderFiles(orderId: number): Promise<HealthOrderFileResponseDto[]> {
+    this.logger.debug('Find health order files', { service: HealthOrderService.name, orderId });
+    await this.healthOrderRepository.getHealthOrderAndFail(orderId, []);
+    const files = await this.healthOrderRepository.findHealthOrderFiles(orderId);
+    return files.map(HealthOrderEntityDtoMapper.healthOrderFileToResponseDto);
+  }
+
+  async downloadOrderFile(orderId: number, fileId: string): Promise<HealthOrderFileDownload> {
+    this.logger.debug('Download health order file', { service: HealthOrderService.name, orderId, fileId });
+    const file = await this.healthOrderRepository.findHealthOrderFile(orderId, fileId);
+    if (!file) {
+      throw notFoundError(`File ID: ${fileId} was not found in Health Order ID: ${orderId}`);
+    }
+    return {
+      stream: await this.fileStorage.createReadStream(file.storedFileName),
+      mimeType: file.mimeType,
+      originalName: file.originalName,
+      sizeBytes: file.sizeBytes,
+    };
   }
 
   sendHealthOrderResultsToClient(id: number, sendQuotationDto: SendHealthOrderEMailRequestDto): Promise<any> {
     //TODO: implement
     this.logger.log('Send health order results', { service: HealthOrderService.name, id, sendQuotationDto });
     throw new NotImplementedException(`Service not implemented ID: ${id}`);
+  }
+
+  /**
+   * Writes the file to the storage and registers it in the database. If the registration fails the stored file is
+   * removed, so no orphan file is left on disk.
+   */
+  private async storeAndAttachFile(
+    orderId: number,
+    file: Express.Multer.File,
+    additionalNotes: string,
+    fileType: HealthOrderFileType,
+  ): Promise<string> {
+    const detectedType = detectFileType(file.buffer);
+    const storedFileName = await this.fileStorage.save(file.buffer, detectedType.extension);
+    try {
+      return await this.healthOrderRepository.attachHealthOrderFile(orderId, {
+        mimeType: detectedType.mimeType,
+        storedFileName,
+        originalName: file.originalname,
+        sizeBytes: file.buffer.length,
+        checksumSha256: createHash('sha256').update(file.buffer).digest('hex'),
+        additionalNotes,
+        fileType,
+      });
+    } catch (error) {
+      await this.fileStorage.delete(storedFileName).catch(deleteError => {
+        this.logger.error(`Could not remove stored file ${storedFileName} after a failed insert`, deleteError);
+      });
+      throw error;
+    }
   }
 
   /**

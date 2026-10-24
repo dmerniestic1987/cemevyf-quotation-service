@@ -7,9 +7,10 @@ import { HealthOrderService } from './health-order.service';
 import { Client } from '../clients/client.entity';
 import { HealthOrderItem } from './health-order-item.entity';
 import { HealthOrder } from './health-order.entity';
+import { FileStorageModule } from '../commons/file-storage/file-storage.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Client, HealthOrder, HealthOrderItem]), BaseServiceModule],
+  imports: [TypeOrmModule.forFeature([Client, HealthOrder, HealthOrderItem]), BaseServiceModule, FileStorageModule],
   providers: [HealthOrderRepository, HealthOrderService],
   controllers: [HealthOrderController],
   exports: [HealthOrderRepository, HealthOrderService],

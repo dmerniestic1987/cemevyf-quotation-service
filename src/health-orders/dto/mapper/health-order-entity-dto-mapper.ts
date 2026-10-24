@@ -4,6 +4,8 @@ import { HealthOrderItem } from '../../health-order-item.entity';
 import { ItemHealthOrderRequestDto } from '../item-health-order-request.dto';
 import { HealthOrder } from '../../health-order.entity';
 import { HealthOrderClientDto } from '../health-order-client.dto';
+import { HealthOrderFile } from '../../health-order-file.entity';
+import { HealthOrderFileResponseDto } from '../health-order-file-response.dto';
 import { fromCents, toCents } from '../../../commons/utils/money';
 
 export class HealthOrderEntityDtoMapper {
@@ -45,5 +47,17 @@ export class HealthOrderEntityDtoMapper {
     item.unitPrice = Number(itemDto.unitPrice); //TODO: Transform to BigDecimal
     item.itemCount = itemDto.itemCount;
     return item;
+  }
+
+  public static healthOrderFileToResponseDto(file: HealthOrderFile): HealthOrderFileResponseDto {
+    const dto = new HealthOrderFileResponseDto();
+    dto.id = file.id;
+    dto.fileType = file.fileType;
+    dto.originalName = file.originalName;
+    dto.mimeType = file.mimeType;
+    dto.sizeBytes = file.sizeBytes;
+    dto.additionalNotes = file.additionalNotes ?? undefined;
+    dto.createdAt = file.createdAt.toISOString();
+    return dto;
   }
 }

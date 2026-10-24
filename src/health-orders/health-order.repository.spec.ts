@@ -14,7 +14,7 @@ const buildItem = (id: number): HealthOrderItem => Object.assign(new HealthOrder
 describe('HealthOrderRepository', () => {
   let entityManager: { save: jest.Mock; delete: jest.Mock; findOne: jest.Mock };
   let queryRunner: Record<string, jest.Mock | typeof entityManager>;
-  let ormRepository: { findOne: jest.Mock; save: jest.Mock };
+  let ormRepository: { findOne: jest.Mock; save: jest.Mock; find: jest.Mock };
   let dataSource: { createQueryRunner: jest.Mock; getRepository: jest.Mock; transaction: jest.Mock };
   let repository: HealthOrderRepository;
 
@@ -32,7 +32,7 @@ describe('HealthOrderRepository', () => {
       release: jest.fn(),
       manager: entityManager,
     };
-    ormRepository = { findOne: jest.fn(), save: jest.fn() };
+    ormRepository = { findOne: jest.fn(), save: jest.fn(), find: jest.fn() };
     dataSource = {
       createQueryRunner: jest.fn(() => queryRunner),
       getRepository: jest.fn(() => ormRepository),
@@ -178,27 +178,25 @@ describe('HealthOrderRepository', () => {
   });
 
   describe('attachHealthOrderFile', () => {
-    it('saves the file referencing the order without loading other files', async () => {
-      ormRepository.save.mockImplementation(async file => Object.assign(file, { id: 'file-id' }));
-      const fileData = Buffer.from('data');
+    const fileMetadata = {
+      mimeType: 'application/pdf',
+      storedFileName: '3f2c1b7e-0d44-4a53-9a39-0f6a2f6a8c11.pdf',
+      originalName: 'order.pdf',
+      sizeBytes: 4,
+      checksumSha256: 'a'.repeat(64),
+      fileType: HealthOrderFileType.HEALTH_ORDER_RESULT,
+      additionalNotes: 'notes',
+    };
 
-      const fileId = await repository.attachHealthOrderFile(7, {
-        mimeType: 'application/pdf',
-        fileData,
-        fileType: HealthOrderFileType.HEALTH_ORDER_RESULT,
-        additionalNotes: 'notes',
-      });
+    it('saves the file metadata referencing the order without loading other files', async () => {
+      ormRepository.save.mockImplementation(async file => Object.assign(file, { id: 'file-id' }));
+
+      const fileId = await repository.attachHealthOrderFile(7, fileMetadata);
 
       expect(fileId).toBe('file-id');
       expect(dataSource.getRepository).toHaveBeenCalledWith(HealthOrderFile);
       expect(ormRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          healthOrder: { id: 7 },
-          mimeType: 'application/pdf',
-          fileData,
-          fileType: HealthOrderFileType.HEALTH_ORDER_RESULT,
-          additionalNotes: 'notes',
-        }),
+        expect.objectContaining({ healthOrder: { id: 7 }, ...fileMetadata }),
       );
       expect(entityManager.findOne).not.toHaveBeenCalled();
     });
@@ -206,15 +204,41 @@ describe('HealthOrderRepository', () => {
     it('defaults the file type to prescription', async () => {
       ormRepository.save.mockImplementation(async file => Object.assign(file, { id: 'file-id' }));
 
-      await repository.attachHealthOrderFile(7, {
-        mimeType: 'image/png',
-        fileData: Buffer.from(''),
-        fileType: undefined,
-      });
+      await repository.attachHealthOrderFile(7, { ...fileMetadata, fileType: undefined });
 
       expect(ormRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({ fileType: HealthOrderFileType.HEALTH_ORDER_PRESCRIPTION }),
       );
+    });
+  });
+
+  describe('findHealthOrderFiles', () => {
+    it('returns the files of the order sorted by creation date', async () => {
+      const files = [new HealthOrderFile()];
+      ormRepository.find.mockResolvedValue(files);
+
+      await expect(repository.findHealthOrderFiles(7)).resolves.toBe(files);
+      expect(dataSource.getRepository).toHaveBeenCalledWith(HealthOrderFile);
+      expect(ormRepository.find).toHaveBeenCalledWith({
+        where: { healthOrder: { id: 7 } },
+        order: { createdAt: 'ASC' },
+      });
+    });
+  });
+
+  describe('findHealthOrderFile', () => {
+    it('looks the file up by ID restricted to the order', async () => {
+      const file = new HealthOrderFile();
+      ormRepository.findOne.mockResolvedValue(file);
+
+      await expect(repository.findHealthOrderFile(7, 'file-id')).resolves.toBe(file);
+      expect(ormRepository.findOne).toHaveBeenCalledWith({ where: { id: 'file-id', healthOrder: { id: 7 } } });
+    });
+
+    it('returns null when the file belongs to another order', async () => {
+      ormRepository.findOne.mockResolvedValue(null);
+
+      await expect(repository.findHealthOrderFile(8, 'file-id')).resolves.toBeNull();
     });
   });
 });

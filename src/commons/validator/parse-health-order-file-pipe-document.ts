@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 import { extname } from 'path';
 import { files as filesConfig } from 'config';
+import { detectFileType } from '../file-storage/detect-file-type';
 
-const MAX_FILE_SIZE_IN_BYTES = 1024 * 1024 * Number(filesConfig.maxFileSizeInMb);
+export const MAX_FILE_SIZE_IN_BYTES = 1024 * 1024 * Number(filesConfig.maxFileSizeInMb);
 
 @Injectable()
 export class ParseHealthOrderFilePipeDocument implements PipeTransform {
@@ -21,6 +22,14 @@ export class ParseHealthOrderFilePipeDocument implements PipeTransform {
     if (value.size > MAX_FILE_SIZE_IN_BYTES) {
       throw new BadRequestException(`File too big. Max allowed size in : ${filesConfig.maxFileSizeInMb} MB`);
     }
+
+    const detectedType = detectFileType(value.buffer);
+    if (!detectedType) {
+      throw new BadRequestException('File content is not a valid PNG, JPG or PDF');
+    }
+
+    // The stored MIME type comes from the content, never from what the client declared
+    value.mimetype = detectedType.mimeType;
     return value;
   }
 }
