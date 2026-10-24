@@ -1,16 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum } from 'class-validator';
-import { CurrencyEnum } from '../../commons/types/currency.enum';
+import { IsEmail, IsEnum, IsOptional } from 'class-validator';
 import { MessageChannelEnum } from '../../commons/types/message-channel.enum';
 
 export class SendHealthOrderEMailRequestDto {
   @ApiProperty({
     description: 'The channel to send quotation',
     required: true,
+    enum: MessageChannelEnum,
     example: MessageChannelEnum.E_MAIL,
     default: MessageChannelEnum.E_MAIL,
   })
-  @IsEnum(CurrencyEnum)
+  @IsEnum(MessageChannelEnum)
   public channel: MessageChannelEnum;
 
   @ApiProperty({
@@ -18,6 +18,7 @@ export class SendHealthOrderEMailRequestDto {
     required: false,
     example: 'example@example.com',
   })
+  @IsOptional()
   @IsEmail()
   public eMail?: string;
 }

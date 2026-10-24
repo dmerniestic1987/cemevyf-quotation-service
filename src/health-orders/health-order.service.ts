@@ -22,9 +22,11 @@ import {
 } from '../commons/errors/exceptions';
 import { HealthOrder } from './health-order.entity';
 import { IHealthOrderService } from './i-health-order.service';
-import { HealthOrderStatus, nextStatusMap } from './types/health-order-status';
+import { HealthOrderStatus } from './types/health-order-status';
 import { HealthOrderFileType } from './types/health-order-file-type';
 import { HealthOrderMailUtils } from './health-order-mail-utils';
+import { ItemHealthOrderRequestDto } from './dto/item-health-order-request.dto';
+import { computeTotal } from '../commons/utils/money';
 
 @Injectable()
 export class HealthOrderService
@@ -54,16 +56,9 @@ export class HealthOrderService
     }
 
     let healthOrder: HealthOrder = new HealthOrder();
-    healthOrder.totalAmount = Number(orderDto.totalAmount); //TODO: Transform to BigDecimal
     healthOrder.currency = orderDto.currency;
-    healthOrder.healthOrderItems = [];
     healthOrder.client = client;
-    orderDto.quotationItems.forEach((itemDto, itemIndex) => {
-      const item = HealthOrderEntityDtoMapper.healthOrderItemRequestDtoToItemDto(itemDto, itemIndex);
-      item.healthOrder = healthOrder;
-      item.orderId = healthOrder.id;
-      healthOrder.healthOrderItems.push(item);
-    });
+    this.setHealthOrderItems(healthOrder, orderDto.quotationItems);
 
     healthOrder = await this.healthOrderRepository.createHealthOrder(healthOrder);
     let sentMail = false;
@@ -122,24 +117,16 @@ export class HealthOrderService
   async update(id: number, updateDto: UpdateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
     this.logger.log('Update Health Order', { service: HealthOrderService.name, id });
     let healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(id);
-    if (updateDto.totalAmount) {
-      healthOrder.totalAmount = Number(updateDto.totalAmount);
-    }
     if (updateDto.currency) {
       healthOrder.currency = updateDto.currency;
     }
 
-    if (updateDto.orderItems) {
-      healthOrder.healthOrderItems = [];
-      updateDto.orderItems.forEach((itemDto, itemIndex) => {
-        const quotationItem = HealthOrderEntityDtoMapper.healthOrderItemRequestDtoToItemDto(itemDto, itemIndex);
-        quotationItem.healthOrder = healthOrder;
-        quotationItem.orderId = healthOrder.id;
-        healthOrder.healthOrderItems.push(quotationItem);
-      });
+    const replaceItems = Boolean(updateDto.orderItems);
+    if (replaceItems) {
+      this.setHealthOrderItems(healthOrder, updateDto.orderItems);
     }
 
-    healthOrder = await this.healthOrderRepository.updateHealthOrder(healthOrder);
+    healthOrder = await this.healthOrderRepository.updateHealthOrder(healthOrder, replaceItems);
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 
@@ -163,14 +150,9 @@ export class HealthOrderService
     };
   }
 
-  async updateHealthOrderStatus(id: number, newStatus: HealthOrderStatus = HealthOrderStatus.QUOTED): Promise<HealthOrderResponseDto> {
+  async updateHealthOrderStatus(id: number, newStatus: HealthOrderStatus): Promise<HealthOrderResponseDto> {
     this.logger.log('Update health order status', { service: HealthOrderService.name, id, newStatus });
-    let healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(id, []);
-    const expectedNewStatus =  nextStatusMap.get(healthOrder.status);
-    if (newStatus !== expectedNewStatus) {
-      throw healthOrderIncorrectStatusError();
-    }
-    healthOrder = await this.healthOrderRepository.updateHealthOrderStatus(id, newStatus);
+    const healthOrder = await this.healthOrderRepository.updateHealthOrderStatus(id, newStatus);
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 
@@ -211,5 +193,18 @@ export class HealthOrderService
     //TODO: implement
     this.logger.log('Send health order results', { service: HealthOrderService.name, id, sendQuotationDto });
     throw new NotImplementedException(`Service not implemented ID: ${id}`);
+  }
+
+  /**
+   * Replaces the items of the health order and recomputes its total amount on the server side.
+   */
+  private setHealthOrderItems(healthOrder: HealthOrder, itemDtos: ItemHealthOrderRequestDto[]): void {
+    healthOrder.healthOrderItems = itemDtos.map((itemDto, itemIndex) => {
+      const item = HealthOrderEntityDtoMapper.healthOrderItemRequestDtoToItemDto(itemDto, itemIndex);
+      item.healthOrder = healthOrder;
+      item.orderId = healthOrder.id;
+      return item;
+    });
+    healthOrder.totalAmount = Number(computeTotal(itemDtos));
   }
 }

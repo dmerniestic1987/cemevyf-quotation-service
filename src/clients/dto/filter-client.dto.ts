@@ -1,13 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsString, IsUUID } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IdTypeEnum } from '../../commons/types/id-type.enum';
+import { PageOptionsDto } from '../../commons/dto/page-options.dto';
 
-export class FilterClientDto {
+export class FilterClientDto extends PageOptionsDto {
   @ApiProperty({
     description: 'The ID',
     required: false,
     example: 'd5b13516-0557-4ca1-96f5-a6eeedec5472',
   })
+  @IsOptional()
   @IsUUID()
   id?: string;
 
@@ -16,6 +18,7 @@ export class FilterClientDto {
     required: false,
     example: 'Diego',
   })
+  @IsOptional()
   @IsString()
   firstName?: string;
 
@@ -24,15 +27,17 @@ export class FilterClientDto {
     required: false,
     example: 'Rossi',
   })
+  @IsOptional()
   @IsString()
   lastName?: string;
 
   @ApiProperty({
     description: 'The ID type of Patient',
     required: false,
-    default: IdTypeEnum.DNI,
+    enum: IdTypeEnum,
     example: IdTypeEnum.DNI,
   })
+  @IsOptional()
   @IsEnum(IdTypeEnum)
   personIdType?: IdTypeEnum;
 
@@ -41,6 +46,7 @@ export class FilterClientDto {
     required: false,
     example: '32847809',
   })
+  @IsOptional()
   @IsString()
   personId?: string;
 }

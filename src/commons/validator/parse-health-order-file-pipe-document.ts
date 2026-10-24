@@ -9,7 +9,11 @@ export class ParseHealthOrderFilePipeDocument implements PipeTransform {
   private readonly allowedExtensions = ['.png', '.pdf', '.jpeg', '.jpg'];
 
   transform(value: Express.Multer.File): Express.Multer.File {
-    const extension = extname(value.originalname);
+    if (!value) {
+      throw new BadRequestException('A file is required');
+    }
+
+    const extension = extname(value.originalname).toLowerCase();
     if (!this.allowedExtensions.includes(extension)) {
       throw new BadRequestException(`File type ${extension} not supported`);
     }

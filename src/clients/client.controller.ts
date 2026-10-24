@@ -1,6 +1,5 @@
-import { Body, Controller, Get, HttpStatus, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { ClientService } from './client.service';
 import { CreateClientResponseDto } from './dto/create-client-response.dto';
@@ -27,11 +26,8 @@ export class ClientController {
   @Get()
   @ApiOperation({ summary: 'Gets a list of clients', operationId: 'findClients' })
   @ApiOkResponse({ type: [ClientResponseDto] })
-  async findClients(
-    @Query() filterDto: FilterClientDto,
-    @Query() pageOptionsDto: PageOptionsDto,
-  ): Promise<PageResponseDto<ClientResponseDto>> {
-    return this.clientService.findClients(filterDto, pageOptionsDto);
+  async findClients(@Query() filterDto: FilterClientDto): Promise<PageResponseDto<ClientResponseDto>> {
+    return this.clientService.findClients(filterDto, filterDto);
   }
 
   @Get('/:id')
@@ -42,7 +38,7 @@ export class ClientController {
     type: ClientResponseDto,
   })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Client not found' })
-  async findClient(@Param('id') id: string): Promise<ClientResponseDto> {
+  async findClient(@Param('id', ParseUUIDPipe) id: string): Promise<ClientResponseDto> {
     return this.clientService.findOrder(id);
   }
 }

@@ -1,3 +1,4 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -19,10 +20,17 @@ async function bootstrap() {
       jsonDocumentUrl: 'swagger/json',
     });
   }
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
   app.enableCors({
     origin: cors.allowedOrigins.split(','),
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-  }),
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  });
   await app.listen(parseInt(port, 10));
   console.log(`Application is running on: ${await app.getUrl()}`);
 }

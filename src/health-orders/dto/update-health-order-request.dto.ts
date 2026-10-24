@@ -1,35 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsNumber } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ArrayMinSize, IsArray, IsEnum, IsOptional, ValidateNested } from 'class-validator';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
 import { ItemHealthOrderRequestDto } from './item-health-order-request.dto';
 
 export class UpdateHealthOrderRequestDto {
   @ApiProperty({
-    description: 'total amount of quotation computed by client',
-    required: false,
-    example: '37500.50',
-    minimum: 0,
-    maximum: 9999999.99,
-    default: '0',
-  })
-  @IsNumber({ allowNaN: false, allowInfinity: false, maxDecimalPlaces: 2 })
-  totalAmount: string;
-
-  @ApiProperty({
     description: 'The currency to estimate the quotation',
     required: false,
+    enum: CurrencyEnum,
     example: CurrencyEnum.ARS,
-    default: CurrencyEnum.ARS,
   })
+  @IsOptional()
   @IsEnum(CurrencyEnum)
-  public currency: CurrencyEnum;
+  public currency?: CurrencyEnum;
 
   @ApiProperty({
-    description: 'The list of items',
-    required: true,
-    minLength: 0,
+    description: 'The list of items. When present it replaces all current items and the total amount is recomputed',
+    required: false,
+    minItems: 1,
     type: [ItemHealthOrderRequestDto],
   })
+  @IsOptional()
   @IsArray()
-  public orderItems: ItemHealthOrderRequestDto[];
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => ItemHealthOrderRequestDto)
+  public orderItems?: ItemHealthOrderRequestDto[];
 }
