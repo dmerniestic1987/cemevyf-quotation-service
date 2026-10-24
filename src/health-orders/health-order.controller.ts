@@ -4,15 +4,19 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  ParseUUIDPipe,
   Patch,
   Post,
   Put,
   Query,
+  Res,
+  StreamableFile,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { CreateHealthOrderRequestDto } from './dto/create-health-order-request.dto';
-import { ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { HealthOrderResponseDto } from './dto/health-order-response.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { HealthOrderService } from './health-order.service';
@@ -21,11 +25,18 @@ import { UpdateHealthOrderRequestDto } from './dto/update-health-order-request.d
 import { SendHealthOrderEMailRequestDto } from './dto/send-health-order-e-mail-request.dto';
 import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-response.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ParseHealthOrderFilePipeDocument } from '../commons/validator/parse-health-order-file-pipe-document';
+import {
+  MAX_FILE_SIZE_IN_BYTES,
+  ParseHealthOrderFilePipeDocument,
+} from '../commons/validator/parse-health-order-file-pipe-document';
 import { AdditionalDataDto } from './dto/additional-data.dto';
 import { inputFileSchema } from './types/input-file-schema';
 import { UpdateHealthOrderStatusRequestDto } from './dto/update-health-order-status-request.dto';
 import { AttachedFileResponseDto } from './dto/attached-file-response.dto';
+import { HealthOrderFileResponseDto } from './dto/health-order-file-response.dto';
+
+// Multer keeps the upload in memory, so the limit aborts oversized requests (413) before they are fully buffered
+const FILE_UPLOAD_OPTIONS = { limits: { fileSize: MAX_FILE_SIZE_IN_BYTES, files: 1 } };
 
 @ApiTags('health-orders')
 @Controller('health-orders')
@@ -81,7 +92,7 @@ export class HealthOrderController {
     return this.healthOrderService.update(id, updateHealthOrderDto);
   }
 
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', FILE_UPLOAD_OPTIONS))
   @Post('/:id/prescription')
   @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({
@@ -106,6 +117,34 @@ export class HealthOrderController {
     };
   }
 
+  @Get('/:id/files')
+  @ApiParam({ type: 'number', name: 'id' })
+  @ApiOperation({ summary: 'Lists the files attached to a health order', operationId: 'findHealthOrderFiles' })
+  @ApiOkResponse({ type: [HealthOrderFileResponseDto] })
+  async findHealthOrderFiles(@Param('id', ParseIntPipe) id: number): Promise<HealthOrderFileResponseDto[]> {
+    return this.healthOrderService.findOrderFiles(id);
+  }
+
+  @Get('/:id/files/:fileId')
+  @ApiParam({ type: 'number', name: 'id' })
+  @ApiParam({ type: 'string', name: 'fileId' })
+  @ApiOperation({ summary: 'Downloads a file attached to a health order', operationId: 'downloadHealthOrderFile' })
+  @ApiProduces('application/pdf', 'image/png', 'image/jpeg')
+  async downloadHealthOrderFile(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('fileId', ParseUUIDPipe) fileId: string,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<StreamableFile> {
+    const file = await this.healthOrderService.downloadOrderFile(id, fileId);
+    response.set({
+      'Content-Type': file.mimeType,
+      'Content-Length': String(file.sizeBytes),
+      'Content-Disposition': `inline; filename*=UTF-8''${encodeURIComponent(file.originalName)}`,
+      'X-Content-Type-Options': 'nosniff',
+    });
+    return new StreamableFile(file.stream);
+  }
+
   @Post('/:id/prescription/e-mail')
   @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({
@@ -120,7 +159,7 @@ export class HealthOrderController {
     return this.healthOrderService.sendHealthOrderPrescriptionToClient(id, sendDto);
   }
 
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', FILE_UPLOAD_OPTIONS))
   @Post('/:id/results')
   @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({

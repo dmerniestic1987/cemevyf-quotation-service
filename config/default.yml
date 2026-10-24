@@ -18,6 +18,7 @@ serviceConfig:
   messageServiceUrl: http://localhost:6000
 files:
   maxFileSizeInMb: 5
+  uploadDir: uploadedFiles
 cors:
   allowedOrigins: http://localhost:3000,http://127.0.0.1:3000
 swagger:

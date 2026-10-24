@@ -1,3 +1,5 @@
+import { StreamableFile } from '@nestjs/common';
+import { Readable } from 'stream';
 import { HealthOrderController } from './health-order.controller';
 import { HealthOrderStatus } from './types/health-order-status';
 import { MessageChannelEnum } from '../commons/types/message-channel.enum';
@@ -18,6 +20,8 @@ describe('HealthOrderController', () => {
       sendHealthOrderPrescriptionToClient: jest.fn(async () => 'prescription-sent'),
       attachResultFile: jest.fn(async () => 'result-id'),
       sendHealthOrderResultsToClient: jest.fn(async () => 'results-sent'),
+      findOrderFiles: jest.fn(async () => 'files'),
+      downloadOrderFile: jest.fn(),
     };
     controller = new HealthOrderController(service as any);
   });
@@ -78,5 +82,32 @@ describe('HealthOrderController', () => {
     const dto = { channel: MessageChannelEnum.E_MAIL };
     await expect(controller.sendHealthOrderResultsToClient(7, dto)).resolves.toBe('results-sent');
     expect(service.sendHealthOrderResultsToClient).toHaveBeenCalledWith(7, dto);
+  });
+
+  it('lists the files of a health order', async () => {
+    await expect(controller.findHealthOrderFiles(7)).resolves.toBe('files');
+    expect(service.findOrderFiles).toHaveBeenCalledWith(7);
+  });
+
+  it('downloads a file streaming it with the stored headers', async () => {
+    const stream = Readable.from(['content']);
+    service.downloadOrderFile.mockResolvedValue({
+      stream,
+      mimeType: 'application/pdf',
+      originalName: 'órden médica.pdf',
+      sizeBytes: 7,
+    });
+    const response = { set: jest.fn() };
+
+    const result = await controller.downloadHealthOrderFile(7, 'file-id', response as any);
+
+    expect(service.downloadOrderFile).toHaveBeenCalledWith(7, 'file-id');
+    expect(result).toBeInstanceOf(StreamableFile);
+    expect(response.set).toHaveBeenCalledWith({
+      'Content-Type': 'application/pdf',
+      'Content-Length': '7',
+      'Content-Disposition': "inline; filename*=UTF-8''%C3%B3rden%20m%C3%A9dica.pdf",
+      'X-Content-Type-Options': 'nosniff',
+    });
   });
 });

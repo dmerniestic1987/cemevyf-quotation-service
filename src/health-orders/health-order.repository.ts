@@ -14,7 +14,10 @@ import { HealthOrderFileType } from './types/health-order-file-type';
 
 export interface HealthOrderFileData {
   mimeType: string;
-  fileData: Buffer;
+  storedFileName: string;
+  originalName: string;
+  sizeBytes: number;
+  checksumSha256: string;
   fileType: HealthOrderFileType;
   additionalNotes?: string;
 }
@@ -120,10 +123,26 @@ export class HealthOrderRepository {
     const file = new HealthOrderFile();
     file.healthOrder = { id } as HealthOrder;
     file.mimeType = healthOrderFile.mimeType;
-    file.fileData = healthOrderFile.fileData;
+    file.storedFileName = healthOrderFile.storedFileName;
+    file.originalName = healthOrderFile.originalName;
+    file.sizeBytes = healthOrderFile.sizeBytes;
+    file.checksumSha256 = healthOrderFile.checksumSha256;
     file.additionalNotes = healthOrderFile.additionalNotes;
     file.fileType = healthOrderFile.fileType || HealthOrderFileType.HEALTH_ORDER_PRESCRIPTION;
     const savedFile = await this.dataSource.getRepository(HealthOrderFile).save(file);
     return savedFile.id;
+  }
+
+  async findHealthOrderFiles(orderId: number): Promise<HealthOrderFile[]> {
+    return await this.dataSource.getRepository(HealthOrderFile).find({
+      where: { healthOrder: { id: orderId } },
+      order: { createdAt: 'ASC' },
+    });
+  }
+
+  async findHealthOrderFile(orderId: number, fileId: string): Promise<HealthOrderFile | null> {
+    return await this.dataSource.getRepository(HealthOrderFile).findOne({
+      where: { id: fileId, healthOrder: { id: orderId } },
+    });
   }
 }
