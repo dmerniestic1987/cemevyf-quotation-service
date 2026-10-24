@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HealthOrderController } from './health-order.controller';
-import { BaseServiceModule } from 'src/commons/service/base-service.module';
+import { BaseServiceModule } from '../commons/service/base-service.module';
 import { HealthOrderRepository } from './health-order.repository';
 import { HealthOrderService } from './health-order.service';
 import { Client } from '../clients/client.entity';

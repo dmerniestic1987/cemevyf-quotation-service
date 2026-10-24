@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { IdTypeEnum } from '../../commons/types/id-type.enum';
 
 export class ClientRequestDto {
@@ -9,6 +9,8 @@ export class ClientRequestDto {
     example: 'Diego',
   })
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
   firstName: string;
 
   @ApiProperty({
@@ -17,31 +19,38 @@ export class ClientRequestDto {
     example: 'Di Rossi',
   })
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
   lastName: string;
 
   @ApiProperty({
     description: 'The ID type of Patient',
     required: false,
-    default: IdTypeEnum.DNI,
+    enum: IdTypeEnum,
     example: IdTypeEnum.DNI,
   })
+  @IsOptional()
   @IsEnum(IdTypeEnum)
-  personIdType: IdTypeEnum;
+  personIdType?: IdTypeEnum;
 
   @ApiProperty({
     description: 'The ID of Patient',
     required: false,
     example: '32847809',
   })
+  @IsOptional()
   @IsString()
-  personId: string;
+  @MaxLength(50)
+  personId?: string;
 
   @ApiProperty({
     description: 'The ID in external system',
     required: false,
     example: 'A847809',
   })
+  @IsOptional()
   @IsString()
+  @MaxLength(50)
   externalId?: string;
 
   @ApiProperty({
@@ -49,7 +58,9 @@ export class ClientRequestDto {
     required: false,
     example: '88847809',
   })
+  @IsOptional()
   @IsString()
+  @MaxLength(50)
   booklyId?: string;
 
   @ApiProperty({
@@ -57,7 +68,9 @@ export class ClientRequestDto {
     required: false,
     example: 'example@hola.com',
   })
+  @IsOptional()
   @IsEmail()
+  @MaxLength(255)
   email?: string;
 
   @ApiProperty({
@@ -65,5 +78,8 @@ export class ClientRequestDto {
     required: false,
     example: '1155667788',
   })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
   phoneNumber?: string;
 }

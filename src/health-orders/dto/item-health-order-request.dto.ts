@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNumber, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 
 export class ItemHealthOrderRequestDto {
   @ApiProperty({
@@ -7,33 +7,41 @@ export class ItemHealthOrderRequestDto {
     required: false,
     example: 'T4L',
   })
+  @IsOptional()
   @IsString()
+  @MaxLength(255)
   code?: string;
 
   @ApiProperty({
     description: 'The name of item',
-    required: false,
+    required: true,
     example: 'T4 Libre',
   })
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
   name: string;
 
   @ApiProperty({
-    description: 'total amount of quotation computed by client',
+    description: 'The unit price of the item, as a non-negative decimal string with up to 2 decimal places',
     required: true,
     example: '37500.50',
   })
-  @IsNumber({ allowNaN: false, allowInfinity: false, maxDecimalPlaces: 2 })
+  @IsString()
+  @Matches(/^\d{1,10}(\.\d{1,2})?$/, {
+    message: 'unitPrice must be a non-negative decimal string with up to 10 integer digits and 2 decimal places',
+  })
   unitPrice: string;
 
   @ApiProperty({
     description: 'total number of items',
-    required: false,
+    required: true,
     example: 2,
-    default: 1,
     minimum: 1,
     maximum: 100,
   })
   @IsInt()
+  @Min(1)
+  @Max(100)
   itemCount: number;
 }

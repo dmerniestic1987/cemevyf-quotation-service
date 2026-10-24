@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 
 export const createQuotationInternalError = (msg = 'Error creation quotation') => {
-  return new HttpException({ message: msg, code: 'INVALID_TOKEN_ID_ERROR' }, HttpStatus.INTERNAL_SERVER_ERROR);
+  return new HttpException({ message: msg, code: 'HEALTH_ORDER_INTERNAL_ERROR' }, HttpStatus.INTERNAL_SERVER_ERROR);
 };
 
 export const featureNotImplementedError = (msg = 'Feature Not Implemented') => {

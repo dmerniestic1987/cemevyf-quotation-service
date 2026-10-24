@@ -1,3 +1,8 @@
+import { IsOptional, IsString, MaxLength } from 'class-validator';
+
 export class AdditionalDataDto {
-  additionalNotes: string;
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  additionalNotes?: string;
 }
