@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, NotImplementedException } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { HealthOrderRepository } from './health-order.repository';
 import { CreateHealthOrderRequestDto } from './dto/create-health-order-request.dto';
@@ -13,14 +13,7 @@ import { BaseService } from '../commons/service/base-service';
 import { FilterHealthOrderDto } from './dto/filter-health-order.dto';
 import { HealthOrderEntityDtoMapper } from './dto/mapper/health-order-entity-dto-mapper';
 import { UpdateHealthOrderRequestDto } from './dto/update-health-order-request.dto';
-import { SendHealthOrderEMailRequestDto } from './dto/send-health-order-e-mail-request.dto';
-import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-response.dto';
-import { MessageChannelEnum } from '../commons/types/message-channel.enum';
-import {
-  featureNotImplementedError,
-  healthOrderIncorrectStatusError,
-  notFoundError,
-} from '../commons/errors/exceptions';
+import { healthOrderIncorrectStatusError, notFoundError } from '../commons/errors/exceptions';
 import { HealthOrder } from './health-order.entity';
 import { IHealthOrderService } from './i-health-order.service';
 import { HealthOrderStatus } from './types/health-order-status';
@@ -106,6 +99,10 @@ export class HealthOrderService
       where['currency'] = filterDto.currency;
     }
 
+    if (filterDto.status) {
+      where['status'] = filterDto.status;
+    }
+
     return super.findAndPaginate(
       pageOptionsDto,
       this.healthOrderRepository.getRepository(),
@@ -137,33 +134,17 @@ export class HealthOrderService
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 
-  async sendHealthOrderPrescriptionToClient(
-    id: number,
-    sendQuotationDto: SendHealthOrderEMailRequestDto,
-  ): Promise<HealthOrderEmailSentResponseDto> {
-    this.logger.log('Send Message With Quotation', { service: HealthOrderService.name, id });
-    if (sendQuotationDto.channel !== MessageChannelEnum.E_MAIL) {
-      throw featureNotImplementedError(`Sending messages by ${sendQuotationDto.channel} is not implemented`);
-    }
-    const quotation = await this.healthOrderRepository.getHealthOrderAndFail(id, {
-      client: true,
-      healthOrderItems: true,
-    });
-
-    const sentMail = await this.messageService.sendMail(
-      HealthOrderMailUtils.toCemevyfMailMessage(sendQuotationDto.eMail, quotation),
-    );
-    return {
-      id,
-      channel: sendQuotationDto.channel,
-      sentMail,
-    };
-  }
-
   async updateHealthOrderStatus(id: number, newStatus: HealthOrderStatus): Promise<HealthOrderResponseDto> {
     this.logger.log('Update health order status', { service: HealthOrderService.name, id, newStatus });
     const healthOrder = await this.healthOrderRepository.updateHealthOrderStatus(id, newStatus);
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
+  }
+
+  async bulkUpdateHealthOrderStatus(ids: number[], newStatus: HealthOrderStatus): Promise<HealthOrderResponseDto[]> {
+    this.logger.log('Bulk update health order status', { service: HealthOrderService.name, ids, newStatus });
+    const healthOrders = await this.healthOrderRepository.bulkUpdateHealthOrderStatus(ids, newStatus);
+    // An arrow function is needed: the mapper's second parameter would receive the array index otherwise
+    return healthOrders.map(healthOrder => HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder));
   }
 
   async attachHealthOrderPrescription(
@@ -172,19 +153,13 @@ export class HealthOrderService
     additionalNotes: string,
   ): Promise<string> {
     this.logger.log('Attach file to health order', { service: HealthOrderService.name, orderId });
-    const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(orderId, {});
-    if (healthOrder.status === HealthOrderStatus.RESULTS_DONE) {
-      throw healthOrderIncorrectStatusError();
-    }
+    await this.assertFilesCanBeAttached(orderId);
     return this.storeAndAttachFile(orderId, file, additionalNotes, HealthOrderFileType.HEALTH_ORDER_PRESCRIPTION);
   }
 
   async attachResultFile(orderId: number, file: Express.Multer.File, additionalNotes: string): Promise<string> {
     this.logger.log('Attach result file', { service: HealthOrderService.name, orderId });
-    const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(orderId, {});
-    if (healthOrder.status !== HealthOrderStatus.EXECUTED) {
-      throw healthOrderIncorrectStatusError();
-    }
+    await this.assertFilesCanBeAttached(orderId);
     return this.storeAndAttachFile(orderId, file, additionalNotes, HealthOrderFileType.HEALTH_ORDER_RESULT);
   }
 
@@ -209,10 +184,16 @@ export class HealthOrderService
     };
   }
 
-  sendHealthOrderResultsToClient(id: number, sendQuotationDto: SendHealthOrderEMailRequestDto): Promise<any> {
-    //TODO: implement
-    this.logger.log('Send health order results', { service: HealthOrderService.name, id, sendQuotationDto });
-    throw new NotImplementedException(`Service not implemented ID: ${id}`);
+  /**
+   * Files can be attached to a health order in any status except when its results are already done.
+   */
+  private async assertFilesCanBeAttached(orderId: number): Promise<void> {
+    const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(orderId, {});
+    if (healthOrder.status === HealthOrderStatus.RESULTS_DONE) {
+      throw healthOrderIncorrectStatusError(
+        `Files cannot be attached to a health order in '${HealthOrderStatus.RESULTS_DONE}' status`,
+      );
+    }
   }
 
   /**

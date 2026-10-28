@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { DataSource, FindOptionsRelations, Repository } from 'typeorm';
+import { DataSource, FindOptionsRelations, In, Repository } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import {
   createQuotationInternalError,
@@ -8,7 +8,7 @@ import {
 } from '../commons/errors/exceptions';
 import { HealthOrderItem } from './health-order-item.entity';
 import { HealthOrder } from './health-order.entity';
-import { HealthOrderStatus, nextStatusMap } from './types/health-order-status';
+import { getPreviousStatus, HealthOrderStatus, nextStatusMap } from './types/health-order-status';
 import { HealthOrderFile } from './health-order-file.entity';
 import { HealthOrderFileType } from './types/health-order-file-type';
 
@@ -110,14 +110,53 @@ export class HealthOrderRepository {
       if (!healthOrder) {
         throw notFoundError(`Health Order ID: ${id} was not found`);
       }
-      if (nextStatusMap.get(healthOrder.status) !== newStatus) {
+      if (!this.canMoveTo(healthOrder, newStatus)) {
         throw healthOrderIncorrectStatusError();
       }
-      healthOrder.status = newStatus;
-      if (newStatus === HealthOrderStatus.EXECUTED) {
-        healthOrder.executedAt = new Date();
-      }
+      this.moveTo(healthOrder, newStatus);
       return await entityManager.save(healthOrder);
+    });
+  }
+
+  /**
+   * Moves all the health orders to newStatus in a single transaction: either every order is updated or none is.
+   * The rows are locked ordered by ID, so concurrent bulk updates cannot deadlock each other.
+   * @returns the updated orders in the same order as ids
+   */
+  async bulkUpdateHealthOrderStatus(ids: number[], newStatus: HealthOrderStatus): Promise<HealthOrder[]> {
+    this.logger.debug('Bulk update Health Order status', { service: HealthOrderRepository.name, ids, newStatus });
+    return await this.dataSource.transaction(async entityManager => {
+      const healthOrders = await entityManager.find(HealthOrder, {
+        where: { id: In(ids) },
+        order: { id: 'ASC' },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      const foundIds = new Set(healthOrders.map(healthOrder => Number(healthOrder.id)));
+      const missingIds = ids.filter(id => !foundIds.has(id));
+      if (missingIds.length > 0) {
+        throw notFoundError(`Health Orders not found: ${missingIds.join(', ')}`, { missingIds });
+      }
+
+      const invalidOrders = healthOrders.filter(healthOrder => !this.canMoveTo(healthOrder, newStatus));
+      if (invalidOrders.length > 0) {
+        const requiredCurrentStatus = getPreviousStatus(newStatus);
+        throw healthOrderIncorrectStatusError(
+          requiredCurrentStatus
+            ? `Only health orders in '${requiredCurrentStatus}' status can move to '${newStatus}'`
+            : `No health order can move to '${newStatus}'`,
+          {
+            requiredCurrentStatus,
+            invalidOrders: invalidOrders.map(({ id, status }) => ({ id: Number(id), currentStatus: status })),
+          },
+        );
+      }
+
+      healthOrders.forEach(healthOrder => this.moveTo(healthOrder, newStatus));
+      const savedById = new Map(
+        (await entityManager.save(healthOrders)).map(healthOrder => [Number(healthOrder.id), healthOrder]),
+      );
+      return ids.map(id => savedById.get(id));
     });
   }
 
@@ -147,5 +186,16 @@ export class HealthOrderRepository {
     return await this.dataSource.getRepository(HealthOrderFile).findOne({
       where: { id: fileId, healthOrder: { id: orderId } },
     });
+  }
+
+  private canMoveTo(healthOrder: HealthOrder, newStatus: HealthOrderStatus): boolean {
+    return nextStatusMap.get(healthOrder.status) === newStatus;
+  }
+
+  private moveTo(healthOrder: HealthOrder, newStatus: HealthOrderStatus): void {
+    healthOrder.status = newStatus;
+    if (newStatus === HealthOrderStatus.EXECUTED) {
+      healthOrder.executedAt = new Date();
+    }
   }
 }

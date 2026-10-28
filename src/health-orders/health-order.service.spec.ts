@@ -1,4 +1,4 @@
-import { HttpStatus, NotImplementedException } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { Readable } from 'stream';
 import { HealthOrderService } from './health-order.service';
@@ -9,7 +9,6 @@ import { HealthOrderFileType } from './types/health-order-file-type';
 import { Client } from '../clients/client.entity';
 import { HealthOrderFile } from './health-order-file.entity';
 import { CurrencyEnum } from '../commons/types/currency.enum';
-import { MessageChannelEnum } from '../commons/types/message-channel.enum';
 
 const CLIENT_ID = '14e7b437-3c5c-44a6-8d99-a0fab3ef6c40';
 const CREATED_AT = new Date('2026-10-24T00:00:00.000Z');
@@ -53,6 +52,7 @@ describe('HealthOrderService', () => {
       updateHealthOrder: jest.fn(async (healthOrder: HealthOrder) => healthOrder),
       getHealthOrderAndFail: jest.fn(),
       updateHealthOrderStatus: jest.fn(),
+      bulkUpdateHealthOrderStatus: jest.fn(),
       attachHealthOrderFile: jest.fn(async () => 'file-id'),
       findHealthOrderFiles: jest.fn(),
       findHealthOrderFile: jest.fn(),
@@ -147,6 +147,18 @@ describe('HealthOrderService', () => {
       expect(result.meta).toMatchObject({ itemCount: 11, page: 2, hasPreviousPage: true });
     });
 
+    it.each(Object.values(HealthOrderStatus))('filters by the %p status', async status => {
+      await service.findOrders({ status }, pageOptions);
+
+      expect(getFindOptions().where).toEqual({ status });
+    });
+
+    it('combines the status with the other filters', async () => {
+      await service.findOrders({ id: 3, currency: CurrencyEnum.USD, status: HealthOrderStatus.EXECUTED }, pageOptions);
+
+      expect(getFindOptions().where).toEqual({ id: 3, currency: CurrencyEnum.USD, status: HealthOrderStatus.EXECUTED });
+    });
+
     it.each([
       [{ dateFrom: '2026-01-01' }, 'moreThanOrEqual'],
       [{ dateTo: '2026-02-01' }, 'lessThanOrEqual'],
@@ -206,30 +218,6 @@ describe('HealthOrderService', () => {
     });
   });
 
-  describe('sendHealthOrderPrescriptionToClient', () => {
-    it('sends the e-mail to the requested address', async () => {
-      healthOrderRepository.getHealthOrderAndFail.mockResolvedValue(buildHealthOrder({ client: buildClient() }));
-
-      const result = await service.sendHealthOrderPrescriptionToClient(7, {
-        channel: MessageChannelEnum.E_MAIL,
-        eMail: 'other@b.com',
-      });
-
-      expect(healthOrderRepository.getHealthOrderAndFail).toHaveBeenCalledWith(7, {
-        client: true,
-        healthOrderItems: true,
-      });
-      expect(messageService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'other@b.com' }));
-      expect(result).toEqual({ id: 7, channel: MessageChannelEnum.E_MAIL, sentMail: true });
-    });
-
-    it('throws not implemented for other channels', async () => {
-      await expect(
-        service.sendHealthOrderPrescriptionToClient(7, { channel: MessageChannelEnum.WHATSAPP }),
-      ).rejects.toMatchObject({ status: HttpStatus.NOT_IMPLEMENTED });
-    });
-  });
-
   describe('updateHealthOrderStatus', () => {
     it('delegates the transition to the repository', async () => {
       healthOrderRepository.updateHealthOrderStatus.mockResolvedValue(
@@ -240,6 +228,44 @@ describe('HealthOrderService', () => {
 
       expect(healthOrderRepository.updateHealthOrderStatus).toHaveBeenCalledWith(7, HealthOrderStatus.EXECUTED);
       expect(result.status).toBe(HealthOrderStatus.EXECUTED);
+    });
+  });
+
+  describe('bulkUpdateHealthOrderStatus', () => {
+    it('delegates to the repository and maps every order keeping the requested order', async () => {
+      healthOrderRepository.bulkUpdateHealthOrderStatus.mockResolvedValue([
+        buildHealthOrder({ id: 3, status: HealthOrderStatus.PENDING_RESULTS }),
+        buildHealthOrder({ id: 1, status: HealthOrderStatus.PENDING_RESULTS }),
+      ]);
+
+      const result = await service.bulkUpdateHealthOrderStatus([3, 1], HealthOrderStatus.PENDING_RESULTS);
+
+      expect(healthOrderRepository.bulkUpdateHealthOrderStatus).toHaveBeenCalledWith(
+        [3, 1],
+        HealthOrderStatus.PENDING_RESULTS,
+      );
+      expect(result.map(order => [order.id, order.status])).toEqual([
+        [3, HealthOrderStatus.PENDING_RESULTS],
+        [1, HealthOrderStatus.PENDING_RESULTS],
+      ]);
+    });
+
+    it('does not report the array index as the e-mail sent flag', async () => {
+      healthOrderRepository.bulkUpdateHealthOrderStatus.mockResolvedValue([buildHealthOrder(), buildHealthOrder()]);
+
+      const result = await service.bulkUpdateHealthOrderStatus([1, 2], HealthOrderStatus.EXECUTED);
+
+      expect(result.map(order => order.sentMail)).toEqual([undefined, undefined]);
+    });
+
+    it('propagates the repository errors', async () => {
+      healthOrderRepository.bulkUpdateHealthOrderStatus.mockRejectedValue(
+        Object.assign(new Error(), { status: HttpStatus.NOT_FOUND }),
+      );
+
+      await expect(service.bulkUpdateHealthOrderStatus([1], HealthOrderStatus.EXECUTED)).rejects.toMatchObject({
+        status: HttpStatus.NOT_FOUND,
+      });
     });
   });
 
@@ -260,6 +286,15 @@ describe('HealthOrderService', () => {
       });
       expect(fileStorage.delete).not.toHaveBeenCalled();
     });
+
+    it.each([HealthOrderStatus.QUOTED, HealthOrderStatus.EXECUTED, HealthOrderStatus.PENDING_RESULTS])(
+      'attaches the prescription when the order is %p',
+      async status => {
+        healthOrderRepository.getHealthOrderAndFail.mockResolvedValue(buildHealthOrder({ status }));
+
+        await expect(service.attachHealthOrderPrescription(7, buildFile(), 'notes')).resolves.toBe('file-id');
+      },
+    );
 
     it('rejects when the results are already done without touching the disk', async () => {
       healthOrderRepository.getHealthOrderAndFail.mockResolvedValue(
@@ -292,25 +327,30 @@ describe('HealthOrderService', () => {
   });
 
   describe('attachResultFile', () => {
-    it('attaches the file as a result when the order is executed', async () => {
+    it.each([HealthOrderStatus.QUOTED, HealthOrderStatus.EXECUTED, HealthOrderStatus.PENDING_RESULTS])(
+      'attaches the file as a result when the order is %p',
+      async status => {
+        healthOrderRepository.getHealthOrderAndFail.mockResolvedValue(buildHealthOrder({ status }));
+
+        await expect(service.attachResultFile(7, buildFile(), undefined)).resolves.toBe('file-id');
+        expect(healthOrderRepository.attachHealthOrderFile).toHaveBeenCalledWith(
+          7,
+          expect.objectContaining({ fileType: HealthOrderFileType.HEALTH_ORDER_RESULT }),
+        );
+      },
+    );
+
+    it('rejects when the results are already done without touching the disk', async () => {
       healthOrderRepository.getHealthOrderAndFail.mockResolvedValue(
-        buildHealthOrder({ status: HealthOrderStatus.EXECUTED }),
+        buildHealthOrder({ status: HealthOrderStatus.RESULTS_DONE }),
       );
-
-      await expect(service.attachResultFile(7, buildFile(), undefined)).resolves.toBe('file-id');
-      expect(healthOrderRepository.attachHealthOrderFile).toHaveBeenCalledWith(
-        7,
-        expect.objectContaining({ fileType: HealthOrderFileType.HEALTH_ORDER_RESULT }),
-      );
-    });
-
-    it('rejects when the order is not executed without touching the disk', async () => {
-      healthOrderRepository.getHealthOrderAndFail.mockResolvedValue(buildHealthOrder());
 
       await expect(service.attachResultFile(7, buildFile(), undefined)).rejects.toMatchObject({
         status: HttpStatus.BAD_REQUEST,
+        response: { code: 'INCORRECT_STATUS_ERROR' },
       });
       expect(fileStorage.save).not.toHaveBeenCalled();
+      expect(healthOrderRepository.attachHealthOrderFile).not.toHaveBeenCalled();
     });
   });
 
@@ -381,14 +421,6 @@ describe('HealthOrderService', () => {
 
       await expect(service.downloadOrderFile(7, 'file-id')).rejects.toMatchObject({ status: HttpStatus.NOT_FOUND });
       expect(fileStorage.createReadStream).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('sendHealthOrderResultsToClient', () => {
-    it('is not implemented yet', () => {
-      expect(() => service.sendHealthOrderResultsToClient(7, { channel: MessageChannelEnum.E_MAIL })).toThrow(
-        NotImplementedException,
-      );
     });
   });
 });

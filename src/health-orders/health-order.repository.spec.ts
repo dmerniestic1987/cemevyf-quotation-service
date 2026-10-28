@@ -4,6 +4,7 @@ import { HealthOrder } from './health-order.entity';
 import { HealthOrderItem } from './health-order-item.entity';
 import { HealthOrderFile } from './health-order-file.entity';
 import { HealthOrderStatus } from './types/health-order-status';
+import { In } from 'typeorm';
 import { HealthOrderFileType } from './types/health-order-file-type';
 
 const buildHealthOrder = (overrides: Partial<HealthOrder> = {}): HealthOrder =>
@@ -12,7 +13,7 @@ const buildHealthOrder = (overrides: Partial<HealthOrder> = {}): HealthOrder =>
 const buildItem = (id: number): HealthOrderItem => Object.assign(new HealthOrderItem(), { id, name: `item ${id}` });
 
 describe('HealthOrderRepository', () => {
-  let entityManager: { save: jest.Mock; delete: jest.Mock; findOne: jest.Mock };
+  let entityManager: { save: jest.Mock; delete: jest.Mock; findOne: jest.Mock; find: jest.Mock };
   let queryRunner: Record<string, jest.Mock | typeof entityManager>;
   let ormRepository: { findOne: jest.Mock; save: jest.Mock; find: jest.Mock };
   let dataSource: { createQueryRunner: jest.Mock; getRepository: jest.Mock; transaction: jest.Mock };
@@ -23,6 +24,7 @@ describe('HealthOrderRepository', () => {
       save: jest.fn(async entity => entity),
       delete: jest.fn(),
       findOne: jest.fn(),
+      find: jest.fn(),
     };
     queryRunner = {
       connect: jest.fn(),
@@ -174,6 +176,128 @@ describe('HealthOrderRepository', () => {
         status: HttpStatus.BAD_REQUEST,
       });
       expect(entityManager.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('bulkUpdateHealthOrderStatus', () => {
+    // MySQL returns bigint columns as strings, so the IDs of the loaded orders are strings in real life
+    const buildStoredOrder = (id: number, status: HealthOrderStatus, overrides: Partial<HealthOrder> = {}) =>
+      buildHealthOrder({ id: String(id) as unknown as number, status, ...overrides });
+
+    const getThrown = async (promise: Promise<unknown>) =>
+      promise.then(
+        () => undefined,
+        error => error,
+      );
+
+    it('reads the orders ordered by ID with a write lock', async () => {
+      entityManager.find.mockResolvedValue([buildStoredOrder(1, HealthOrderStatus.QUOTED)]);
+
+      await repository.bulkUpdateHealthOrderStatus([1], HealthOrderStatus.EXECUTED);
+
+      expect(entityManager.find).toHaveBeenCalledWith(HealthOrder, {
+        where: { id: In([1]) },
+        order: { id: 'ASC' },
+        lock: { mode: 'pessimistic_write' },
+      });
+    });
+
+    it('moves every order to the new status in one save and returns them in the requested order', async () => {
+      entityManager.find.mockResolvedValue([
+        buildStoredOrder(1, HealthOrderStatus.EXECUTED),
+        buildStoredOrder(2, HealthOrderStatus.EXECUTED),
+        buildStoredOrder(3, HealthOrderStatus.EXECUTED),
+      ]);
+
+      const result = await repository.bulkUpdateHealthOrderStatus([3, 1, 2], HealthOrderStatus.PENDING_RESULTS);
+
+      expect(entityManager.save).toHaveBeenCalledTimes(1);
+      expect(result.map(order => String(order.id))).toEqual(['3', '1', '2']);
+      expect(result.every(order => order.status === HealthOrderStatus.PENDING_RESULTS)).toBe(true);
+    });
+
+    it('sets the execution date only when moving to EXECUTED', async () => {
+      entityManager.find.mockResolvedValue([buildStoredOrder(1, HealthOrderStatus.QUOTED)]);
+
+      const [executed] = await repository.bulkUpdateHealthOrderStatus([1], HealthOrderStatus.EXECUTED);
+
+      expect(executed.executedAt).toBeInstanceOf(Date);
+    });
+
+    it('keeps the execution date on later transitions', async () => {
+      const executedAt = new Date('2026-01-01T00:00:00.000Z');
+      entityManager.find.mockResolvedValue([buildStoredOrder(1, HealthOrderStatus.EXECUTED, { executedAt })]);
+
+      const [updated] = await repository.bulkUpdateHealthOrderStatus([1], HealthOrderStatus.PENDING_RESULTS);
+
+      expect(updated.executedAt).toBe(executedAt);
+    });
+
+    it('updates nothing and reports every missing ID when some orders do not exist', async () => {
+      entityManager.find.mockResolvedValue([buildStoredOrder(2, HealthOrderStatus.QUOTED)]);
+
+      const error = await getThrown(repository.bulkUpdateHealthOrderStatus([5, 2, 9], HealthOrderStatus.EXECUTED));
+
+      expect(error.getStatus()).toBe(HttpStatus.NOT_FOUND);
+      expect(error.getResponse()).toMatchObject({
+        code: 'NOT_FOUND_ERROR',
+        details: { missingIds: [5, 9] },
+      });
+      expect(entityManager.save).not.toHaveBeenCalled();
+    });
+
+    it('updates nothing and reports the orders that cannot make the transition', async () => {
+      entityManager.find.mockResolvedValue([
+        buildStoredOrder(1, HealthOrderStatus.QUOTED),
+        buildStoredOrder(2, HealthOrderStatus.EXECUTED),
+        buildStoredOrder(3, HealthOrderStatus.RESULTS_DONE),
+      ]);
+
+      const error = await getThrown(
+        repository.bulkUpdateHealthOrderStatus([1, 2, 3], HealthOrderStatus.PENDING_RESULTS),
+      );
+
+      expect(error.getStatus()).toBe(HttpStatus.BAD_REQUEST);
+      expect(error.getResponse()).toMatchObject({
+        code: 'INCORRECT_STATUS_ERROR',
+        message: "Only health orders in 'executed' status can move to 'pending_results'",
+        details: {
+          requiredCurrentStatus: HealthOrderStatus.EXECUTED,
+          invalidOrders: [
+            { id: 1, currentStatus: HealthOrderStatus.QUOTED },
+            { id: 3, currentStatus: HealthOrderStatus.RESULTS_DONE },
+          ],
+        },
+      });
+      expect(entityManager.save).not.toHaveBeenCalled();
+    });
+
+    it('rejects any order when the target status is the initial one', async () => {
+      entityManager.find.mockResolvedValue([buildStoredOrder(1, HealthOrderStatus.EXECUTED)]);
+
+      const error = await getThrown(repository.bulkUpdateHealthOrderStatus([1], HealthOrderStatus.QUOTED));
+
+      expect(error.getStatus()).toBe(HttpStatus.BAD_REQUEST);
+      expect(error.getResponse()).toMatchObject({
+        message: "No health order can move to 'quoted'",
+        details: { requiredCurrentStatus: undefined },
+      });
+      expect(entityManager.save).not.toHaveBeenCalled();
+    });
+
+    it('reports the missing orders before the invalid transitions', async () => {
+      entityManager.find.mockResolvedValue([buildStoredOrder(1, HealthOrderStatus.RESULTS_DONE)]);
+
+      const error = await getThrown(repository.bulkUpdateHealthOrderStatus([1, 2], HealthOrderStatus.EXECUTED));
+
+      expect(error.getStatus()).toBe(HttpStatus.NOT_FOUND);
+    });
+
+    it('propagates a failing save so the transaction is rolled back', async () => {
+      entityManager.find.mockResolvedValue([buildStoredOrder(1, HealthOrderStatus.QUOTED)]);
+      entityManager.save.mockRejectedValue(new Error('db down'));
+
+      await expect(repository.bulkUpdateHealthOrderStatus([1], HealthOrderStatus.EXECUTED)).rejects.toThrow('db down');
     });
   });
 

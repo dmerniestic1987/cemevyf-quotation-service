@@ -2,7 +2,6 @@ import { StreamableFile } from '@nestjs/common';
 import { Readable } from 'stream';
 import { HealthOrderController } from './health-order.controller';
 import { HealthOrderStatus } from './types/health-order-status';
-import { MessageChannelEnum } from '../commons/types/message-channel.enum';
 
 describe('HealthOrderController', () => {
   let service: Record<string, jest.Mock>;
@@ -17,9 +16,8 @@ describe('HealthOrderController', () => {
       findOrder: jest.fn(async () => 'order'),
       update: jest.fn(async () => 'updated'),
       attachHealthOrderPrescription: jest.fn(async () => 'prescription-id'),
-      sendHealthOrderPrescriptionToClient: jest.fn(async () => 'prescription-sent'),
       attachResultFile: jest.fn(async () => 'result-id'),
-      sendHealthOrderResultsToClient: jest.fn(async () => 'results-sent'),
+      bulkUpdateHealthOrderStatus: jest.fn(async () => 'bulk-updated'),
       findOrderFiles: jest.fn(async () => 'files'),
       downloadOrderFile: jest.fn(),
     };
@@ -64,12 +62,6 @@ describe('HealthOrderController', () => {
     expect(service.attachHealthOrderPrescription).toHaveBeenCalledWith(7, file, 'notes');
   });
 
-  it('sends the prescription e-mail', async () => {
-    const dto = { channel: MessageChannelEnum.E_MAIL };
-    await expect(controller.sendHealthOrderPrescriptionToClient(7, dto)).resolves.toBe('prescription-sent');
-    expect(service.sendHealthOrderPrescriptionToClient).toHaveBeenCalledWith(7, dto);
-  });
-
   it('attaches a result and returns the file ID with its original name', async () => {
     await expect(controller.attachHealthOrderResult(7, file, {})).resolves.toEqual({
       id: 'result-id',
@@ -78,10 +70,11 @@ describe('HealthOrderController', () => {
     expect(service.attachResultFile).toHaveBeenCalledWith(7, file, undefined);
   });
 
-  it('sends the results e-mail', async () => {
-    const dto = { channel: MessageChannelEnum.E_MAIL };
-    await expect(controller.sendHealthOrderResultsToClient(7, dto)).resolves.toBe('results-sent');
-    expect(service.sendHealthOrderResultsToClient).toHaveBeenCalledWith(7, dto);
+  it('updates the status of several health orders at once', async () => {
+    await expect(
+      controller.bulkUpdateHealthOrderStatus({ ids: [1, 2, 3], status: HealthOrderStatus.PENDING_RESULTS }),
+    ).resolves.toBe('bulk-updated');
+    expect(service.bulkUpdateHealthOrderStatus).toHaveBeenCalledWith([1, 2, 3], HealthOrderStatus.PENDING_RESULTS);
   });
 
   it('lists the files of a health order', async () => {

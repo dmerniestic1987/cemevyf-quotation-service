@@ -4,8 +4,6 @@ import { FilterHealthOrderDto } from './dto/filter-health-order.dto';
 import { PageOptionsDto } from '../commons/dto/page-options.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { UpdateHealthOrderRequestDto } from './dto/update-health-order-request.dto';
-import { SendHealthOrderEMailRequestDto } from './dto/send-health-order-e-mail-request.dto';
-import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-response.dto';
 import { HealthOrderStatus } from './types/health-order-status';
 import { HealthOrderFileResponseDto } from './dto/health-order-file-response.dto';
 import { HealthOrderFileDownload } from './types/health-order-file-download';
@@ -22,11 +20,6 @@ export interface IHealthOrderService {
 
   update(id: number, updateQuotationDto: UpdateHealthOrderRequestDto): Promise<HealthOrderResponseDto>;
 
-  sendHealthOrderPrescriptionToClient(
-    id: number,
-    sendQuotationDto: SendHealthOrderEMailRequestDto,
-  ): Promise<HealthOrderEmailSentResponseDto>;
-
   /**
    * The health order transitions to an executed state when a professional carries out the procedures associated
    * with the order.
@@ -36,7 +29,15 @@ export interface IHealthOrderService {
   updateHealthOrderStatus(id: number, newStatus: HealthOrderStatus): Promise<any>;
 
   /**
-   * Attach a file to the health order.
+   * Moves several health orders to the same status. Either all of them are updated or none is.
+   * @param ids health order ids
+   * @param newStatus status every order must move to
+   * @returns the updated orders in the same order as ids
+   */
+  bulkUpdateHealthOrderStatus(ids: number[], newStatus: HealthOrderStatus): Promise<HealthOrderResponseDto[]>;
+
+  /**
+   * Attach a file to the health order. Allowed in any status except results_done.
    * @param id
    * @param file
    * @param additionalNotes
@@ -45,7 +46,7 @@ export interface IHealthOrderService {
   attachHealthOrderPrescription(id: number, file: Express.Multer.File, additionalNotes: string): Promise<string>;
 
   /**
-   * Attach a file to the health order.
+   * Attach a result file to the health order. Allowed in any status except results_done.
    * @param id
    * @param resultFile
    * @param additionalNotes
@@ -64,11 +65,4 @@ export interface IHealthOrderService {
    * @param fileId id of the attached file
    */
   downloadOrderFile(id: number, fileId: string): Promise<HealthOrderFileDownload>;
-
-  /**
-   * Send the results via email.
-   * @param id
-   * @returns id of result file
-   */
-  sendHealthOrderResultsToClient(id: number, sendQuotationDto: SendHealthOrderEMailRequestDto): Promise<string>;
 }
