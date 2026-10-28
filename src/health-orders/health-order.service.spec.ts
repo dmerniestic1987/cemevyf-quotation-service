@@ -56,6 +56,7 @@ describe('HealthOrderService', () => {
       attachHealthOrderFile: jest.fn(async () => 'file-id'),
       findHealthOrderFiles: jest.fn(),
       findHealthOrderFile: jest.fn(),
+      deleteHealthOrderFile: jest.fn(),
       getRepository: jest.fn(),
     };
     clientsRepository = { findOne: jest.fn() };
@@ -421,6 +422,89 @@ describe('HealthOrderService', () => {
 
       await expect(service.downloadOrderFile(7, 'file-id')).rejects.toMatchObject({ status: HttpStatus.NOT_FOUND });
       expect(fileStorage.createReadStream).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteOrderFile', () => {
+    const deletedFile = () =>
+      Object.assign(new HealthOrderFile(), {
+        id: 'file-id',
+        fileType: HealthOrderFileType.HEALTH_ORDER_RESULT,
+        storedFileName: STORED_FILE_NAME,
+        checksumSha256: PDF_SHA256,
+      });
+
+    it.each([HealthOrderStatus.QUOTED, HealthOrderStatus.PENDING_RESULTS])(
+      'deletes the record and then the stored file when the order is %p',
+      async status => {
+        const calls: string[] = [];
+        healthOrderRepository.getHealthOrderAndFail.mockResolvedValue(buildHealthOrder({ status }));
+        healthOrderRepository.deleteHealthOrderFile.mockImplementation(async () => {
+          calls.push('record');
+          return deletedFile();
+        });
+        fileStorage.delete.mockImplementation(async () => {
+          calls.push('file');
+        });
+
+        await expect(service.deleteOrderFile(7, 'file-id')).resolves.toBeUndefined();
+
+        expect(healthOrderRepository.deleteHealthOrderFile).toHaveBeenCalledWith(7, 'file-id');
+        expect(fileStorage.delete).toHaveBeenCalledWith(STORED_FILE_NAME);
+        expect(calls).toEqual(['record', 'file']);
+      },
+    );
+
+    it.each([HealthOrderStatus.EXECUTED, HealthOrderStatus.RESULTS_DONE])(
+      'rejects the deletion when the order is %p without touching the record or the disk',
+      async status => {
+        healthOrderRepository.getHealthOrderAndFail.mockResolvedValue(buildHealthOrder({ status }));
+
+        await expect(service.deleteOrderFile(7, 'file-id')).rejects.toMatchObject({
+          status: HttpStatus.BAD_REQUEST,
+          response: {
+            code: 'INCORRECT_STATUS_ERROR',
+            message: "Files can only be deleted from health orders in 'quoted' or 'pending_results' status",
+          },
+        });
+        expect(healthOrderRepository.deleteHealthOrderFile).not.toHaveBeenCalled();
+        expect(fileStorage.delete).not.toHaveBeenCalled();
+      },
+    );
+
+    it('throws not found when the order does not exist', async () => {
+      healthOrderRepository.getHealthOrderAndFail.mockRejectedValue(
+        Object.assign(new Error(), { status: HttpStatus.NOT_FOUND }),
+      );
+
+      await expect(service.deleteOrderFile(7, 'file-id')).rejects.toMatchObject({ status: HttpStatus.NOT_FOUND });
+      expect(healthOrderRepository.deleteHealthOrderFile).not.toHaveBeenCalled();
+      expect(fileStorage.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws not found and does not touch the disk when the file does not belong to the order', async () => {
+      healthOrderRepository.getHealthOrderAndFail.mockResolvedValue(buildHealthOrder());
+      healthOrderRepository.deleteHealthOrderFile.mockResolvedValue(null);
+
+      await expect(service.deleteOrderFile(7, 'file-id')).rejects.toMatchObject({ status: HttpStatus.NOT_FOUND });
+      expect(fileStorage.delete).not.toHaveBeenCalled();
+    });
+
+    it('does not touch the disk when removing the record fails', async () => {
+      healthOrderRepository.getHealthOrderAndFail.mockResolvedValue(buildHealthOrder());
+      healthOrderRepository.deleteHealthOrderFile.mockRejectedValue(new Error('db down'));
+
+      await expect(service.deleteOrderFile(7, 'file-id')).rejects.toThrow('db down');
+      expect(fileStorage.delete).not.toHaveBeenCalled();
+    });
+
+    it('succeeds and keeps going when the stored file cannot be removed, leaving only an orphan file', async () => {
+      healthOrderRepository.getHealthOrderAndFail.mockResolvedValue(buildHealthOrder());
+      healthOrderRepository.deleteHealthOrderFile.mockResolvedValue(deletedFile());
+      fileStorage.delete.mockRejectedValue(new Error('EACCES'));
+
+      await expect(service.deleteOrderFile(7, 'file-id')).resolves.toBeUndefined();
+      expect(fileStorage.delete).toHaveBeenCalledWith(STORED_FILE_NAME);
     });
   });
 });

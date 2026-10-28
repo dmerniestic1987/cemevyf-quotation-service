@@ -365,4 +365,40 @@ describe('HealthOrderRepository', () => {
       await expect(repository.findHealthOrderFile(8, 'file-id')).resolves.toBeNull();
     });
   });
+
+  describe('deleteHealthOrderFile', () => {
+    const buildFile = () =>
+      Object.assign(new HealthOrderFile(), {
+        id: 'file-id',
+        storedFileName: '3f2c1b7e-0d44-4a53-9a39-0f6a2f6a8c11.pdf',
+        fileType: HealthOrderFileType.HEALTH_ORDER_RESULT,
+      });
+
+    it('locks the file of the order, deletes its record and returns it', async () => {
+      const file = buildFile();
+      entityManager.findOne.mockResolvedValue(file);
+
+      await expect(repository.deleteHealthOrderFile(7, 'file-id')).resolves.toBe(file);
+
+      expect(entityManager.findOne).toHaveBeenCalledWith(HealthOrderFile, {
+        where: { id: 'file-id', healthOrder: { id: 7 } },
+        lock: { mode: 'pessimistic_write' },
+      });
+      expect(entityManager.delete).toHaveBeenCalledWith(HealthOrderFile, { id: 'file-id' });
+    });
+
+    it('returns null and deletes nothing when the order has no such file', async () => {
+      entityManager.findOne.mockResolvedValue(null);
+
+      await expect(repository.deleteHealthOrderFile(7, 'file-id')).resolves.toBeNull();
+      expect(entityManager.delete).not.toHaveBeenCalled();
+    });
+
+    it('propagates a failing delete so the transaction is rolled back', async () => {
+      entityManager.findOne.mockResolvedValue(buildFile());
+      entityManager.delete.mockRejectedValue(new Error('db down'));
+
+      await expect(repository.deleteHealthOrderFile(7, 'file-id')).rejects.toThrow('db down');
+    });
+  });
 });

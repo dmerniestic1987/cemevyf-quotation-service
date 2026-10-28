@@ -188,6 +188,27 @@ export class HealthOrderRepository {
     });
   }
 
+  /**
+   * Deletes the file record of the health order. The row is locked first, so two concurrent deletions of the same
+   * file cannot both succeed.
+   * @returns the deleted record (it holds the name of the file to remove from the storage) or null if the order
+   * has no such file
+   */
+  async deleteHealthOrderFile(orderId: number, fileId: string): Promise<HealthOrderFile | null> {
+    this.logger.debug('Delete health order file', { service: HealthOrderRepository.name, orderId, fileId });
+    return await this.dataSource.transaction(async entityManager => {
+      const file = await entityManager.findOne(HealthOrderFile, {
+        where: { id: fileId, healthOrder: { id: orderId } },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!file) {
+        return null;
+      }
+      await entityManager.delete(HealthOrderFile, { id: file.id });
+      return file;
+    });
+  }
+
   private canMoveTo(healthOrder: HealthOrder, newStatus: HealthOrderStatus): boolean {
     return nextStatusMap.get(healthOrder.status) === newStatus;
   }

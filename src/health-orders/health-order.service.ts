@@ -26,6 +26,9 @@ import { detectFileType } from '../commons/file-storage/detect-file-type';
 import { HealthOrderFileResponseDto } from './dto/health-order-file-response.dto';
 import { HealthOrderFileDownload } from './types/health-order-file-download';
 
+// A health order that is being executed or whose results are done is a closed record: its files cannot be removed
+const STATUSES_ALLOWING_FILE_DELETION = [HealthOrderStatus.QUOTED, HealthOrderStatus.PENDING_RESULTS];
+
 @Injectable()
 export class HealthOrderService
   extends BaseService<HealthOrder, CreateHealthOrderRequestDto>
@@ -182,6 +185,34 @@ export class HealthOrderService
       originalName: file.originalName,
       sizeBytes: file.sizeBytes,
     };
+  }
+
+  async deleteOrderFile(orderId: number, fileId: string): Promise<void> {
+    this.logger.log('Delete health order file', { service: HealthOrderService.name, orderId, fileId });
+    const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(orderId, {});
+    if (!STATUSES_ALLOWING_FILE_DELETION.includes(healthOrder.status)) {
+      throw healthOrderIncorrectStatusError(
+        `Files can only be deleted from health orders in '${HealthOrderStatus.QUOTED}' or '${HealthOrderStatus.PENDING_RESULTS}' status`,
+      );
+    }
+
+    // The record goes first: if removing the file fails afterwards, only an orphan file stays on disk and the API
+    // never points to a missing file
+    const deletedFile = await this.healthOrderRepository.deleteHealthOrderFile(orderId, fileId);
+    if (!deletedFile) {
+      throw notFoundError(`File ID: ${fileId} was not found in Health Order ID: ${orderId}`);
+    }
+    this.logger.log('Health order file record deleted', {
+      service: HealthOrderService.name,
+      orderId,
+      fileId,
+      fileType: deletedFile.fileType,
+      storedFileName: deletedFile.storedFileName,
+      checksumSha256: deletedFile.checksumSha256,
+    });
+    await this.fileStorage.delete(deletedFile.storedFileName).catch(error => {
+      this.logger.error(`Orphan file ${deletedFile.storedFileName} could not be removed from the storage`, error);
+    });
   }
 
   /**
