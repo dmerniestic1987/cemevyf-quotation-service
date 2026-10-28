@@ -18,3 +18,15 @@ export const healthOrderIncorrectStatusError = (
 export const resourceAlreadyExist = (msg = 'Resource already exists') => {
   return new HttpException({ message: msg, code: 'RESOURCE_ALREADY_EXISTS' }, HttpStatus.CONFLICT);
 };
+
+export const unauthorizedError = (msg = 'Unauthorized') => {
+  return new HttpException({ message: msg, code: 'UNAUTHORIZED' }, HttpStatus.UNAUTHORIZED);
+};
+
+export const forbiddenError = (msg = 'Forbidden') => {
+  return new HttpException({ message: msg, code: 'FORBIDDEN' }, HttpStatus.FORBIDDEN);
+};
+
+export const badRequestError = (msg = 'Bad request', code = 'BAD_REQUEST') => {
+  return new HttpException({ message: msg, code }, HttpStatus.BAD_REQUEST);
+};

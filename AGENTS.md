@@ -11,7 +11,7 @@ Our primary goal is to provide a fast, reliable CRUD (Create, Read, Update, Dele
 - **Framework:** NestJS 12.2 (ESM-only packages loaded from the CommonJS app; tests run with `npm test`, which enables `--experimental-vm-modules`)
 - **Language:** TypeScript 6.0 (strict mode is the target; `strict` is currently `false` in `tsconfig.json` and enabling it is tracked as a separate task)
 - **ORM & Database:** TypeORM 1.x with MySQL 9.7 LTS (`mysql2` driver)
-- **Authentication/Security:** `bcrypt` for sensitive data hashing
+- **Authentication/Security:** JWT (`@nestjs/jwt`, HS256) with global guards, `bcrypt` for password hashing, `@nestjs/throttler` on login
 - **Communications:** SMTP server integration for sending emails
 
 ## 🧑‍💻 Coding Standards & AI Guidelines
@@ -86,3 +86,10 @@ Provide a robust search/filter endpoint for quotations using:
 - Quotation ID / Unique Number
 - Quotation Creation Date (Date Range)
 - Execution Date (Date Range)
+
+## 🔑 Authentication & Authorization Rules
+- All endpoints are protected by the global `JwtAuthGuard` + `RolesGuard` (see `src/auth`). Authorization is deny by default.
+- Every controller or endpoint MUST declare its access with `@Auth(...roles)` (use `ALL_ROLES` for any authenticated user) or `@Public()`. Add new controllers to `src/auth/security-metadata.spec.ts`.
+- Never return `passwordHash` or `tokenVersion`; map users to `UserResponseDto`. Never log passwords or tokens.
+- Changing a user's role, status or password must increment `tokenVersion` (this revokes the existing tokens).
+- Secrets only come from the environment (`CEMEVYF_HEALTH_ORDERS_SERVICE_AUTH_JWT_SECRET`) or the git-ignored `config/local.yml`. No users or passwords in migrations; the first admin is created with `npm run -s user:create` (always `-s`, otherwise npm echoes the password argument). Never print or log passwords or tokens.

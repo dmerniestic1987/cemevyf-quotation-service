@@ -5,3 +5,7 @@ typeOrm:
 logLevel: log
 files:
   uploadDir: /tmp/cemevyf-uploaded-files-test
+auth:
+  jwt:
+    secret: test-only-secret-that-is-at-least-32-chars-long
+  bcryptRounds: 4

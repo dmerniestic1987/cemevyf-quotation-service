@@ -43,6 +43,63 @@ npm test           # unit tests with coverage
 `npm test` runs Jest with `--experimental-vm-modules` because the NestJS 12 packages are ESM-only; always use the
 npm script instead of calling `jest` directly.
 
+## Authentication and roles
+
+Every endpoint requires a JWT (`Authorization: Bearer <token>`) except `POST /auth/login`. There are two mutually
+exclusive roles, `SECRETARY` and `BUSINESS_ADMIN`; today both can call the clients and health orders endpoints, and
+only `BUSINESS_ADMIN` can manage users (`/users`).
+
+- **Login:** `POST /auth/login` with `username` and `password` returns `{ accessToken, tokenType, expiresIn, user }`.
+  Usernames are case insensitive. `GET /auth/me` returns the user of the token and `PUT /auth/password` changes the
+  own password (it closes every open session, the user must log in again).
+- **Configuration** (`auth.*` in `config/default.yml`, environment variables in
+  `config/custom-environment-variables.yml`):
+  - `CEMEVYF_HEALTH_ORDERS_SERVICE_AUTH_JWT_SECRET` is **required**, at least 32 characters. The service does not start
+    without it. Generate one with `node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"`.
+    Never commit it; for local development put it in `config/local.yml`.
+  - `CEMEVYF_HEALTH_ORDERS_SERVICE_AUTH_JWT_EXPIRES_IN` is the session length, `8h` by default (a number followed by
+    `s`, `m`, `h` or `d`).
+  - `CEMEVYF_HEALTH_ORDERS_SERVICE_AUTH_BCRYPT_ROUNDS` (default 12) and `auth.loginRateLimit` (5 attempts per minute
+    per username, 20 per IP). The counters live in memory, so they are per instance.
+  - `CEMEVYF_HEALTH_ORDERS_SERVICE_TRUST_PROXY`: set it to the number of proxies in front of the service (e.g. `1`)
+    when it runs behind a load balancer, otherwise every request looks like it comes from the proxy IP.
+- **First administrator:** after `npm run migrate` and `npm run build`, create it with the script. The other users
+  are created by that administrator with `POST /users`.
+
+  ```
+  npm run -s user:create -- <username> <SECRETARY|BUSINESS_ADMIN> <password>
+  npm run -s user:create -- admin BUSINESS_ADMIN 'a-long-password'
+  ```
+
+  Always use `-s` (`--silent`): without it npm prints the whole command, password included, before running it. The
+  script itself never prints or logs the password, and it validates the arguments before it connects to the database.
+  A password given as an argument is still visible in the shell history and in the process list of the machine. To
+  avoid that, leave the third argument out and give it in the `NEW_USER_PASSWORD` environment variable
+  (`read -rs NEW_USER_PASSWORD && export NEW_USER_PASSWORD`); the argument takes precedence when both are present.
+  The username and password follow the same rules as `POST /users`.
+- **Sessions:** the user is read from the database on every request, so disabling a user, changing the role or
+  changing the password invalidates its tokens immediately (`users.token_version`). There are no refresh tokens: when
+  the token expires the user logs in again. Passwords: 12 characters minimum, 72 bytes maximum (bcrypt limit).
+- **Frontend:** keep the token in `sessionStorage` (or memory), never in `localStorage`. File downloads need the
+  header, so fetch them as a blob instead of using `<img src>` or `<iframe src>`.
+
+### Adding or restricting an endpoint
+
+Authorization is deny by default: the global guards reject any endpoint that does not declare who can call it.
+
+```ts
+@Auth(...ALL_ROLES)                // whole controller, every authenticated user
+@Controller('quotations')
+export class QuotationController {
+  @Auth(Role.BUSINESS_ADMIN)       // an endpoint can narrow (or change) the roles of its controller
+  @Delete('/:id')
+  remove() {}
+}
+```
+
+`@Public()` skips authentication. New controllers must be added to `src/auth/security-metadata.spec.ts`, which fails
+if an endpoint forgets its roles.
+
 ## Uploaded files
 
 Prescription and result files (PNG, JPG or PDF, 5 MB max) are stored on disk, not in the database. Each file gets a

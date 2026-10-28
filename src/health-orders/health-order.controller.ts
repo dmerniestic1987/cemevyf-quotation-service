@@ -32,6 +32,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { HealthOrderResponseDto } from './dto/health-order-response.dto';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { ALL_ROLES } from '../auth/types/role.enum';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { HealthOrderService } from './health-order.service';
 import { FilterHealthOrderDto } from './dto/filter-health-order.dto';
@@ -52,6 +54,7 @@ import { HealthOrderFileResponseDto } from './dto/health-order-file-response.dto
 const FILE_UPLOAD_OPTIONS = { limits: { fileSize: MAX_FILE_SIZE_IN_BYTES, files: 1 } };
 
 @ApiTags('health-orders')
+@Auth(...ALL_ROLES)
 @Controller('health-orders')
 export class HealthOrderController {
   constructor(private readonly healthOrderService: HealthOrderService) {}
