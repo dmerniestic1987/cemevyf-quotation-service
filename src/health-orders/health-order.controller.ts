@@ -22,8 +22,6 @@ import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { HealthOrderService } from './health-order.service';
 import { FilterHealthOrderDto } from './dto/filter-health-order.dto';
 import { UpdateHealthOrderRequestDto } from './dto/update-health-order-request.dto';
-import { SendHealthOrderEMailRequestDto } from './dto/send-health-order-e-mail-request.dto';
-import { HealthOrderEmailSentResponseDto } from './dto/health-order-email-sent-response.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   MAX_FILE_SIZE_IN_BYTES,
@@ -32,6 +30,7 @@ import {
 import { AdditionalDataDto } from './dto/additional-data.dto';
 import { inputFileSchema } from './types/input-file-schema';
 import { UpdateHealthOrderStatusRequestDto } from './dto/update-health-order-status-request.dto';
+import { BulkUpdateHealthOrderStatusRequestDto } from './dto/bulk-update-health-order-status-request.dto';
 import { AttachedFileResponseDto } from './dto/attached-file-response.dto';
 import { HealthOrderFileResponseDto } from './dto/health-order-file-response.dto';
 
@@ -66,6 +65,22 @@ export class HealthOrderController {
     return this.healthOrderService.updateHealthOrderStatus(id, updateStatusDto.status);
   }
 
+  @Patch('/status/bulk')
+  @ApiOperation({
+    summary: 'Updates the status of several health orders at once',
+    operationId: 'bulkUpdateHealthOrderStatus',
+    description:
+      'Moves every health order in ids to the given status with the same transition rules as the single update. ' +
+      'The operation is transactional: if any order does not exist (404) or cannot move to the status (400), ' +
+      'no order is updated and the response details tell which ones are the problem.',
+  })
+  @ApiOkResponse({ type: [HealthOrderResponseDto] })
+  async bulkUpdateHealthOrderStatus(
+    @Body() bulkUpdateStatusDto: BulkUpdateHealthOrderStatusRequestDto,
+  ): Promise<HealthOrderResponseDto[]> {
+    return this.healthOrderService.bulkUpdateHealthOrderStatus(bulkUpdateStatusDto.ids, bulkUpdateStatusDto.status);
+  }
+
   @Get()
   @ApiOperation({ summary: 'Gets a list of all enabled health orders', operationId: 'findHealthOrders' })
   @ApiOkResponse({ type: [HealthOrderResponseDto] })
@@ -97,6 +112,7 @@ export class HealthOrderController {
   @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({
     summary: 'Adds a prescription file to a health order. The file could be jpg, png or pdf file',
+    description: "Allowed while the health order is in any status except 'results_done'.",
     operationId: 'attachHealthOrderPrescription',
   })
   @ApiConsumes('multipart/form-data')
@@ -145,25 +161,12 @@ export class HealthOrderController {
     return new StreamableFile(file.stream);
   }
 
-  @Post('/:id/prescription/e-mail')
-  @ApiParam({ type: 'number', name: 'id' })
-  @ApiOperation({
-    summary: 'Send a e-mail with health order prescription to the client',
-    operationId: 'sendHealthOrderPrescriptionToClient',
-  })
-  @ApiOkResponse({ type: HealthOrderEmailSentResponseDto })
-  async sendHealthOrderPrescriptionToClient(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() sendDto: SendHealthOrderEMailRequestDto,
-  ): Promise<HealthOrderEmailSentResponseDto> {
-    return this.healthOrderService.sendHealthOrderPrescriptionToClient(id, sendDto);
-  }
-
   @UseInterceptors(FileInterceptor('file', FILE_UPLOAD_OPTIONS))
   @Post('/:id/results')
   @ApiParam({ type: 'number', name: 'id' })
   @ApiOperation({
     summary: 'Adds a result file to a health order. The file could be jpg, png or pdf file',
+    description: "Allowed while the health order is in any status except 'results_done'.",
     operationId: 'attachHealthOrderResult',
   })
   @ApiConsumes('multipart/form-data')
@@ -182,19 +185,5 @@ export class HealthOrderController {
       id: fileId,
       originalName: file.originalname,
     };
-  }
-
-  @Post('/:id/results/e-mail')
-  @ApiParam({ type: 'number', name: 'id' })
-  @ApiOperation({
-    summary: 'Send a e-mail with health order results to the client',
-    operationId: 'sendHealthOrderResultsToClient',
-  })
-  @ApiOkResponse({ type: HealthOrderEmailSentResponseDto })
-  async sendHealthOrderResultsToClient(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() sendDto: SendHealthOrderEMailRequestDto,
-  ): Promise<HealthOrderEmailSentResponseDto> {
-    return this.healthOrderService.sendHealthOrderResultsToClient(id, sendDto);
   }
 }

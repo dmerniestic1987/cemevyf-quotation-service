@@ -2,7 +2,10 @@ import { ValidationPipe } from '@nestjs/common';
 import { CreateHealthOrderRequestDto } from './create-health-order-request.dto';
 import { UpdateHealthOrderRequestDto } from './update-health-order-request.dto';
 import { FilterHealthOrderDto } from './filter-health-order.dto';
-import { SendHealthOrderEMailRequestDto } from './send-health-order-e-mail-request.dto';
+import {
+  BulkUpdateHealthOrderStatusRequestDto,
+  MAX_BULK_STATUS_UPDATE_IDS,
+} from './bulk-update-health-order-status-request.dto';
 import { AdditionalDataDto } from './additional-data.dto';
 import { UpdateHealthOrderStatusRequestDto } from './update-health-order-status-request.dto';
 import { ClientRequestDto } from '../../clients/dto/client-request.dto';
@@ -142,6 +145,18 @@ describe('DTO validation', () => {
       expect(dto).toMatchObject({ id: 3, page: 2, take: 5 });
     });
 
+    it.each(['quoted', 'executed', 'pending_results', 'results_done'])('accepts the %p status filter', async status => {
+      const dto = await validate(FilterHealthOrderDto, { status }, 'query');
+
+      expect(dto.status).toBe(status);
+    });
+
+    it('rejects an unknown status filter', async () => {
+      const errors = await getErrors(FilterHealthOrderDto, { status: 'done' }, 'query');
+
+      expect(errors).toEqual([expect.stringContaining('status must be one of')]);
+    });
+
     it('rejects invalid values and unknown parameters', async () => {
       const errors = await getErrors(
         FilterHealthOrderDto,
@@ -159,16 +174,58 @@ describe('DTO validation', () => {
     });
   });
 
-  describe('SendHealthOrderEMailRequestDto', () => {
-    it('accepts a valid channel without e-mail', async () => {
-      expect(await getErrors(SendHealthOrderEMailRequestDto, { channel: 'e-mail' })).toEqual([]);
+  describe('BulkUpdateHealthOrderStatusRequestDto', () => {
+    it('accepts a list of IDs and a status', async () => {
+      const dto = await validate(BulkUpdateHealthOrderStatusRequestDto, { ids: [1, 2, 3], status: 'pending_results' });
+
+      expect(dto).toBeInstanceOf(BulkUpdateHealthOrderStatusRequestDto);
+      expect(dto).toMatchObject({ ids: [1, 2, 3], status: 'pending_results' });
     });
 
-    it('rejects a currency used as channel and an invalid e-mail', async () => {
-      expect(await getErrors(SendHealthOrderEMailRequestDto, { channel: 'ARS', eMail: 'nope' })).toEqual([
-        'channel must be one of the following values: e-mail, whatsapp, telegram',
-        'eMail must be an email',
+    it('accepts exactly the maximum amount of IDs', async () => {
+      const ids = Array.from({ length: MAX_BULK_STATUS_UPDATE_IDS }, (_, index) => index + 1);
+
+      expect(await getErrors(BulkUpdateHealthOrderStatusRequestDto, { ids, status: 'executed' })).toEqual([]);
+    });
+
+    it('rejects more IDs than the maximum', async () => {
+      const ids = Array.from({ length: MAX_BULK_STATUS_UPDATE_IDS + 1 }, (_, index) => index + 1);
+
+      expect(await getErrors(BulkUpdateHealthOrderStatusRequestDto, { ids, status: 'executed' })).toEqual([
+        `ids must contain no more than ${MAX_BULK_STATUS_UPDATE_IDS} elements`,
       ]);
+    });
+
+    it('rejects an empty list of IDs', async () => {
+      expect(await getErrors(BulkUpdateHealthOrderStatusRequestDto, { ids: [], status: 'executed' })).toEqual([
+        'ids must contain at least 1 elements',
+      ]);
+    });
+
+    it('rejects a missing list of IDs', async () => {
+      const errors = await getErrors(BulkUpdateHealthOrderStatusRequestDto, { status: 'executed' });
+
+      expect(errors).toEqual(expect.arrayContaining(['ids must be an array']));
+    });
+
+    it('rejects duplicated IDs', async () => {
+      expect(await getErrors(BulkUpdateHealthOrderStatusRequestDto, { ids: [1, 2, 1], status: 'executed' })).toEqual([
+        "All ids's elements must be unique",
+      ]);
+    });
+
+    it.each([[[0]], [[-3]], [[1.5]], [['1']], [[null]]])('rejects the invalid IDs %p', async ids => {
+      const errors = await getErrors(BulkUpdateHealthOrderStatusRequestDto, { ids, status: 'executed' });
+
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('rejects an unknown status and unknown properties', async () => {
+      const errors = await getErrors(BulkUpdateHealthOrderStatusRequestDto, { ids: [1], status: 'done', foo: 'bar' });
+
+      expect(errors).toEqual(
+        expect.arrayContaining(['property foo should not exist', expect.stringContaining('status must be one of')]),
+      );
     });
   });
 

@@ -9,3 +9,9 @@ export const nextStatusMap = new Map<HealthOrderStatus, HealthOrderStatus>();
 nextStatusMap.set(HealthOrderStatus.QUOTED, HealthOrderStatus.EXECUTED);
 nextStatusMap.set(HealthOrderStatus.EXECUTED, HealthOrderStatus.PENDING_RESULTS);
 nextStatusMap.set(HealthOrderStatus.PENDING_RESULTS, HealthOrderStatus.RESULTS_DONE);
+
+/**
+ * The only status a health order can be in to move to the given status, or undefined when no transition leads to it.
+ */
+export const getPreviousStatus = (status: HealthOrderStatus): HealthOrderStatus | undefined =>
+  [...nextStatusMap.entries()].find(([, next]) => next === status)?.[0];
