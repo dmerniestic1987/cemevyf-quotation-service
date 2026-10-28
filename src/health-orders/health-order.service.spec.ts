@@ -139,7 +139,7 @@ describe('HealthOrderService', () => {
         where: { id: 3, currency: CurrencyEnum.ARS },
         skip: 10,
         take: 10,
-        relations: ['client'],
+        relations: { client: true },
       });
       expect(getFindOptions().where.createdAt.type).toBe('and');
       expect(result.data).toHaveLength(1);
@@ -215,7 +215,10 @@ describe('HealthOrderService', () => {
         eMail: 'other@b.com',
       });
 
-      expect(healthOrderRepository.getHealthOrderAndFail).toHaveBeenCalledWith(7, ['client', 'healthOrderItems']);
+      expect(healthOrderRepository.getHealthOrderAndFail).toHaveBeenCalledWith(7, {
+        client: true,
+        healthOrderItems: true,
+      });
       expect(messageService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'other@b.com' }));
       expect(result).toEqual({ id: 7, channel: MessageChannelEnum.E_MAIL, sentMail: true });
     });

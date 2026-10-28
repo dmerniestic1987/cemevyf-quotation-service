@@ -25,17 +25,20 @@ export class ClientService extends BaseService<HealthOrder, ClientResponseDto> {
 
   async create(clientDto: ClientRequestDto): Promise<CreateClientResponseDto> {
     this.logger.debug('Create Client', { service: ClientService.name, clientDto });
-    let client: Client = await this.clientsRepository.findOne({
-      where: {
-        personId: clientDto.personId,
-        personIdType: clientDto.personIdType,
-      },
-    });
-    if (client) {
-      throw resourceAlreadyExist('Client already exists');
+    // The document is optional: without both type and number there is nothing to check for duplicates
+    if (clientDto.personId && clientDto.personIdType) {
+      const existingClient = await this.clientsRepository.findOne({
+        where: {
+          personId: clientDto.personId,
+          personIdType: clientDto.personIdType,
+        },
+      });
+      if (existingClient) {
+        throw resourceAlreadyExist('Client already exists');
+      }
     }
 
-    client = new Client();
+    const client = new Client();
     client.personId = clientDto.personId;
     client.personIdType = clientDto.personIdType;
     client.firstName = clientDto.firstName;
@@ -44,9 +47,9 @@ export class ClientService extends BaseService<HealthOrder, ClientResponseDto> {
     client.booklyId = clientDto.booklyId;
     client.email = clientDto.email;
     client.phoneNumber = clientDto.phoneNumber;
-    client = await this.clientsRepository.save(client);
+    const savedClient = await this.clientsRepository.save(client);
     return {
-      id: client.id,
+      id: savedClient.id,
     };
   }
 

@@ -1,6 +1,8 @@
 import { of, throwError } from 'rxjs';
-import { serviceConfig } from 'config';
+import config from 'config';
 import { CemevyfMessageService } from './cemevyf-message.service';
+
+const serviceConfig = config.get<{ messageServiceUrl: string }>('serviceConfig');
 
 describe('CemevyfMessageService', () => {
   const message = { to: 'a@b.com', subject: 'subject', context: {} };

@@ -54,13 +54,13 @@ describe('HealthOrderRepository', () => {
       ormRepository.findOne.mockResolvedValue(healthOrder);
 
       await expect(repository.getHealthOrderAndFail(7)).resolves.toBe(healthOrder);
-      expect(ormRepository.findOne).toHaveBeenCalledWith({ where: { id: 7 }, relations: ['healthOrderItems'] });
+      expect(ormRepository.findOne).toHaveBeenCalledWith({ where: { id: 7 }, relations: { healthOrderItems: true } });
     });
 
     it('throws not found when the health order does not exist', async () => {
       ormRepository.findOne.mockResolvedValue(null);
 
-      await expect(repository.getHealthOrderAndFail(7, [])).rejects.toMatchObject({ status: HttpStatus.NOT_FOUND });
+      await expect(repository.getHealthOrderAndFail(7, {})).rejects.toMatchObject({ status: HttpStatus.NOT_FOUND });
     });
   });
 

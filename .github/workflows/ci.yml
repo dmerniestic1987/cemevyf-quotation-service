@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:9.7.4
+        env:
+          MYSQL_ROOT_PASSWORD: my-secret-pw
+          MYSQL_DATABASE: health_orders
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -pmy-secret-pw"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      CEMEVYF_HEALTH_ORDERS_SERVICE_DB_HOST: 127.0.0.1
+      CEMEVYF_HEALTH_ORDERS_SERVICE_DB_PORT: 3306
+      CEMEVYF_HEALTH_ORDERS_SERVICE_DB_USERNAME: root
+      CEMEVYF_HEALTH_ORDERS_SERVICE_DB_PASSWORD: my-secret-pw
+      CEMEVYF_HEALTH_ORDERS_SERVICE_DB_NAME: health_orders
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npx eslint '{src,test}/**/*.ts'
+      - name: Build
+        run: npm run build
+      - name: Unit tests
+        run: npm test
+      - name: Migrations (apply, revert, apply)
+        run: |
+          npm run migrate
+          npm run rollback
+          npm run rollback
+          npm run migrate
+      - name: Entities and migrations are in sync
+        run: npm run typeorm --silent -- schema:log | tee schema.log && grep -q "Your schema is up to date" schema.log
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t cemevyf-quotation-service .

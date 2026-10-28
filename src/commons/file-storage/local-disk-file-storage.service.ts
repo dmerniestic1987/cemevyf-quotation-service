@@ -4,9 +4,11 @@ import { createReadStream } from 'fs';
 import { access, mkdir, unlink, writeFile } from 'fs/promises';
 import { isAbsolute, join, resolve } from 'path';
 import { Readable } from 'stream';
-import { files as filesConfig } from 'config';
+import config from 'config';
 import { notFoundError } from '../errors/exceptions';
 import { FileStorage } from './file-storage';
+
+const filesConfig = config.get<{ uploadDir: string }>('files');
 
 const STORED_FILE_NAME_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(png|jpg|pdf)$/;
 

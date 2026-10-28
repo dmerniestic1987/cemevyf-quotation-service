@@ -7,10 +7,10 @@ This is a backend REST API system designed to manage laboratory test quotations,
 Our primary goal is to provide a fast, reliable CRUD (Create, Read, Update, Delete) and business logic layer for generating and managing quotations.
 
 ## 🛠 Tech Stack & Architecture
-- **Runtime:** Node.js v24 (macOS development environment)
-- **Framework:** NestJS v12
-- **Language:** TypeScript (Strict mode)
-- **ORM & Database:** TypeORM with MySQL
+- **Runtime:** Node.js 24.22.1 (pinned in `.nvmrc` and `engines`; macOS development environment)
+- **Framework:** NestJS 12.2 (ESM-only packages loaded from the CommonJS app; tests run with `npm test`, which enables `--experimental-vm-modules`)
+- **Language:** TypeScript 6.0 (strict mode is the target; `strict` is currently `false` in `tsconfig.json` and enabling it is tracked as a separate task)
+- **ORM & Database:** TypeORM 1.x with MySQL 9.7 LTS (`mysql2` driver)
 - **Authentication/Security:** `bcrypt` for sensitive data hashing
 - **Communications:** SMTP server integration for sending emails
 
