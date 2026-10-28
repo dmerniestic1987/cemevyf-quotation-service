@@ -1,9 +1,12 @@
 import { HttpStatus } from '@nestjs/common';
 import {
+  badRequestError,
   createQuotationInternalError,
+  forbiddenError,
   healthOrderIncorrectStatusError,
   notFoundError,
   resourceAlreadyExist,
+  unauthorizedError,
 } from './exceptions';
 
 describe('exceptions', () => {
@@ -66,5 +69,23 @@ describe('exceptions', () => {
     it('accepts a custom message', () => {
       expect(resourceAlreadyExist('duplicated').getResponse()).toMatchObject({ message: 'duplicated' });
     });
+  });
+
+  it('builds an unauthorized error', () => {
+    expect(unauthorizedError().getStatus()).toBe(HttpStatus.UNAUTHORIZED);
+    expect(unauthorizedError().getResponse()).toEqual({ message: 'Unauthorized', code: 'UNAUTHORIZED' });
+    expect(unauthorizedError('expired').getResponse()).toMatchObject({ message: 'expired' });
+  });
+
+  it('builds a forbidden error', () => {
+    expect(forbiddenError().getStatus()).toBe(HttpStatus.FORBIDDEN);
+    expect(forbiddenError().getResponse()).toEqual({ message: 'Forbidden', code: 'FORBIDDEN' });
+    expect(forbiddenError('no').getResponse()).toMatchObject({ message: 'no' });
+  });
+
+  it('builds a bad request error with a default and a custom code', () => {
+    expect(badRequestError().getStatus()).toBe(HttpStatus.BAD_REQUEST);
+    expect(badRequestError().getResponse()).toEqual({ message: 'Bad request', code: 'BAD_REQUEST' });
+    expect(badRequestError('bad', 'CUSTOM').getResponse()).toEqual({ message: 'bad', code: 'CUSTOM' });
   });
 });

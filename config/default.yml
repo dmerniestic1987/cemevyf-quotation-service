@@ -23,3 +23,15 @@ cors:
   allowedOrigins: http://localhost:3000,http://127.0.0.1:3000
 swagger:
   feature: enabled #enabled/disabled
+trustProxy: false # false, or the number of proxy hops in front of the service (e.g. 1 behind a single load balancer)
+auth:
+  jwt:
+    secret: '' # required, at least 32 characters. Set it with CEMEVYF_HEALTH_ORDERS_SERVICE_AUTH_JWT_SECRET, never commit it
+    expiresIn: 8h # session lifetime, e.g. 30m, 8h, 1d
+    issuer: cemevyf-health-orders-service
+    audience: cemevyf-health-orders-clients
+  bcryptRounds: 12
+  loginRateLimit:
+    limitPerUsername: 5 # login attempts allowed per window for the same username
+    limitPerIp: 20 # login attempts allowed per window from the same IP (an office shares one IP, so it is higher)
+    windowInSeconds: 60

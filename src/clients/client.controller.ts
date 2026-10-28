@@ -1,5 +1,7 @@
 import { Body, Controller, Get, HttpStatus, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { ALL_ROLES } from '../auth/types/role.enum';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { ClientService } from './client.service';
 import { CreateClientResponseDto } from './dto/create-client-response.dto';
@@ -8,6 +10,7 @@ import { FilterClientDto } from './dto/filter-client.dto';
 import { ClientRequestDto } from './dto/client-request.dto';
 
 @ApiTags('Clients')
+@Auth(...ALL_ROLES)
 @Controller('clients')
 export class ClientController {
   constructor(private readonly clientService: ClientService) {}
