@@ -60,6 +60,14 @@ export interface IHealthOrderService {
   findOrderFiles(id: number): Promise<HealthOrderFileResponseDto[]>;
 
   /**
+   * Deletes an attached file: its record in the database and the file in the storage. Only health orders in
+   * quoted or pending_results status allow it.
+   * @param id health order id
+   * @param fileId id of the attached file
+   */
+  deleteOrderFile(id: number, fileId: string): Promise<void>;
+
+  /**
    * Opens an attached file for download.
    * @param id health order id
    * @param fileId id of the attached file

@@ -54,7 +54,9 @@ detected from the content, size and SHA-256 checksum).
 - The files contain medical data: the directory is created with `0700` permissions and the files with `0600`.
 - **In Docker/production the directory must be a persistent volume and must be included in the backups.** The
   database and the directory have to be restored together, otherwise the downloads fail with 404.
-- Endpoints: `GET /health-orders/:id/files` lists the files and `GET /health-orders/:id/files/:fileId` downloads one.
+- Endpoints: `GET /health-orders/:id/files` lists the files, `GET /health-orders/:id/files/:fileId` downloads one and
+  `DELETE /health-orders/:id/files/:fileId` deletes one (the record and the file on disk). Files can only be deleted
+  while the order is in `quoted` or `pending_results` status.
 
 ## Swagger
 

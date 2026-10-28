@@ -20,6 +20,7 @@ describe('HealthOrderController', () => {
       bulkUpdateHealthOrderStatus: jest.fn(async () => 'bulk-updated'),
       findOrderFiles: jest.fn(async () => 'files'),
       downloadOrderFile: jest.fn(),
+      deleteOrderFile: jest.fn(async () => undefined),
     };
     controller = new HealthOrderController(service as any);
   });
@@ -102,5 +103,10 @@ describe('HealthOrderController', () => {
       'Content-Disposition': "inline; filename*=UTF-8''%C3%B3rden%20m%C3%A9dica.pdf",
       'X-Content-Type-Options': 'nosniff',
     });
+  });
+
+  it('deletes a file of a health order and returns nothing', async () => {
+    await expect(controller.deleteHealthOrderFile(7, 'file-id')).resolves.toBeUndefined();
+    expect(service.deleteOrderFile).toHaveBeenCalledWith(7, 'file-id');
   });
 });

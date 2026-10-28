@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   ParseUUIDPipe,
@@ -16,7 +19,18 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { CreateHealthOrderRequestDto } from './dto/create-health-order-request.dto';
-import { ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiProduces, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiConsumes,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiProduces,
+  ApiTags,
+} from '@nestjs/swagger';
 import { HealthOrderResponseDto } from './dto/health-order-response.dto';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { HealthOrderService } from './health-order.service';
@@ -159,6 +173,27 @@ export class HealthOrderController {
       'X-Content-Type-Options': 'nosniff',
     });
     return new StreamableFile(file.stream);
+  }
+
+  @Delete('/:id/files/:fileId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiParam({ type: 'number', name: 'id' })
+  @ApiParam({ type: 'string', name: 'fileId' })
+  @ApiOperation({
+    summary: 'Deletes a file (prescription or result) attached to a health order',
+    operationId: 'deleteHealthOrderFile',
+    description:
+      "Removes the file record and the file stored on the server. Only allowed while the health order is in 'quoted' " +
+      "or 'pending_results' status.",
+  })
+  @ApiNoContentResponse({ description: 'The file was deleted' })
+  @ApiNotFoundResponse({ description: 'The health order does not exist or the file does not belong to it' })
+  @ApiBadRequestResponse({ description: 'The health order status does not allow deleting files' })
+  async deleteHealthOrderFile(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('fileId', ParseUUIDPipe) fileId: string,
+  ): Promise<void> {
+    await this.healthOrderService.deleteOrderFile(id, fileId);
   }
 
   @UseInterceptors(FileInterceptor('file', FILE_UPLOAD_OPTIONS))
