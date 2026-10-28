@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpStatus, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PageResponseDto } from '../commons/dto/page-response.dto';
 import { ClientService } from './client.service';
 import { CreateClientResponseDto } from './dto/create-client-response.dto';
@@ -14,10 +14,7 @@ export class ClientController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new client', operationId: 'createClient' })
-  @ApiOkResponse({
-    status: HttpStatus.CREATED,
-    type: CreateClientResponseDto,
-  })
+  @ApiCreatedResponse({ type: CreateClientResponseDto })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Conflict' })
   async createClient(@Body() createClientDto: ClientRequestDto): Promise<CreateClientResponseDto> {
     return this.clientService.create(createClientDto);
@@ -33,10 +30,7 @@ export class ClientController {
   @Get('/:id')
   @ApiParam({ type: 'string', name: 'id' })
   @ApiOperation({ summary: 'Gets details of an specific client', operationId: 'findClient' })
-  @ApiOkResponse({
-    status: HttpStatus.OK,
-    type: ClientResponseDto,
-  })
+  @ApiOkResponse({ type: ClientResponseDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Client not found' })
   async findClient(@Param('id', ParseUUIDPipe) id: string): Promise<ClientResponseDto> {
     return this.clientService.findOrder(id);

@@ -56,7 +56,7 @@ export class HealthOrderService
       where: {
         id: orderDto.clientId,
       },
-      relations: [],
+      relations: {},
     });
     if (!client) {
       throw notFoundError('Client not found');
@@ -110,7 +110,7 @@ export class HealthOrderService
       pageOptionsDto,
       this.healthOrderRepository.getRepository(),
       where,
-      ['client'],
+      { client: true },
       HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto,
     );
   }
@@ -145,7 +145,10 @@ export class HealthOrderService
     if (sendQuotationDto.channel !== MessageChannelEnum.E_MAIL) {
       throw featureNotImplementedError(`Sending messages by ${sendQuotationDto.channel} is not implemented`);
     }
-    const quotation = await this.healthOrderRepository.getHealthOrderAndFail(id, ['client', 'healthOrderItems']);
+    const quotation = await this.healthOrderRepository.getHealthOrderAndFail(id, {
+      client: true,
+      healthOrderItems: true,
+    });
 
     const sentMail = await this.messageService.sendMail(
       HealthOrderMailUtils.toCemevyfMailMessage(sendQuotationDto.eMail, quotation),
@@ -169,7 +172,7 @@ export class HealthOrderService
     additionalNotes: string,
   ): Promise<string> {
     this.logger.log('Attach file to health order', { service: HealthOrderService.name, orderId });
-    const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(orderId, []);
+    const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(orderId, {});
     if (healthOrder.status === HealthOrderStatus.RESULTS_DONE) {
       throw healthOrderIncorrectStatusError();
     }
@@ -178,7 +181,7 @@ export class HealthOrderService
 
   async attachResultFile(orderId: number, file: Express.Multer.File, additionalNotes: string): Promise<string> {
     this.logger.log('Attach result file', { service: HealthOrderService.name, orderId });
-    const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(orderId, []);
+    const healthOrder = await this.healthOrderRepository.getHealthOrderAndFail(orderId, {});
     if (healthOrder.status !== HealthOrderStatus.EXECUTED) {
       throw healthOrderIncorrectStatusError();
     }
@@ -187,7 +190,7 @@ export class HealthOrderService
 
   async findOrderFiles(orderId: number): Promise<HealthOrderFileResponseDto[]> {
     this.logger.debug('Find health order files', { service: HealthOrderService.name, orderId });
-    await this.healthOrderRepository.getHealthOrderAndFail(orderId, []);
+    await this.healthOrderRepository.getHealthOrderAndFail(orderId, {});
     const files = await this.healthOrderRepository.findHealthOrderFiles(orderId);
     return files.map(HealthOrderEntityDtoMapper.healthOrderFileToResponseDto);
   }

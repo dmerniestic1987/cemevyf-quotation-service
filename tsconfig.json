@@ -1,18 +1,21 @@
 {
   "compilerOptions": {
     "module": "commonjs",
+    "moduleResolution": "bundler",
+    "target": "ES2024",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2021",
+    "esModuleInterop": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "rootDir": ".",
     "incremental": true,
     "skipLibCheck": true,
-    "esModuleInterop": true
+    "strict": false,
+    "types": ["node", "jest", "multer"]
   },
   "include": ["src/**/*"]
 }

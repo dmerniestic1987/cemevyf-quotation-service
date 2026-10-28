@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, FindOptionsRelations, Repository } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import {
   createQuotationInternalError,
@@ -61,7 +61,10 @@ export class HealthOrderRepository {
     }
   }
 
-  public async getHealthOrderAndFail(id: number, relations = ['healthOrderItems']): Promise<HealthOrder> {
+  public async getHealthOrderAndFail(
+    id: number,
+    relations: FindOptionsRelations<HealthOrder> = { healthOrderItems: true },
+  ): Promise<HealthOrder> {
     const healthOrder = await this.getRepository().findOne({
       where: {
         id,

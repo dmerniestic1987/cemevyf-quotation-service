@@ -40,6 +40,23 @@ describe('ClientService', () => {
       expect(clientsRepository.save).toHaveBeenCalledWith(expect.objectContaining(clientDto));
     });
 
+    it('does not look for duplicates when the client has no document', async () => {
+      const clientWithoutDocument = { ...clientDto, personId: undefined, personIdType: undefined };
+
+      await expect(service.create(clientWithoutDocument)).resolves.toEqual({ id: CLIENT_ID });
+      expect(clientsRepository.findOne).not.toHaveBeenCalled();
+      expect(clientsRepository.save).toHaveBeenCalledWith(expect.objectContaining({ firstName: 'Diego' }));
+    });
+
+    it.each([
+      ['the document type', { personId: undefined }],
+      ['the document number', { personIdType: undefined }],
+    ])('does not look for duplicates when only %s is provided', async (_name, missingField) => {
+      await service.create({ ...clientDto, ...missingField });
+
+      expect(clientsRepository.findOne).not.toHaveBeenCalled();
+    });
+
     it('throws conflict when the client already exists', async () => {
       clientsRepository.findOne.mockResolvedValue(new Client());
 

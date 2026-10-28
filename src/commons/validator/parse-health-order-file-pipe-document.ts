@@ -1,7 +1,9 @@
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 import { extname } from 'path';
-import { files as filesConfig } from 'config';
+import config from 'config';
 import { detectFileType } from '../file-storage/detect-file-type';
+
+const filesConfig = config.get<{ maxFileSizeInMb: number | string }>('files');
 
 export const MAX_FILE_SIZE_IN_BYTES = 1024 * 1024 * Number(filesConfig.maxFileSizeInMb);
 
