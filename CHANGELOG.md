@@ -39,6 +39,7 @@ This release summarizes everything since commit `5889a4b` (version 0.0.1, includ
   - `DELETE /health-orders/:id/files/:fileId` deletes a file while the order is `quoted` or `pending_results`.
   - Upload size limit (5 MB by default), enforced before the file is fully buffered.
 - `PATCH /health-orders/status/bulk` updates the status of several health orders in a single transaction.
+- `GET /health-orders` can be filtered by the ID of the client (`clientId`), alone or combined with the other filters.
 - Health order responses include the client information and the execution date.
 - Demo master price list of laboratory tests (`data/labs-master-demo.csv`).
 - `AGENTS.md` and `CLAUDE.md` with the project context and coding rules for AI agents.
@@ -58,7 +59,7 @@ This release summarizes everything since commit `5889a4b` (version 0.0.1, includ
 
 ### Testing
 
-- Unit test coverage is above 99 % (409 tests), including an integration test of the guards over HTTP and a test that
+- Unit test coverage is above 99 % (413 tests), including an integration test of the guards over HTTP and a test that
   fails when any endpoint does not declare its roles.
 
 [0.1.0]: https://github.com/dmerniestic1987/cemevyf-quotation-service/compare/5889a4b...HEAD

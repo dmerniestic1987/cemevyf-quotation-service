@@ -83,6 +83,10 @@ export class HealthOrderService
       where['id'] = filterDto.id;
     }
 
+    if (filterDto.clientId) {
+      where['client'] = { id: filterDto.clientId };
+    }
+
     if (filterDto.dateFrom && filterDto.dateTo) {
       where['createdAt'] = And(
         MoreThanOrEqual(new Date(filterDto.dateFrom)),

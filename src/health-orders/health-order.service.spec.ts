@@ -169,6 +169,18 @@ describe('HealthOrderService', () => {
       expect(getFindOptions().where.createdAt.type).toBe(operatorType);
     });
 
+    it('filters by the ID of the client', async () => {
+      await service.findOrders({ clientId: CLIENT_ID }, pageOptions);
+
+      expect(getFindOptions()).toMatchObject({ where: { client: { id: CLIENT_ID } }, relations: { client: true } });
+    });
+
+    it('combines the client with the other filters', async () => {
+      await service.findOrders({ clientId: CLIENT_ID, status: HealthOrderStatus.QUOTED }, pageOptions);
+
+      expect(getFindOptions().where).toEqual({ client: { id: CLIENT_ID }, status: HealthOrderStatus.QUOTED });
+    });
+
     it('uses an empty filter when nothing is provided', async () => {
       await service.findOrders({}, pageOptions);
 

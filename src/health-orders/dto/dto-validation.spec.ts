@@ -151,6 +151,18 @@ describe('DTO validation', () => {
       expect(dto.status).toBe(status);
     });
 
+    it('accepts the client ID filter', async () => {
+      const dto = await validate(FilterHealthOrderDto, { clientId: CLIENT_ID }, 'query');
+
+      expect(dto.clientId).toBe(CLIENT_ID);
+    });
+
+    it('rejects a client ID that is not a UUID', async () => {
+      const errors = await getErrors(FilterHealthOrderDto, { clientId: '123' }, 'query');
+
+      expect(errors).toEqual(['clientId must be a UUID']);
+    });
+
     it('rejects an unknown status filter', async () => {
       const errors = await getErrors(FilterHealthOrderDto, { status: 'done' }, 'query');
 
