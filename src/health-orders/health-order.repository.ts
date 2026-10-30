@@ -11,6 +11,7 @@ import { HealthOrder } from './health-order.entity';
 import { getPreviousStatus, HealthOrderStatus, nextStatusMap } from './types/health-order-status';
 import { HealthOrderFile } from './health-order-file.entity';
 import { HealthOrderFileType } from './types/health-order-file-type';
+import { Client } from '../clients/client.entity';
 
 export interface HealthOrderFileData {
   mimeType: string;
@@ -114,6 +115,32 @@ export class HealthOrderRepository {
         throw healthOrderIncorrectStatusError();
       }
       this.moveTo(healthOrder, newStatus);
+      return await entityManager.save(healthOrder);
+    });
+  }
+
+  /**
+   * Assigns the health order to client. The status is read with a row lock inside the transaction, so the order
+   * cannot leave the quoted status while the client is being changed.
+   */
+  async updateHealthOrderClient(id: number, client: Client): Promise<HealthOrder> {
+    this.logger.debug('Update Health Order client', { service: HealthOrderRepository.name, id });
+    return await this.dataSource.transaction(async entityManager => {
+      const healthOrder = await entityManager.findOne(HealthOrder, {
+        where: {
+          id,
+        },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!healthOrder) {
+        throw notFoundError(`Health Order ID: ${id} was not found`);
+      }
+      if (healthOrder.status !== HealthOrderStatus.QUOTED) {
+        throw healthOrderIncorrectStatusError(
+          `The client can only be changed in health orders in '${HealthOrderStatus.QUOTED}' status`,
+        );
+      }
+      healthOrder.client = client;
       return await entityManager.save(healthOrder);
     });
   }

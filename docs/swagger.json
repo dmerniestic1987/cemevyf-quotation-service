@@ -1,0 +1,1918 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "operationId": "login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid username or password"
+          },
+          "429": {
+            "description": "Too many login attempts"
+          }
+        },
+        "summary": "Logs in with username and password",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "operationId": "whoAmI",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginUserDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gets the user of the token",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/password": {
+      "put": {
+        "description": "Closes every session of the user, including this one: the user must log in again",
+        "operationId": "changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "The password was changed"
+          },
+          "400": {
+            "description": "The current password is not correct"
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Changes the password of the user of the token",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/users": {
+      "post": {
+        "operationId": "createUser",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          },
+          "409": {
+            "description": "The username already exists"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Creates a user",
+        "tags": [
+          "Users"
+        ]
+      },
+      "get": {
+        "operationId": "findUsers",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "username",
+            "required": false,
+            "in": "query",
+            "description": "Part of the username",
+            "schema": {
+              "example": "maria",
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SECRETARY",
+                "BUSINESS_ADMIN"
+              ]
+            }
+          },
+          {
+            "name": "enabled",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gets a list of users",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "operationId": "findUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gets a user",
+        "tags": [
+          "Users"
+        ]
+      },
+      "patch": {
+        "description": "Users are never deleted: disable them instead. A change closes the sessions already opened by the user. You cannot change your own role or status.",
+        "operationId": "updateUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Changes the role of a user or enables/disables it",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/{id}/password": {
+      "put": {
+        "description": "Closes the sessions already opened by the user",
+        "operationId": "resetUserPassword",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "The password was changed"
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Sets a new password for a user",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/clients": {
+      "post": {
+        "operationId": "createClient",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateClientResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new client",
+        "tags": [
+          "Clients"
+        ]
+      },
+      "get": {
+        "operationId": "findClients",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "id",
+            "required": false,
+            "in": "query",
+            "description": "The ID",
+            "schema": {
+              "example": "d5b13516-0557-4ca1-96f5-a6eeedec5472",
+              "type": "string"
+            }
+          },
+          {
+            "name": "firstName",
+            "required": false,
+            "in": "query",
+            "description": "The first name",
+            "schema": {
+              "example": "Diego",
+              "type": "string"
+            }
+          },
+          {
+            "name": "lastName",
+            "required": false,
+            "in": "query",
+            "description": "The last name",
+            "schema": {
+              "example": "Rossi",
+              "type": "string"
+            }
+          },
+          {
+            "name": "personIdType",
+            "required": false,
+            "in": "query",
+            "description": "The ID type of Patient",
+            "schema": {
+              "example": "dni",
+              "type": "string",
+              "enum": [
+                "dni",
+                "pass",
+                "cuil",
+                "cuit",
+                "other"
+              ]
+            }
+          },
+          {
+            "name": "personId",
+            "required": false,
+            "in": "query",
+            "description": "The ID of Patient",
+            "schema": {
+              "example": "32847809",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gets a list of clients",
+        "tags": [
+          "Clients"
+        ]
+      }
+    },
+    "/clients/{id}": {
+      "get": {
+        "operationId": "findClient",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          },
+          "404": {
+            "description": "Client not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gets details of an specific client",
+        "tags": [
+          "Clients"
+        ]
+      }
+    },
+    "/health-orders": {
+      "post": {
+        "operationId": "createHealthOrder",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHealthOrderRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOrderResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new health order",
+        "tags": [
+          "health-orders"
+        ]
+      },
+      "get": {
+        "operationId": "findHealthOrders",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "id",
+            "required": false,
+            "in": "query",
+            "description": "The ID of the health order",
+            "schema": {
+              "example": 3902,
+              "type": "number"
+            }
+          },
+          {
+            "name": "clientId",
+            "required": false,
+            "in": "query",
+            "description": "The ID of the client the health order belongs to",
+            "schema": {
+              "example": "d5b13516-0557-4ca1-96f5-a6eeedec5472",
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateFrom",
+            "required": false,
+            "in": "query",
+            "description": "The from date the quotation was created",
+            "schema": {
+              "example": "2023-05-30T00:00:00.000Z",
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateTo",
+            "required": false,
+            "in": "query",
+            "description": "The to date the quotation was created",
+            "schema": {
+              "example": "2023-12-31T00:00:00.000Z",
+              "type": "string"
+            }
+          },
+          {
+            "name": "currency",
+            "required": false,
+            "in": "query",
+            "description": "The currency to estimate the quotation",
+            "schema": {
+              "example": "ARS",
+              "type": "string",
+              "enum": [
+                "ARS",
+                "USD",
+                "USDC"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "The status of the health order",
+            "schema": {
+              "example": "executed",
+              "type": "string",
+              "enum": [
+                "quoted",
+                "executed",
+                "pending_results",
+                "results_done"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HealthOrderResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gets a list of all enabled health orders",
+        "tags": [
+          "health-orders"
+        ]
+      }
+    },
+    "/health-orders/{id}/status": {
+      "patch": {
+        "description": "The health orders have four possible statuses: quoted, executed, results pending, and results ready. This endpoint validates and updates an order",
+        "operationId": "updateHealthOrderStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateHealthOrderStatusRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOrderResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Updates the status of the order",
+        "tags": [
+          "health-orders"
+        ]
+      }
+    },
+    "/health-orders/{id}/client": {
+      "patch": {
+        "description": "Only allowed while the health order is in 'quoted' status. No e-mail is sent to the new client.",
+        "operationId": "updateHealthOrderClient",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateHealthOrderClientRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid client ID or the health order is not in 'quoted' status"
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          },
+          "404": {
+            "description": "The health order or the client does not exist"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Assigns the health order to another client",
+        "tags": [
+          "health-orders"
+        ]
+      }
+    },
+    "/health-orders/status/bulk": {
+      "patch": {
+        "description": "Moves every health order in ids to the given status with the same transition rules as the single update. The operation is transactional: if any order does not exist (404) or cannot move to the status (400), no order is updated and the response details tell which ones are the problem.",
+        "operationId": "bulkUpdateHealthOrderStatus",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkUpdateHealthOrderStatusRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HealthOrderResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Updates the status of several health orders at once",
+        "tags": [
+          "health-orders"
+        ]
+      }
+    },
+    "/health-orders/{id}": {
+      "get": {
+        "operationId": "findHealthOrder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOrderResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gets details of an specific health order",
+        "tags": [
+          "health-orders"
+        ]
+      },
+      "put": {
+        "operationId": "updateHealthOrder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateHealthOrderRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOrderResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Updates an specific health order",
+        "tags": [
+          "health-orders"
+        ]
+      }
+    },
+    "/health-orders/{id}/prescription": {
+      "post": {
+        "description": "Allowed while the health order is in any status except 'results_done'.",
+        "operationId": "attachHealthOrderPrescription",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "default": "A file with .png, .jpg and .pdf extension is allowed"
+                  },
+                  "additionalNotes": {
+                    "type": "string",
+                    "example": "We are still pending total Glucose example"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachedFileResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Adds a prescription file to a health order. The file could be jpg, png or pdf file",
+        "tags": [
+          "health-orders"
+        ]
+      }
+    },
+    "/health-orders/{id}/files": {
+      "get": {
+        "operationId": "findHealthOrderFiles",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HealthOrderFileResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lists the files attached to a health order",
+        "tags": [
+          "health-orders"
+        ]
+      }
+    },
+    "/health-orders/{id}/files/{fileId}": {
+      "get": {
+        "operationId": "downloadHealthOrderFile",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "fileId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Downloads a file attached to a health order",
+        "tags": [
+          "health-orders"
+        ]
+      },
+      "delete": {
+        "description": "Removes the file record and the file stored on the server. Only allowed while the health order is in 'quoted' or 'pending_results' status.",
+        "operationId": "deleteHealthOrderFile",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "fileId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The file was deleted"
+          },
+          "400": {
+            "description": "The health order status does not allow deleting files"
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          },
+          "404": {
+            "description": "The health order does not exist or the file does not belong to it"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Deletes a file (prescription or result) attached to a health order",
+        "tags": [
+          "health-orders"
+        ]
+      }
+    },
+    "/health-orders/{id}/results": {
+      "post": {
+        "description": "Allowed while the health order is in any status except 'results_done'.",
+        "operationId": "attachHealthOrderResult",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "default": "A file with .png, .jpg and .pdf extension is allowed"
+                  },
+                  "additionalNotes": {
+                    "type": "string",
+                    "example": "We are still pending total Glucose example"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachedFileResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired token"
+          },
+          "403": {
+            "description": "The role of the user cannot call this endpoint"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Adds a result file to a health order. The file could be jpg, png or pdf file",
+        "tags": [
+          "health-orders"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "CEMEVYF Health Orders Service",
+    "description": "A service to provide basic management of Health Orders in CEMEVYF",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "LoginRequestDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "example": "maria.lopez"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "LoginUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "SECRETARY",
+              "BUSINESS_ADMIN"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "role"
+        ]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Send it in the \"Authorization: Bearer <token>\" header"
+          },
+          "tokenType": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "expiresIn": {
+            "type": "number",
+            "description": "Seconds until the token expires",
+            "example": 28800
+          },
+          "user": {
+            "$ref": "#/components/schemas/LoginUserDto"
+          }
+        },
+        "required": [
+          "accessToken",
+          "tokenType",
+          "expiresIn",
+          "user"
+        ]
+      },
+      "ChangePasswordRequestDto": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string",
+            "description": "At least 12 characters and at most 72 bytes"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
+      "CreateUserRequestDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "The username. It is case insensitive and is stored in lower case",
+            "example": "maria.lopez"
+          },
+          "password": {
+            "type": "string",
+            "description": "At least 12 characters and at most 72 bytes"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "SECRETARY",
+              "BUSINESS_ADMIN"
+            ],
+            "example": "SECRETARY"
+          }
+        },
+        "required": [
+          "username",
+          "password",
+          "role"
+        ]
+      },
+      "UserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "d5b13516-0557-4ca1-96f5-a6eeedec5472"
+          },
+          "username": {
+            "type": "string",
+            "example": "maria.lopez"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "SECRETARY",
+              "BUSINESS_ADMIN"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "role",
+          "enabled",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateUserRequestDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "SECRETARY",
+              "BUSINESS_ADMIN"
+            ]
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "false disables the user: the sessions already opened stop working"
+          }
+        }
+      },
+      "ResetPasswordRequestDto": {
+        "type": "object",
+        "properties": {
+          "newPassword": {
+            "type": "string",
+            "description": "At least 12 characters and at most 72 bytes"
+          }
+        },
+        "required": [
+          "newPassword"
+        ]
+      },
+      "ClientRequestDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "description": "The first name",
+            "example": "Diego"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "The last name",
+            "example": "Di Rossi"
+          },
+          "personIdType": {
+            "type": "string",
+            "description": "The ID type of Patient",
+            "enum": [
+              "dni",
+              "pass",
+              "cuil",
+              "cuit",
+              "other"
+            ],
+            "example": "dni"
+          },
+          "personId": {
+            "type": "string",
+            "description": "The ID of Patient",
+            "example": "32847809"
+          },
+          "externalId": {
+            "type": "string",
+            "description": "The ID in external system",
+            "example": "A847809"
+          },
+          "booklyId": {
+            "type": "string",
+            "description": "The ID in Bookly system",
+            "example": "88847809"
+          },
+          "email": {
+            "type": "string",
+            "description": "The email of the client",
+            "example": "example@hola.com"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "The phone number of the client",
+            "example": "1155667788"
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName"
+        ]
+      },
+      "CreateClientResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Client ID",
+            "example": "E5602C37-F3BB-4463-AB77-394D30CEC077"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ClientResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The ID",
+            "example": "d5b13516-0557-4ca1-96f5-a6eeedec5472"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "The first name",
+            "example": "Diego"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "The last name",
+            "example": "Di Rossi"
+          },
+          "personIdType": {
+            "type": "string",
+            "description": "The ID type of Patient",
+            "default": "dni",
+            "example": "dni"
+          },
+          "personId": {
+            "type": "string",
+            "description": "The ID of Patient",
+            "example": "32847809"
+          },
+          "email": {
+            "type": "string",
+            "description": "The email of the client",
+            "example": "example@hola.com"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "The phone number of the client",
+            "example": "1158586969"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "ItemHealthOrderRequestDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The code of item",
+            "example": "T4L"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of item",
+            "example": "T4 Libre"
+          },
+          "unitPrice": {
+            "type": "string",
+            "description": "The unit price of the item, as a non-negative decimal string with up to 2 decimal places",
+            "example": "37500.50"
+          },
+          "itemCount": {
+            "type": "number",
+            "description": "total number of items",
+            "example": 2,
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "name",
+          "unitPrice",
+          "itemCount"
+        ]
+      },
+      "CreateHealthOrderRequestDto": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "description": "The ID of the client",
+            "example": "14e7b437-3c5c-44a6-8d99-a0fab3ef6c40"
+          },
+          "currency": {
+            "type": "string",
+            "description": "The currency to estimate the quotation",
+            "enum": [
+              "ARS",
+              "USD",
+              "USDC"
+            ],
+            "example": "ARS",
+            "default": "ARS"
+          },
+          "quotationItems": {
+            "description": "The list of items. The total amount is computed by the server from these items",
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemHealthOrderRequestDto"
+            }
+          }
+        },
+        "required": [
+          "clientId",
+          "quotationItems"
+        ]
+      },
+      "HealthOrderClientDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The ID",
+            "example": "d5b13516-0557-4ca1-96f5-a6eeedec5472"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "The first name",
+            "example": "Diego"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "The last name",
+            "example": "Di Rossi"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "HealthOrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Quotation ID",
+            "example": 12001
+          },
+          "currency": {
+            "type": "string",
+            "description": "The currency used to create the quotation",
+            "example": 4
+          },
+          "status": {
+            "type": "string",
+            "description": "The status of the quotation",
+            "example": "quoted"
+          },
+          "totalAmount": {
+            "type": "number",
+            "description": "The total amount of the the quotation",
+            "example": 45000.99
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Creation Date in ISO 8601 format",
+            "example": "2023-05-30T00:00:00.000Z"
+          },
+          "executedAt": {
+            "type": "string",
+            "description": "Execution date in ISO 8601 format",
+            "example": "2025-05-30T00:00:00.000Z"
+          },
+          "items": {
+            "description": "The list of items",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "client": {
+            "description": "The client who requested the health order",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HealthOrderClientDto"
+              }
+            ]
+          },
+          "sentMail": {
+            "type": "boolean",
+            "description": "True if e-mail was sent to the client",
+            "example": true
+          }
+        },
+        "required": [
+          "id",
+          "currency",
+          "status",
+          "totalAmount",
+          "createdAt",
+          "executedAt",
+          "items",
+          "client",
+          "sentMail"
+        ]
+      },
+      "UpdateHealthOrderStatusRequestDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "The health order status",
+            "example": "pending_results",
+            "enum": [
+              "quoted",
+              "executed",
+              "pending_results",
+              "results_done"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "UpdateHealthOrderClientRequestDto": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "description": "The ID of the client the health order belongs to",
+            "example": "14e7b437-3c5c-44a6-8d99-a0fab3ef6c40"
+          }
+        },
+        "required": [
+          "clientId"
+        ]
+      },
+      "BulkUpdateHealthOrderStatusRequestDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "The health order status",
+            "example": "pending_results",
+            "enum": [
+              "quoted",
+              "executed",
+              "pending_results",
+              "results_done"
+            ]
+          },
+          "ids": {
+            "description": "The IDs of the health orders. All of them move to the same status or none of them does",
+            "minItems": 1,
+            "maxItems": 100,
+            "example": [
+              1,
+              2,
+              3
+            ],
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "ids"
+        ]
+      },
+      "UpdateHealthOrderRequestDto": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "description": "The currency to estimate the quotation",
+            "enum": [
+              "ARS",
+              "USD",
+              "USDC"
+            ],
+            "example": "ARS"
+          },
+          "orderItems": {
+            "description": "The list of items. When present it replaces all current items and the total amount is recomputed",
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemHealthOrderRequestDto"
+            }
+          }
+        }
+      },
+      "AttachedFileResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The ID of the attached file",
+            "example": "d5b13516-0557-4ca1-96f5-a6eeedec5472"
+          },
+          "originalName": {
+            "type": "string",
+            "description": "The original name of the uploaded file",
+            "example": "prescription.pdf"
+          }
+        },
+        "required": [
+          "id",
+          "originalName"
+        ]
+      },
+      "HealthOrderFileResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The ID of the file",
+            "example": "d5b13516-0557-4ca1-96f5-a6eeedec5472"
+          },
+          "fileType": {
+            "type": "string",
+            "description": "The type of file",
+            "enum": [
+              "result",
+              "prescription",
+              "other"
+            ],
+            "example": "result"
+          },
+          "originalName": {
+            "type": "string",
+            "description": "The original name of the uploaded file",
+            "example": "prescription.pdf"
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "The MIME type detected from the file content",
+            "example": "application/pdf"
+          },
+          "sizeBytes": {
+            "type": "number",
+            "description": "The size of the file in bytes",
+            "example": 102400
+          },
+          "additionalNotes": {
+            "type": "string",
+            "description": "Additional notes of the file",
+            "example": "We are still pending total Glucose"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "The upload date",
+            "example": "2026-10-24T20:43:44.323Z"
+          }
+        },
+        "required": [
+          "id",
+          "fileType",
+          "originalName",
+          "mimeType",
+          "sizeBytes",
+          "createdAt"
+        ]
+      }
+    }
+  }
+}

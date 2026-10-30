@@ -12,6 +12,7 @@ describe('HealthOrderController', () => {
     service = {
       create: jest.fn(async () => 'created'),
       updateHealthOrderStatus: jest.fn(async () => 'status-updated'),
+      updateHealthOrderClient: jest.fn(async () => 'client-updated'),
       findOrders: jest.fn(async () => 'page'),
       findOrder: jest.fn(async () => 'order'),
       update: jest.fn(async () => 'updated'),
@@ -36,6 +37,12 @@ describe('HealthOrderController', () => {
       'status-updated',
     );
     expect(service.updateHealthOrderStatus).toHaveBeenCalledWith(7, HealthOrderStatus.EXECUTED);
+  });
+
+  it('updates the client', async () => {
+    const clientId = '14e7b437-3c5c-44a6-8d99-a0fab3ef6c40';
+    await expect(controller.updateHealthOrderClient(7, { clientId })).resolves.toBe('client-updated');
+    expect(service.updateHealthOrderClient).toHaveBeenCalledWith(7, clientId);
   });
 
   it('uses the same query DTO as filter and pagination options', async () => {

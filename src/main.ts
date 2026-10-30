@@ -1,8 +1,9 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { buildSwaggerConfig } from './commons/swagger/swagger-config';
 const { port, logLevel, swagger, cors, trustProxy } = require('config');
 import { FeatureEnum } from './commons/types/feature.enum';
 
@@ -12,14 +13,8 @@ async function bootstrap() {
   });
   // Needed to see the real client IP (login rate limit and logs) when the service runs behind a proxy
   app.set('trust proxy', trustProxy);
-  const options = new DocumentBuilder()
-    .setTitle('CEMEVYF Health Orders Service')
-    .setDescription('A service to provide basic management of Health Orders in CEMEVYF')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
   if (swagger.feature === FeatureEnum.ENABLED.toString()) {
-    const document = SwaggerModule.createDocument(app, options);
+    const document = SwaggerModule.createDocument(app, buildSwaggerConfig());
     SwaggerModule.setup('swagger', app, document, {
       jsonDocumentUrl: 'swagger/json',
     });

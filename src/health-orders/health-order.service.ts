@@ -147,6 +147,20 @@ export class HealthOrderService
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 
+  async updateHealthOrderClient(id: number, clientId: string): Promise<HealthOrderResponseDto> {
+    this.logger.log('Update health order client', { service: HealthOrderService.name, id, clientId });
+    const client = await this.clientsRepository.findOne({
+      where: {
+        id: clientId,
+      },
+    });
+    if (!client) {
+      throw notFoundError(`Client ID: ${clientId} was not found`);
+    }
+    const healthOrder = await this.healthOrderRepository.updateHealthOrderClient(id, client);
+    return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
+  }
+
   async bulkUpdateHealthOrderStatus(ids: number[], newStatus: HealthOrderStatus): Promise<HealthOrderResponseDto[]> {
     this.logger.log('Bulk update health order status', { service: HealthOrderService.name, ids, newStatus });
     const healthOrders = await this.healthOrderRepository.bulkUpdateHealthOrderStatus(ids, newStatus);

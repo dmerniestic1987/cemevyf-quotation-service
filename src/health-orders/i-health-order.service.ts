@@ -29,6 +29,13 @@ export interface IHealthOrderService {
   updateHealthOrderStatus(id: number, newStatus: HealthOrderStatus): Promise<any>;
 
   /**
+   * Assigns the health order to another client. Only health orders in quoted status allow it.
+   * @param id health order id
+   * @param clientId id of the new client
+   */
+  updateHealthOrderClient(id: number, clientId: string): Promise<HealthOrderResponseDto>;
+
+  /**
    * Moves several health orders to the same status. Either all of them are updated or none is.
    * @param ids health order ids
    * @param newStatus status every order must move to

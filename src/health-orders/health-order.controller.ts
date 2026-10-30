@@ -47,6 +47,7 @@ import { AdditionalDataDto } from './dto/additional-data.dto';
 import { inputFileSchema } from './types/input-file-schema';
 import { UpdateHealthOrderStatusRequestDto } from './dto/update-health-order-status-request.dto';
 import { BulkUpdateHealthOrderStatusRequestDto } from './dto/bulk-update-health-order-status-request.dto';
+import { UpdateHealthOrderClientRequestDto } from './dto/update-health-order-client-request.dto';
 import { AttachedFileResponseDto } from './dto/attached-file-response.dto';
 import { HealthOrderFileResponseDto } from './dto/health-order-file-response.dto';
 
@@ -80,6 +81,23 @@ export class HealthOrderController {
     @Body() updateStatusDto: UpdateHealthOrderStatusRequestDto,
   ): Promise<HealthOrderResponseDto> {
     return this.healthOrderService.updateHealthOrderStatus(id, updateStatusDto.status);
+  }
+
+  @Patch('/:id/client')
+  @ApiParam({ type: 'number', name: 'id' })
+  @ApiOperation({
+    summary: 'Assigns the health order to another client',
+    operationId: 'updateHealthOrderClient',
+    description: "Only allowed while the health order is in 'quoted' status. No e-mail is sent to the new client.",
+  })
+  @ApiOkResponse({ type: HealthOrderResponseDto })
+  @ApiNotFoundResponse({ description: 'The health order or the client does not exist' })
+  @ApiBadRequestResponse({ description: "Invalid client ID or the health order is not in 'quoted' status" })
+  async updateHealthOrderClient(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateClientDto: UpdateHealthOrderClientRequestDto,
+  ): Promise<HealthOrderResponseDto> {
+    return this.healthOrderService.updateHealthOrderClient(id, updateClientDto.clientId);
   }
 
   @Patch('/status/bulk')

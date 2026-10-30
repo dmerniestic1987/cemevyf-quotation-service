@@ -40,6 +40,9 @@ This release summarizes everything since commit `5889a4b` (version 0.0.1, includ
   - Upload size limit (5 MB by default), enforced before the file is fully buffered.
 - `PATCH /health-orders/status/bulk` updates the status of several health orders in a single transaction.
 - `GET /health-orders` can be filtered by the ID of the client (`clientId`), alone or combined with the other filters.
+- `PATCH /health-orders/:id/client` assigns a health order to another client (`{ "clientId": "<uuid>" }`). Only
+  allowed while the order is `quoted`; no e-mail is sent to the new client.
+- `docs/swagger.json` with the OpenAPI document, regenerated with `npm run -s swagger:generate`.
 - Health order responses include the client information and the execution date.
 - Demo master price list of laboratory tests (`data/labs-master-demo.csv`).
 - `AGENTS.md` and `CLAUDE.md` with the project context and coding rules for AI agents.

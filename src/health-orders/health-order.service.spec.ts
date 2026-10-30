@@ -52,6 +52,7 @@ describe('HealthOrderService', () => {
       updateHealthOrder: jest.fn(async (healthOrder: HealthOrder) => healthOrder),
       getHealthOrderAndFail: jest.fn(),
       updateHealthOrderStatus: jest.fn(),
+      updateHealthOrderClient: jest.fn(),
       bulkUpdateHealthOrderStatus: jest.fn(),
       attachHealthOrderFile: jest.fn(async () => 'file-id'),
       findHealthOrderFiles: jest.fn(),
@@ -241,6 +242,46 @@ describe('HealthOrderService', () => {
 
       expect(healthOrderRepository.updateHealthOrderStatus).toHaveBeenCalledWith(7, HealthOrderStatus.EXECUTED);
       expect(result.status).toBe(HealthOrderStatus.EXECUTED);
+    });
+  });
+
+  describe('updateHealthOrderClient', () => {
+    it('assigns the client to the order and returns it with the new client', async () => {
+      const client = buildClient();
+      clientsRepository.findOne.mockResolvedValue(client);
+      healthOrderRepository.updateHealthOrderClient.mockResolvedValue(buildHealthOrder({ client }));
+
+      const result = await service.updateHealthOrderClient(7, CLIENT_ID);
+
+      expect(clientsRepository.findOne).toHaveBeenCalledWith({ where: { id: CLIENT_ID } });
+      expect(healthOrderRepository.updateHealthOrderClient).toHaveBeenCalledWith(7, client);
+      expect(result.client).toEqual({ id: CLIENT_ID, firstName: 'Diego', lastName: 'Rossi' });
+    });
+
+    it('does not send an e-mail to the new client', async () => {
+      clientsRepository.findOne.mockResolvedValue(buildClient());
+      healthOrderRepository.updateHealthOrderClient.mockResolvedValue(buildHealthOrder());
+
+      const result = await service.updateHealthOrderClient(7, CLIENT_ID);
+
+      expect(messageService.sendMail).not.toHaveBeenCalled();
+      expect(result.sentMail).toBeUndefined();
+    });
+
+    it('throws not found without touching the order when the client does not exist', async () => {
+      clientsRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.updateHealthOrderClient(7, CLIENT_ID)).rejects.toMatchObject({
+        status: HttpStatus.NOT_FOUND,
+      });
+      expect(healthOrderRepository.updateHealthOrderClient).not.toHaveBeenCalled();
+    });
+
+    it('propagates the repository errors', async () => {
+      clientsRepository.findOne.mockResolvedValue(buildClient());
+      healthOrderRepository.updateHealthOrderClient.mockRejectedValue(new Error('not quoted'));
+
+      await expect(service.updateHealthOrderClient(7, CLIENT_ID)).rejects.toThrow('not quoted');
     });
   });
 

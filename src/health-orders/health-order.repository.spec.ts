@@ -6,6 +6,7 @@ import { HealthOrderFile } from './health-order-file.entity';
 import { HealthOrderStatus } from './types/health-order-status';
 import { In } from 'typeorm';
 import { HealthOrderFileType } from './types/health-order-file-type';
+import { Client } from '../clients/client.entity';
 
 const buildHealthOrder = (overrides: Partial<HealthOrder> = {}): HealthOrder =>
   Object.assign(new HealthOrder(), { id: 7, status: HealthOrderStatus.QUOTED, healthOrderItems: [] }, overrides);
@@ -177,6 +178,44 @@ describe('HealthOrderRepository', () => {
       });
       expect(entityManager.save).not.toHaveBeenCalled();
     });
+  });
+
+  describe('updateHealthOrderClient', () => {
+    const client = Object.assign(new Client(), { id: '14e7b437-3c5c-44a6-8d99-a0fab3ef6c40' });
+
+    it('reads the order with a write lock and saves it with the new client', async () => {
+      entityManager.findOne.mockResolvedValue(buildHealthOrder());
+
+      const result = await repository.updateHealthOrderClient(7, client);
+
+      expect(entityManager.findOne).toHaveBeenCalledWith(HealthOrder, {
+        where: { id: 7 },
+        lock: { mode: 'pessimistic_write' },
+      });
+      expect(result.client).toBe(client);
+      expect(entityManager.save).toHaveBeenCalledWith(result);
+    });
+
+    it('throws not found when the order does not exist', async () => {
+      entityManager.findOne.mockResolvedValue(null);
+
+      await expect(repository.updateHealthOrderClient(7, client)).rejects.toMatchObject({
+        status: HttpStatus.NOT_FOUND,
+      });
+      expect(entityManager.save).not.toHaveBeenCalled();
+    });
+
+    it.each([HealthOrderStatus.EXECUTED, HealthOrderStatus.PENDING_RESULTS, HealthOrderStatus.RESULTS_DONE])(
+      'rejects an order in %p status without saving it',
+      async status => {
+        entityManager.findOne.mockResolvedValue(buildHealthOrder({ status }));
+
+        await expect(repository.updateHealthOrderClient(7, client)).rejects.toMatchObject({
+          status: HttpStatus.BAD_REQUEST,
+        });
+        expect(entityManager.save).not.toHaveBeenCalled();
+      },
+    );
   });
 
   describe('bulkUpdateHealthOrderStatus', () => {
