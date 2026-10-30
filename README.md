@@ -68,7 +68,7 @@ only `BUSINESS_ADMIN` can manage users (`/users`).
 
   ```
   npm run -s user:create -- <username> <SECRETARY|BUSINESS_ADMIN> <password>
-  npm run -s user:create -- admin BUSINESS_ADMIN 'a-long-password'
+  npm run -s user:create -- secretaria SECRETARY 'milanesa2026'
   ```
 
   Always use `-s` (`--silent`): without it npm prints the whole command, password included, before running it. The
@@ -118,3 +118,12 @@ detected from the content, size and SHA-256 checksum).
 ## Swagger
 
 1. Navigate to the server url with the '/swagger' postfix
+
+The OpenAPI document is also versioned in `docs/swagger.json`. Regenerate it after changing an endpoint or a DTO:
+
+```
+npm run -s swagger:generate
+```
+
+It builds the project and scans the controllers without starting the application, so it needs neither MySQL nor
+the JWT secret. An optional argument changes the output path: `npm run -s swagger:generate -- /tmp/swagger.json`.

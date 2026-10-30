@@ -8,6 +8,7 @@ import {
 } from './bulk-update-health-order-status-request.dto';
 import { AdditionalDataDto } from './additional-data.dto';
 import { UpdateHealthOrderStatusRequestDto } from './update-health-order-status-request.dto';
+import { UpdateHealthOrderClientRequestDto } from './update-health-order-client-request.dto';
 import { ClientRequestDto } from '../../clients/dto/client-request.dto';
 import { FilterClientDto } from '../../clients/dto/filter-client.dto';
 
@@ -151,6 +152,18 @@ describe('DTO validation', () => {
       expect(dto.status).toBe(status);
     });
 
+    it('accepts the client ID filter', async () => {
+      const dto = await validate(FilterHealthOrderDto, { clientId: CLIENT_ID }, 'query');
+
+      expect(dto.clientId).toBe(CLIENT_ID);
+    });
+
+    it('rejects a client ID that is not a UUID', async () => {
+      const errors = await getErrors(FilterHealthOrderDto, { clientId: '123' }, 'query');
+
+      expect(errors).toEqual(['clientId must be a UUID']);
+    });
+
     it('rejects an unknown status filter', async () => {
       const errors = await getErrors(FilterHealthOrderDto, { status: 'done' }, 'query');
 
@@ -232,6 +245,29 @@ describe('DTO validation', () => {
   describe('UpdateHealthOrderStatusRequestDto', () => {
     it('rejects an unknown status', async () => {
       expect(await getErrors(UpdateHealthOrderStatusRequestDto, { status: 'done' })).toHaveLength(1);
+    });
+  });
+
+  describe('UpdateHealthOrderClientRequestDto', () => {
+    it('accepts a client ID', async () => {
+      const dto = await validate(UpdateHealthOrderClientRequestDto, { clientId: CLIENT_ID });
+      expect(dto).toEqual({ clientId: CLIENT_ID });
+    });
+
+    it('rejects a client ID that is not a UUID', async () => {
+      expect(await getErrors(UpdateHealthOrderClientRequestDto, { clientId: '123' })).toEqual([
+        'clientId must be a UUID',
+      ]);
+    });
+
+    it('rejects a missing client ID', async () => {
+      expect(await getErrors(UpdateHealthOrderClientRequestDto, {})).toEqual(['clientId must be a UUID']);
+    });
+
+    it('rejects unknown properties', async () => {
+      expect(await getErrors(UpdateHealthOrderClientRequestDto, { clientId: CLIENT_ID, status: 'quoted' })).toEqual([
+        'property status should not exist',
+      ]);
     });
   });
 

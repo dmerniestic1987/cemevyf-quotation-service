@@ -83,6 +83,10 @@ export class HealthOrderService
       where['id'] = filterDto.id;
     }
 
+    if (filterDto.clientId) {
+      where['client'] = { id: filterDto.clientId };
+    }
+
     if (filterDto.dateFrom && filterDto.dateTo) {
       where['createdAt'] = And(
         MoreThanOrEqual(new Date(filterDto.dateFrom)),
@@ -140,6 +144,20 @@ export class HealthOrderService
   async updateHealthOrderStatus(id: number, newStatus: HealthOrderStatus): Promise<HealthOrderResponseDto> {
     this.logger.log('Update health order status', { service: HealthOrderService.name, id, newStatus });
     const healthOrder = await this.healthOrderRepository.updateHealthOrderStatus(id, newStatus);
+    return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
+  }
+
+  async updateHealthOrderClient(id: number, clientId: string): Promise<HealthOrderResponseDto> {
+    this.logger.log('Update health order client', { service: HealthOrderService.name, id, clientId });
+    const client = await this.clientsRepository.findOne({
+      where: {
+        id: clientId,
+      },
+    });
+    if (!client) {
+      throw notFoundError(`Client ID: ${clientId} was not found`);
+    }
+    const healthOrder = await this.healthOrderRepository.updateHealthOrderClient(id, client);
     return HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto(healthOrder);
   }
 

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDateString, IsEnum, IsInt, IsOptional, Min } from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsOptional, IsUUID, Min } from 'class-validator';
 import { CurrencyEnum } from '../../commons/types/currency.enum';
 import { HealthOrderStatus } from '../types/health-order-status';
 import { PageOptionsDto } from '../../commons/dto/page-options.dto';
@@ -16,6 +16,15 @@ export class FilterHealthOrderDto extends PageOptionsDto {
   @IsInt()
   @Min(1)
   id?: number;
+
+  @ApiProperty({
+    description: 'The ID of the client the health order belongs to',
+    required: false,
+    example: 'd5b13516-0557-4ca1-96f5-a6eeedec5472',
+  })
+  @IsOptional()
+  @IsUUID()
+  clientId?: string;
 
   @ApiProperty({
     description: 'The from date the quotation was created',
