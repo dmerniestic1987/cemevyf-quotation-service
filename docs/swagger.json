@@ -639,6 +639,7 @@
         ]
       },
       "get": {
+        "description": "The health orders are sorted by creation date, the most recent first.",
         "operationId": "findHealthOrders",
         "parameters": [
           {
@@ -1633,7 +1634,8 @@
         "properties": {
           "clientId": {
             "type": "string",
-            "description": "The ID of the client",
+            "description": "The ID of the client. It can be omitted or null and assigned later with PATCH /health-orders/{id}/client",
+            "nullable": true,
             "example": "14e7b437-3c5c-44a6-8d99-a0fab3ef6c40"
           },
           "currency": {
@@ -1657,8 +1659,44 @@
           }
         },
         "required": [
-          "clientId",
           "quotationItems"
+        ]
+      },
+      "ItemHealthOrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The code of item",
+            "example": "T4L"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of item",
+            "example": "T4 Libre"
+          },
+          "unitPrice": {
+            "type": "string",
+            "description": "Unit price of item",
+            "example": "37500.50"
+          },
+          "totalPrice": {
+            "type": "string",
+            "description": "Total amount of quotation computed by client",
+            "example": "37500.50"
+          },
+          "itemCount": {
+            "type": "number",
+            "description": "total number of items",
+            "example": 2,
+            "default": 1,
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "unitPrice",
+          "totalPrice"
         ]
       },
       "HealthOrderClientDto": {
@@ -1697,17 +1735,33 @@
           "currency": {
             "type": "string",
             "description": "The currency used to create the quotation",
-            "example": 4
+            "enum": [
+              "ARS",
+              "USD",
+              "USDC"
+            ],
+            "example": "ARS"
           },
           "status": {
             "type": "string",
             "description": "The status of the quotation",
+            "enum": [
+              "quoted",
+              "executed",
+              "pending_results",
+              "results_done"
+            ],
             "example": "quoted"
+          },
+          "subtotalAmount": {
+            "type": "number",
+            "description": "The exact sum of the items of the quotation",
+            "example": 31245.4
           },
           "totalAmount": {
             "type": "number",
-            "description": "The total amount of the the quotation",
-            "example": 45000.99
+            "description": "The total amount of the quotation: the subtotal rounded up to a multiple of 100",
+            "example": 31300
           },
           "createdAt": {
             "type": "string",
@@ -1723,11 +1777,11 @@
             "description": "The list of items",
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/ItemHealthOrderResponseDto"
             }
           },
           "client": {
-            "description": "The client who requested the health order",
+            "description": "The client who requested the health order. It is missing while no client is assigned",
             "allOf": [
               {
                 "$ref": "#/components/schemas/HealthOrderClientDto"
@@ -1744,11 +1798,10 @@
           "id",
           "currency",
           "status",
+          "subtotalAmount",
           "totalAmount",
           "createdAt",
           "executedAt",
-          "items",
-          "client",
           "sentMail"
         ]
       },

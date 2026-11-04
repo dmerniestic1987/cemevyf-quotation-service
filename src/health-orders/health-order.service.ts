@@ -20,7 +20,7 @@ import { HealthOrderStatus } from './types/health-order-status';
 import { HealthOrderFileType } from './types/health-order-file-type';
 import { HealthOrderMailUtils } from './health-order-mail-utils';
 import { ItemHealthOrderRequestDto } from './dto/item-health-order-request.dto';
-import { computeTotal } from '../commons/utils/money';
+import { computeTotal, roundUpTotal } from '../commons/utils/money';
 import { FILE_STORAGE, FileStorage } from '../commons/file-storage/file-storage';
 import { detectFileType } from '../commons/file-storage/detect-file-type';
 import { HealthOrderFileResponseDto } from './dto/health-order-file-response.dto';
@@ -48,14 +48,18 @@ export class HealthOrderService
 
   async create(orderDto: CreateHealthOrderRequestDto): Promise<HealthOrderResponseDto> {
     this.logger.debug('Create health order', { service: HealthOrderService.name, createQuotationRequestDto: orderDto });
-    const client: Client = await this.clientsRepository.findOne({
-      where: {
-        id: orderDto.clientId,
-      },
-      relations: {},
-    });
-    if (!client) {
-      throw notFoundError('Client not found');
+    // The client is optional: it can be assigned later with updateHealthOrderClient
+    let client: Client | undefined;
+    if (orderDto.clientId) {
+      client = await this.clientsRepository.findOne({
+        where: {
+          id: orderDto.clientId,
+        },
+        relations: {},
+      });
+      if (!client) {
+        throw notFoundError('Client not found');
+      }
     }
 
     let healthOrder: HealthOrder = new HealthOrder();
@@ -65,7 +69,7 @@ export class HealthOrderService
 
     healthOrder = await this.healthOrderRepository.createHealthOrder(healthOrder);
     let sentMail = false;
-    if (client.email) {
+    if (client?.email) {
       sentMail = await this.messageService.sendMail(
         HealthOrderMailUtils.toCemevyfMailMessage(client.email, healthOrder),
       );
@@ -116,6 +120,8 @@ export class HealthOrderService
       where,
       { client: true },
       HealthOrderEntityDtoMapper.healthOrderEntityToResponseDto,
+      // Most recent first. The ID breaks ties so the pages do not repeat or skip orders created at the same time
+      { createdAt: 'DESC', id: 'DESC' },
     );
   }
 
@@ -276,7 +282,8 @@ export class HealthOrderService
   }
 
   /**
-   * Replaces the items of the health order and recomputes its total amount on the server side.
+   * Replaces the items of the health order and recomputes its amounts on the server side: the subtotal is the exact
+   * sum of the items and the total is the subtotal rounded up to a multiple of TOTAL_ROUNDING_STEP.
    */
   private setHealthOrderItems(healthOrder: HealthOrder, itemDtos: ItemHealthOrderRequestDto[]): void {
     healthOrder.healthOrderItems = itemDtos.map((itemDto, itemIndex) => {
@@ -285,6 +292,8 @@ export class HealthOrderService
       item.orderId = healthOrder.id;
       return item;
     });
-    healthOrder.totalAmount = Number(computeTotal(itemDtos));
+    const subtotal = computeTotal(itemDtos);
+    healthOrder.subtotalAmount = Number(subtotal);
+    healthOrder.totalAmount = Number(roundUpTotal(subtotal));
   }
 }

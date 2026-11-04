@@ -23,6 +23,7 @@ const buildHealthOrder = (overrides: Partial<HealthOrder> = {}): HealthOrder =>
       id: 7,
       status: HealthOrderStatus.QUOTED,
       currency: CurrencyEnum.ARS,
+      subtotalAmount: '99.50',
       totalAmount: '100.00',
       createdAt: CREATED_AT,
       healthOrderItems: [],
@@ -91,7 +92,8 @@ describe('HealthOrderService', () => {
       const result = await service.create(createDto);
 
       const savedOrder: HealthOrder = healthOrderRepository.createHealthOrder.mock.calls[0][0];
-      expect(savedOrder.totalAmount).toBe(75001.3);
+      expect(savedOrder.subtotalAmount).toBe(75001.3);
+      expect(savedOrder.totalAmount).toBe(75100);
       expect(savedOrder.currency).toBe(CurrencyEnum.USD);
       expect(savedOrder.healthOrderItems.map(item => [item.id, item.unitPrice, item.itemCount])).toEqual([
         [0, 0.1, 3],
@@ -99,7 +101,7 @@ describe('HealthOrderService', () => {
       ]);
       expect(savedOrder.healthOrderItems.every(item => item.healthOrder === savedOrder)).toBe(true);
       expect(messageService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'a@b.com' }));
-      expect(result).toMatchObject({ id: 7, totalAmount: 75001.3, sentMail: true });
+      expect(result).toMatchObject({ id: 7, subtotalAmount: 75001.3, totalAmount: 75100, sentMail: true });
       expect(result.items.map(item => item.totalPrice)).toEqual(['0.30', '75001.00']);
     });
 
@@ -118,6 +120,21 @@ describe('HealthOrderService', () => {
       await expect(service.create(createDto)).rejects.toMatchObject({ status: HttpStatus.NOT_FOUND });
       expect(healthOrderRepository.createHealthOrder).not.toHaveBeenCalled();
     });
+
+    it.each([undefined, null])(
+      'creates the order without client and without e-mail when the client ID is %p',
+      async clientId => {
+        const result = await service.create({ ...createDto, clientId });
+
+        const savedOrder: HealthOrder = healthOrderRepository.createHealthOrder.mock.calls[0][0];
+        expect(clientsRepository.findOne).not.toHaveBeenCalled();
+        expect(savedOrder.client).toBeUndefined();
+        expect(savedOrder.totalAmount).toBe(75100);
+        expect(messageService.sendMail).not.toHaveBeenCalled();
+        expect(result.client).toBeUndefined();
+        expect(result.sentMail).toBe(false);
+      },
+    );
   });
 
   describe('findOrders', () => {
@@ -142,6 +159,7 @@ describe('HealthOrderService', () => {
         skip: 10,
         take: 10,
         relations: { client: true },
+        order: { createdAt: 'DESC', id: 'DESC' },
       });
       expect(getFindOptions().where.createdAt.type).toBe('and');
       expect(result.data).toHaveLength(1);
@@ -182,6 +200,12 @@ describe('HealthOrderService', () => {
       expect(getFindOptions().where).toEqual({ client: { id: CLIENT_ID }, status: HealthOrderStatus.QUOTED });
     });
 
+    it('sorts the most recent orders first even without filters', async () => {
+      await service.findOrders({}, pageOptions);
+
+      expect(getFindOptions().order).toEqual({ createdAt: 'DESC', id: 'DESC' });
+    });
+
     it('uses an empty filter when nothing is provided', async () => {
       await service.findOrders({}, pageOptions);
 
@@ -193,7 +217,7 @@ describe('HealthOrderService', () => {
     it('returns the mapped health order', async () => {
       healthOrderRepository.getHealthOrderAndFail.mockResolvedValue(buildHealthOrder());
 
-      await expect(service.findOrder(7)).resolves.toMatchObject({ id: 7, totalAmount: 100 });
+      await expect(service.findOrder(7)).resolves.toMatchObject({ id: 7, subtotalAmount: 99.5, totalAmount: 100 });
     });
   });
 
@@ -210,12 +234,13 @@ describe('HealthOrderService', () => {
       });
 
       expect(healthOrderRepository.updateHealthOrder).toHaveBeenCalledWith(healthOrder, true);
-      expect(healthOrder.totalAmount).toBe(401.5);
+      expect(healthOrder.subtotalAmount).toBe(401.5);
+      expect(healthOrder.totalAmount).toBe(500);
       expect(healthOrder.healthOrderItems.map(item => [item.id, item.orderId])).toEqual([
         [0, 7],
         [1, 7],
       ]);
-      expect(result.totalAmount).toBe(401.5);
+      expect(result).toMatchObject({ subtotalAmount: 401.5, totalAmount: 500 });
     });
 
     it('updates only the currency and keeps the items and total', async () => {
@@ -228,6 +253,7 @@ describe('HealthOrderService', () => {
       expect(healthOrderRepository.updateHealthOrder).toHaveBeenCalledWith(healthOrder, false);
       expect(healthOrder.currency).toBe(CurrencyEnum.USD);
       expect(healthOrder.healthOrderItems).toBe(items);
+      expect(healthOrder.subtotalAmount).toBe('99.50');
       expect(healthOrder.totalAmount).toBe('100.00');
     });
   });

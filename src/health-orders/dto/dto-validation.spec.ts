@@ -41,6 +41,15 @@ describe('DTO validation', () => {
       expect(dto).toBeInstanceOf(CreateHealthOrderRequestDto);
     });
 
+    it.each([
+      ['without client ID', {}],
+      ['with a null client ID', { clientId: null }],
+    ])('accepts a request %s', async (_, client) => {
+      const dto = await validate(CreateHealthOrderRequestDto, { ...client, quotationItems: [validItem] });
+      expect(dto).toBeInstanceOf(CreateHealthOrderRequestDto);
+      expect(dto.clientId ?? undefined).toBeUndefined();
+    });
+
     it('rejects a non UUID client ID', async () => {
       expect(
         await getErrors(CreateHealthOrderRequestDto, { clientId: 'a@b.com', quotationItems: [validItem] }),

@@ -23,6 +23,20 @@ export const fromCents = (cents: number): string => {
 };
 
 /**
+ * Step the total of a health order is rounded up to (e.g. 31245.40 -> 31300.00).
+ */
+export const TOTAL_ROUNDING_STEP = 100;
+
+/**
+ * Rounds a decimal amount up to the next multiple of TOTAL_ROUNDING_STEP, returning a decimal string with 2 decimal
+ * places. Amounts that already are a multiple stay the same.
+ */
+export const roundUpTotal = (amount: string | number): string => {
+  const stepInCents = TOTAL_ROUNDING_STEP * 100;
+  return fromCents(Math.ceil(toCents(amount) / stepInCents) * stepInCents);
+};
+
+/**
  * Computes the total of a list of line items as a decimal string with 2 decimal places.
  */
 export const computeTotal = (items: { unitPrice: string | number; itemCount: number }[]): string => {

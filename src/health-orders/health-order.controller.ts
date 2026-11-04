@@ -117,7 +117,11 @@ export class HealthOrderController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Gets a list of all enabled health orders', operationId: 'findHealthOrders' })
+  @ApiOperation({
+    summary: 'Gets a list of all enabled health orders',
+    operationId: 'findHealthOrders',
+    description: 'The health orders are sorted by creation date, the most recent first.',
+  })
   @ApiOkResponse({ type: [HealthOrderResponseDto] })
   async findHealthOrders(@Query() filterDto: FilterHealthOrderDto): Promise<PageResponseDto<HealthOrderResponseDto>> {
     return this.healthOrderService.findOrders(filterDto, filterDto);

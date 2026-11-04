@@ -1,4 +1,4 @@
-import { computeTotal, fromCents, toCents } from './money';
+import { computeTotal, fromCents, roundUpTotal, toCents } from './money';
 
 describe('money utils', () => {
   describe('toCents', () => {
@@ -43,6 +43,25 @@ describe('money utils', () => {
 
     it('returns zero for an empty list', () => {
       expect(computeTotal([])).toBe('0.00');
+    });
+  });
+
+  describe('roundUpTotal', () => {
+    it.each([
+      ['31245.40', '31300.00'],
+      ['31200.01', '31300.00'],
+      ['31300.00', '31300.00'],
+      ['31300.01', '31400.00'],
+      ['0.01', '100.00'],
+      ['99.99', '100.00'],
+      ['0.00', '0.00'],
+      [75001.3, '75100.00'],
+    ])('rounds %p up to %p', (amount, expected) => {
+      expect(roundUpTotal(amount)).toBe(expected);
+    });
+
+    it('throws on invalid amount', () => {
+      expect(() => roundUpTotal('-5')).toThrow('Invalid amount: -5');
     });
   });
 });

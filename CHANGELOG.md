@@ -40,8 +40,15 @@ This release summarizes everything since commit `5889a4b` (version 0.0.1, includ
   - Upload size limit (5 MB by default), enforced before the file is fully buffered.
 - `PATCH /health-orders/status/bulk` updates the status of several health orders in a single transaction.
 - `GET /health-orders` can be filtered by the ID of the client (`clientId`), alone or combined with the other filters.
+- `GET /health-orders` returns the health orders sorted by creation date, the most recent first.
 - `PATCH /health-orders/:id/client` assigns a health order to another client (`{ "clientId": "<uuid>" }`). Only
   allowed while the order is `quoted`; no e-mail is sent to the new client.
+- `POST /health-orders` accepts an omitted or `null` `clientId`: the order is created without client and without
+  e-mail, and the client is assigned later with `PATCH /health-orders/:id/client`.
+- Health order `totalAmount` is rounded up to a multiple of 100 when the order is created or its items are replaced
+  (e.g. 31245.40 becomes 31300.00). The new `subtotalAmount` field keeps the exact sum of the items. The
+  `AddHealthOrderSubtotal` migration adds the `subtotal_amount` column and fills it with the current total; existing
+  totals are not rounded.
 - `docs/swagger.json` with the OpenAPI document, regenerated with `npm run -s swagger:generate`.
 - Health order responses include the client information and the execution date.
 - Demo master price list of laboratory tests (`data/labs-master-demo.csv`).

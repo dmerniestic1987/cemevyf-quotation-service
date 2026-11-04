@@ -13,19 +13,27 @@ export class HealthOrderResponseDto {
 
   @ApiProperty({
     description: 'The currency used to create the quotation',
-    example: 4,
+    enum: CurrencyEnum,
+    example: CurrencyEnum.ARS,
   })
   public currency: CurrencyEnum;
 
   @ApiProperty({
     description: 'The status of the quotation',
+    enum: HealthOrderStatus,
     example: HealthOrderStatus.QUOTED,
   })
   public status: HealthOrderStatus;
 
   @ApiProperty({
-    description: 'The total amount of the the quotation',
-    example: 45000.99,
+    description: 'The exact sum of the items of the quotation',
+    example: 31245.4,
+  })
+  public subtotalAmount: number;
+
+  @ApiProperty({
+    description: 'The total amount of the quotation: the subtotal rounded up to a multiple of 100',
+    example: 31300,
   })
   public totalAmount: number;
 
@@ -43,11 +51,15 @@ export class HealthOrderResponseDto {
 
   @ApiProperty({
     description: 'The list of items',
+    required: false,
+    type: [ItemHealthOrderResponseDto],
   })
   public items?: ItemHealthOrderResponseDto[];
 
   @ApiProperty({
-    description: 'The client who requested the health order',
+    description: 'The client who requested the health order. It is missing while no client is assigned',
+    required: false,
+    type: HealthOrderClientDto,
   })
   public client?: HealthOrderClientDto;
 

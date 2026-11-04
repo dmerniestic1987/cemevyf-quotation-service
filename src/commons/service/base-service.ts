@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PageOptionsDto } from '../dto/page-options.dto';
-import { FindOptionsRelations, Repository } from 'typeorm';
+import { FindOptionsOrder, FindOptionsRelations, Repository } from 'typeorm';
 import { PageResponseDto } from '../dto/page-response.dto';
 import { PageMetaDataDto } from '../dto/page-meta-data.dto';
 
@@ -13,6 +13,7 @@ export class BaseService<T, U> {
     where = undefined,
     relations: FindOptionsRelations<T> = undefined,
     dtoToClassMapper: (T) => V,
+    order: FindOptionsOrder<T> = undefined,
   ): Promise<PageResponseDto<V>> {
     const skip = (pageOptionsDto.page - 1) * pageOptionsDto.take;
     const [entities, itemCount] = await repository.findAndCount({
@@ -20,6 +21,7 @@ export class BaseService<T, U> {
       skip: skip,
       take: pageOptionsDto.take,
       relations,
+      order,
     });
     const items: V[] = (entities || []).map(entity => {
       return dtoToClassMapper(entity);
