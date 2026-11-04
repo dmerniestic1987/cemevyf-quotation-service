@@ -14,6 +14,7 @@ export class HealthOrderEntityDtoMapper {
     dto.id = quotation.id;
     dto.currency = quotation.currency;
     // MySQL returns decimal columns as strings, so the value is normalized to match the response contract
+    dto.subtotalAmount = Number(quotation.subtotalAmount);
     dto.totalAmount = Number(quotation.totalAmount);
     dto.createdAt = quotation.createdAt.toISOString();
     dto.executedAt = quotation.executedAt ? quotation.executedAt.toISOString() : undefined;

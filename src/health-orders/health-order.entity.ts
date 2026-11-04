@@ -29,6 +29,11 @@ export class HealthOrder {
   @JoinColumn({ name: 'client_id', referencedColumnName: 'id' })
   client: Client;
 
+  // Exact sum of the items
+  @Column('decimal', { precision: 14, scale: 2, name: 'subtotal_amount' })
+  public subtotalAmount: number;
+
+  // Subtotal rounded up to a multiple of TOTAL_ROUNDING_STEP: the amount the patient pays
   @Column('decimal', { precision: 14, scale: 2, name: 'total_amount' })
   public totalAmount: number;
 

@@ -6,12 +6,15 @@ import { ItemHealthOrderRequestDto } from './item-health-order-request.dto';
 
 export class CreateHealthOrderRequestDto {
   @ApiProperty({
-    description: 'The ID of the client',
-    required: true,
+    description:
+      'The ID of the client. It can be omitted or null and assigned later with PATCH /health-orders/{id}/client',
+    required: false,
+    nullable: true,
     example: '14e7b437-3c5c-44a6-8d99-a0fab3ef6c40',
   })
+  @IsOptional()
   @IsUUID()
-  clientId: string;
+  public clientId?: string | null;
 
   @ApiProperty({
     description: 'The currency to estimate the quotation',
